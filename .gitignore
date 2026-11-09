@@ -1,0 +1,9 @@
+node_modules
+.next
+.env*.local
+.DS_Store
+.vercel
+/.claude
+tsconfig.tsbuildinfo
+studio/dist
+studio/.sanity

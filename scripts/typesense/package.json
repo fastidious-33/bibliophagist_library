@@ -1,0 +1,8 @@
+{
+  "name": "bibliophagist-typesense-sync",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "typesense": "^3.0.6"
+  }
+}
