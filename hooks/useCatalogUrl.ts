@@ -2,12 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
+import { FILTER_KEYS, type FilterKey } from '@/lib/search/types';
 
 export interface CatalogState {
   q: string;
-  theme: string[];
   tags: string[];
-  language: string[];
   band: string[];
   sort: string;
   page: number;
@@ -21,7 +20,7 @@ export interface CatalogState {
  * Updates go through the native History API rather than router.push. The
  * App Router has no shallow-routing option: router.push/replace both
  * trigger a server round trip that re-renders app/catalog/page.tsx, which
- * queries Typesense — so every click cost two searches, one from the RSC
+ * runs a search — so every click cost two searches, one from the RSC
  * re-render and one from this component's own fetch. Next patches
  * pushState/replaceState so useSearchParams still sees the change.
  *
@@ -46,9 +45,7 @@ export function useCatalogUrl() {
     const sp = new URLSearchParams(search);
     return {
       q: sp.get('q') || '',
-      theme: sp.getAll('theme'),
       tags: sp.getAll('tags'),
-      language: sp.getAll('language'),
       band: sp.getAll('band'),
       sort: sp.get('sort') || 'relevance',
       page: Math.max(1, Number(sp.get('page')) || 1),
@@ -104,7 +101,7 @@ export function useCatalogUrl() {
   );
 
   const setMulti = useCallback(
-    (key: 'theme' | 'tags' | 'language' | 'band', values: string[]) => {
+    (key: FilterKey, values: string[]) => {
       write((sp) => {
         sp.delete(key);
         values.forEach((v) => sp.append(key, v));
@@ -127,16 +124,11 @@ export function useCatalogUrl() {
 
   const clearAll = useCallback(() => {
     write((sp) => {
-      ['q', 'theme', 'tags', 'language', 'band', 'sort', 'page'].forEach((k) => sp.delete(k));
+      ['q', ...FILTER_KEYS, 'sort', 'page'].forEach((k) => sp.delete(k));
     }, 'replace');
   }, [write]);
 
-  const hasActiveFilters =
-    state.q !== '' ||
-    state.theme.length > 0 ||
-    state.tags.length > 0 ||
-    state.language.length > 0 ||
-    state.band.length > 0;
+  const hasActiveFilters = state.q !== '' || state.tags.length > 0 || state.band.length > 0;
 
   return { state, search, setPage, setQuery, setMulti, setSort, clearAll, hasActiveFilters };
 }

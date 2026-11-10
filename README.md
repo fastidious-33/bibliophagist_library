@@ -11,26 +11,37 @@ is still TSBC's card-catalog theme, pending a redesign.
 Live at <https://bibliophagist-library.vercel.app>
 
 **Stack:** Next.js 16 (App Router) · React 19 · TypeScript · Sanity CMS ·
-Typesense · Chart.js · Vercel · Northflank
+Chart.js · Vercel · (later) Typesense on Northflank
 
 ---
 
 ## How the pieces fit together
 
-Three services, each doing one job:
-
 | Service | Role | Hosted on |
 | --- | --- | --- |
 | **Next.js app** | The website itself | Vercel |
-| **Sanity** | Source of truth for books; editing UI is the Studio in `studio/` | Sanity's cloud (free tier) |
-| **Typesense** | Search index for the catalog | Northflank (free tier) |
+| **Sanity** | Source of truth for books. The Studio (editing UI) is its own repo, `library_dataset/`, next to this one | Sanity's cloud (free tier) |
+| **Typesense** | *Optional, not deployed yet.* Search index for the catalog | Northflank (free tier) |
 
-Sanity holds the real data. Typesense holds a searchable *copy* of the books,
-and exists only so `/catalog` can do fast full-text search and faceted
-filtering. If Typesense and Sanity ever disagree, Sanity wins — Typesense can
-always be rebuilt from scratch.
+### Search: Sanity now, Typesense later
 
-### Keeping Typesense in sync
+All catalog search goes through one function, `searchBooks` in
+`lib/search/index.ts`, which picks a backend by env vars:
+
+- **Sanity (the default)** — `lib/search/sanity.ts` loads a light projection
+  of every book once, keeps it in Next's Data Cache under the `books` tag, and
+  does the text match, filters, facet counts, sorting and paging in memory.
+  Comfortable up to a couple of thousand books. The Sanity webhook drops the
+  cached copy on every publish/delete; an hourly revalidate is the safety net.
+- **Typesense** — `lib/typesense/search.ts`, used automatically once
+  `TYPESENSE_HOST` and `TYPESENSE_API_KEY` are both set. Same response shape,
+  so nothing else changes.
+
+Either way Sanity holds the real data; Typesense would only hold a searchable
+*copy*. If they ever disagree, Sanity wins — Typesense can always be rebuilt
+from scratch.
+
+### Keeping Typesense in sync (once it's deployed)
 
 There are **three** sync paths, deliberately. Understanding this is most of
 understanding the project:
@@ -42,9 +53,10 @@ understanding the project:
    but nothing is ever permanently lost.
 
 2. **Webhook, one document at a time** (`app/api/sanity-webhook/route.ts`)
-   Sanity calls this route whenever a book is published or deleted. It
-   re-fetches that single document and upserts or deletes it in Typesense.
-   Signature-verified with `@sanity/webhook`.
+   Sanity calls this route whenever a book is published or deleted. It always
+   revalidates the `books` cache tag (the Sanity search index), and when
+   Typesense is configured it also re-fetches that single document and
+   upserts or deletes it there. Signature-verified with `@sanity/webhook`.
 
 3. **Manual full resync** (`npm run sync:typesense`)
    Disaster recovery, run from your laptop against the live Typesense host.
@@ -59,26 +71,32 @@ understanding the project:
   through it. `hooks/useCatalogUrl.ts` owns this.
 - **Updates use the native History API**, not `router.push`. The App Router
   has no shallow-routing option, so `router.push`/`replace` trigger a server
-  round trip that re-renders the page and queries Typesense — meaning every
+  round trip that re-renders the page and runs the search — meaning every
   click cost two searches. Next patches `pushState`/`replaceState` so
   `useSearchParams` still sees the change.
+- **Filters are tags and year bands.** Tags double as collections/genres
+  (Fiction, Non-Fiction, Indian Authors, …). Several selected tags are OR'd;
+  tags and bands are AND'd.
 - **Filter options are disjunctive.** Each filter's options reflect every
-  *other* active filter but ignore its own — so selecting one theme never
+  *other* active filter but ignore its own — so selecting one tag never
   hides another (which would break multi-select), while selecting a year band
-  does narrow the themes on offer. Options with no results disappear.
-  `lib/typesense/search.ts` does this with one `multi_search` containing the
-  results query plus one facet-only query per active filter.
-- **Year bands are hardcoded** in `lib/typesense/catalog-facets.ts`. An
+  does narrow the tags on offer. Options with no results disappear. The
+  Sanity backend computes this in memory; the Typesense one with a single
+  `multi_search` (results query plus one facet-only query per active filter).
+- **Year bands are hardcoded** in `lib/search/catalog-facets.ts`. An
   earlier design derived them from the data, but boundaries computed from
   counts move as you filter, so options changed shape mid-click.
-- **Search highlighting** uses Typesense's `matched_tokens` and wraps them in
-  React, rather than rendering its pre-marked HTML snippets — so nothing from
-  the dataset is ever injected as markup.
+- **Search highlighting** comes back as a list of matched tokens per field,
+  wrapped in React — never pre-marked HTML — so nothing from the dataset is
+  ever injected as markup.
+- **Client components import only `lib/search/types.ts` and
+  `lib/search/catalog-facets.ts`.** `lib/search/index.ts` pulls in the server
+  backends.
 
 ### Rendering and caching
 
 - `/catalog` is **dynamic** — it reads `searchParams`, so it renders on every
-  request. Its first paint is server-rendered from Typesense, then
+  request. Its first paint is server-rendered from the search, then
   `CatalogBrowser` takes over client-side.
 - Most other pages use ISR with `export const revalidate = 60`. Content edits
   appear within a minute or so without a redeploy. Note this is a floor, not a
@@ -94,13 +112,13 @@ understanding the project:
 | Route | Notes |
 | --- | --- |
 | `/` | Landing page: hero, book count, three most recent books |
-| `/catalog` | Searchable, filterable catalog (Typesense-backed) |
+| `/catalog` | Searchable, filterable catalog |
 | `/catalog/[slug]` | Book detail |
 | `/catalog/random` | Redirects to a random book. Always dynamic |
-| `/ledger` | What the catalog is made of — themes, decades, languages, ratings |
+| `/ledger` | What the catalog is made of — tags, authors, decades, ratings |
 | `/about` | Static content page |
-| `/api/books/search` | JSON search proxy in front of Typesense |
-| `/api/sanity-webhook` | Sanity → Typesense real-time sync |
+| `/api/books/search` | JSON catalog search (Sanity or Typesense, see above) |
+| `/api/sanity-webhook` | Refreshes the search index on publish/delete (+ Typesense sync when configured) |
 | `/api/health` | Sanity reachability check, hit daily by Vercel Cron |
 
 ---
@@ -116,8 +134,8 @@ npm run dev
 ```
 
 Without env vars the site still runs: `lib/sanity/queries.ts` falls back to a
-small set of placeholder books so a fresh clone renders something. The
-catalog's search will be empty, since that needs a real Typesense instance.
+small set of placeholder books so a fresh clone renders something, and the
+catalog searches those. Leave `TYPESENSE_HOST` empty to use Sanity search.
 
 ### Scripts
 
@@ -144,11 +162,11 @@ Two separate sets, because two separate services need them.
 | --- | --- |
 | `NEXT_PUBLIC_SANITY_PROJECT_ID` | Sanity project. Public, not a secret |
 | `NEXT_PUBLIC_SANITY_DATASET` | Usually `production` |
-| `TYPESENSE_HOST` | Northflank service hostname (no protocol) |
-| `TYPESENSE_PORT` | Usually `443` |
-| `TYPESENSE_PROTOCOL` | Usually `https` |
-| `TYPESENSE_API_KEY` | **Secret.** Never prefix with `NEXT_PUBLIC_` |
 | `SANITY_WEBHOOK_SECRET` | **Secret.** Must match the secret set on the Sanity webhook |
+| `TYPESENSE_HOST` | *Optional.* Northflank service hostname (no protocol). Empty = Sanity search |
+| `TYPESENSE_PORT` | *Optional.* Usually `443` |
+| `TYPESENSE_PROTOCOL` | *Optional.* Usually `https` |
+| `TYPESENSE_API_KEY` | *Optional.* **Secret.** Never prefix with `NEXT_PUBLIC_` |
 
 ### The Typesense container (Northflank service settings)
 
@@ -167,22 +185,27 @@ Dockerfile and shouldn't need overriding.
 
 ### 1. Sanity
 
-The Sanity Studio (the admin UI for books) lives in `studio/`, a separate
-package with its own `package.json`. It's excluded from the Next app's
-tsconfig and ESLint, and Vercel never builds it. **`studio/schemaTypes/` is
-the only copy of the schemas.**
+The Sanity Studio (the admin UI for books) is its own repo,
+`library_dataset/`, a sibling of this one. Vercel never builds it.
+**`library_dataset/schemaTypes/` is the only copy of the schemas** — if a
+book field changes there, update the GROQ projections in `lib/sanity/`,
+`lib/search/sanity.ts`, the webhook and `scripts/typesense/` to match.
 
 ```bash
-cd studio
+cd ../library_dataset
 npm install
 npm run dev       # local Studio at http://localhost:3333
 npx sanity deploy # publishes to https://bibliophagist-library.sanity.studio
 ```
 
+Books can also be bulk-imported as ndjson with
+`npx sanity dataset import <file>.ndjson production` (ids `B001`, `B002`, …,
+with `bookId` — the call number on cards — set to the same value).
+
 The `production` dataset must be **public**: the Typesense sync reads it via
 the GROQ HTTP API without a token.
 
-### 2. Typesense on Northflank
+### 2. Typesense on Northflank (later — optional)
 
 Build from `typesense/Dockerfile`, with the **repo root** as build context
 (the image needs `scripts/typesense/`). Set the three container env vars
@@ -191,8 +214,9 @@ that hostname becomes `TYPESENSE_HOST` for the Next app.
 
 ### 3. Next.js on Vercel
 
-Import the repo, add all seven env vars from the first table, deploy. Pushes
-to the working branch redeploy automatically.
+Import the repo, add the env vars from the first table (the Typesense ones
+only once Typesense is running), deploy. Pushes to the working branch
+redeploy automatically.
 
 ### 4. The Sanity webhook
 
@@ -203,8 +227,8 @@ In [manage.sanity.io](https://manage.sanity.io) → API → Webhooks:
 - **Filter:** `_type == "book"`
 - **Secret:** same value as `SANITY_WEBHOOK_SECRET` on Vercel
 
-Without the matching secret every call is rejected with a 401 and search will
-silently stop updating in real time.
+Without the matching secret every call is rejected with a 401, and new or
+edited books only reach catalog search on the hourly revalidate.
 
 ---
 
@@ -264,9 +288,8 @@ Honest list, so future-you doesn't rediscover these from scratch.
   apply to an existing collection. The boot-time path gets away with this
   because it always starts empty. **This also blocks a "recently added" sort
   option on the catalog**, which would need a new indexed field.
-- **The webhook doesn't revalidate Next's cache.** Search updates instantly;
-  the book's own page can lag by a minute or more.
-- **The sitemap omits book pages.** `app/sitemap.ts` covers only the static
-  routes, not `/catalog/[slug]`.
-- **Leftover TSBC styles.** `app/globals.css` still has rules for the removed
-  events, merch, team and initiative pages. They go with the redesign.
+- **The webhook only refreshes search.** The catalog's search index updates
+  right away; the book's own page and the home page are ISR and can lag by a
+  minute or more.
+- **Substring search.** The Sanity backend matches substrings, so "fiction"
+  also finds books tagged "Non-Fiction". Typesense would rank these better.

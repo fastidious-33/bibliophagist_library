@@ -1,6 +1,6 @@
 /**
- * Year bands and sort options, shared by the server (which turns them into
- * Typesense filter clauses) and the client (which renders them).
+ * Year bands and sort options, shared by the server (both search backends)
+ * and the client (which renders them).
  *
  * The band boundaries are HARDCODED on purpose. An earlier design computed
  * them from the data — merging sparse decades — but that makes boundaries
@@ -39,32 +39,20 @@ export function bandForYear(year: number): YearBand | undefined {
   );
 }
 
-/** A single band as a Typesense filter clause. */
-export function bandClause(band: YearBand): string {
-  if (band.min === undefined && band.max !== undefined) return `publishingYear:<=${band.max}`;
-  if (band.max === undefined && band.min !== undefined) return `publishingYear:>=${band.min}`;
-  return `publishingYear:[${band.min}..${band.max}]`;
-}
-
 export interface SortOption {
   id: string;
   label: string;
-  /** Omitted for relevance — Typesense's own default ranking. */
-  sortBy?: string;
 }
 
 /**
- * NOTE: there's no "recently added" option because the Typesense schema has
- * no created-at field. Adding one means changing scripts/typesense/schema.mjs,
- * and schema changes only take effect when the collection is recreated —
- * which runFullSync currently doesn't do (it creates-if-missing, then
- * upserts). So that option is blocked behind the truncate fix.
+ * Each backend maps these ids to its own ordering: lib/search/sanity.ts sorts
+ * in memory, lib/typesense/search.ts turns them into sort_by clauses.
  */
 export const SORT_OPTIONS: SortOption[] = [
   { id: 'relevance', label: 'Best match' },
-  { id: 'rating', label: 'Highest rated', sortBy: 'rating:desc' },
-  { id: 'newest', label: 'Newest first', sortBy: 'publishingYear:desc' },
-  { id: 'oldest', label: 'Oldest first', sortBy: 'publishingYear:asc' },
+  { id: 'rating', label: 'Highest rated' },
+  { id: 'newest', label: 'Newest first' },
+  { id: 'oldest', label: 'Oldest first' },
 ];
 
 export const SORT_BY_ID = new Map(SORT_OPTIONS.map((s) => [s.id, s]));

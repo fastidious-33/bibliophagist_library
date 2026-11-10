@@ -1,59 +1,53 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import type { ReactNode } from 'react';
+import ClothPlate from '@/components/ClothPlate';
+import { LIBRARIANS_PICK_TAG } from '@/lib/genres/shared';
 
 type BookCardProps = {
   slug: string;
   /** Plain string, or pre-highlighted nodes from catalog search. */
   title: ReactNode;
+  /** The title as text, for the cloth plate when `title` is highlighted nodes. */
+  plainTitle?: string;
   author: ReactNode;
   coverUrl?: string | null;
-  theme?: string[] | null;
-  notes?: string | null;
-  language?: string[] | null;
-  rating?: number | null;
+  /** The library's call number, e.g. "B669". */
+  bookId?: string | null;
+  /** Only read for the Librarian's Pick mark; tags aren't shown on cards. */
+  tags?: string[] | null;
 };
 
 /**
- * The one catalog card, shared by the home strip, /catalog and the
- * books-tagged list on past events. Optional fields simply drop out, so
- * every surface renders the same hierarchy: call number → title → author
- * → blurb → meta row.
+ * The one book card, shared by the home desk, /catalog and genre pages.
+ * Cover-led (M1-DESIGN.md): people browse a shelf by its jackets. Tags,
+ * rating and notes live on the book's own page.
  */
-export default function BookCard({
-  slug,
-  title,
-  author,
-  coverUrl,
-  theme,
-  notes,
-  language,
-  rating,
-}: BookCardProps) {
-  const languages = (language || []).join(', ');
-  const hasMeta = Boolean(languages) || rating != null;
+export default function BookCard({ slug, title, plainTitle, author, coverUrl, bookId, tags }: BookCardProps) {
+  const isPick = Boolean(tags?.includes(LIBRARIANS_PICK_TAG));
 
   return (
-    <Link className="card card--link book-card" href={`/catalog/${slug}`}>
-      {/* Cover first: the jacket is what people recognise before the title. */}
-      {coverUrl && (
-        <Image className="book-cover" src={coverUrl} alt="" width={72} height={108} loading="lazy" />
-      )}
-      <span className="call-number">{(theme && theme[0]) || 'Uncategorized'}</span>
+    <Link className="book-card" href={`/catalog/${slug}`}>
+      <div className="book-card-cover">
+        {coverUrl ? (
+          <Image src={coverUrl} alt="" fill sizes="(max-width: 520px) 45vw, 180px" loading="lazy" />
+        ) : (
+          <ClothPlate title={plainTitle ?? (typeof title === 'string' ? title : '')} bookId={bookId} />
+        )}
+        {isPick && <PickRibbon />}
+      </div>
+      <span className="call-number">{bookId || 'Uncatalogued'}</span>
       <h3>{title}</h3>
       <p className="author">{author}</p>
-      {notes && <p className="blurb">{notes}</p>}
-      {hasMeta && (
-        <div className="meta-row">
-          <span>{languages}</span>
-          {rating != null && (
-            <span className="rating" aria-label={`Rated ${rating.toFixed(1)} out of 5`}>
-              {rating.toFixed(1)}
-              <span aria-hidden="true">&#9733;</span>
-            </span>
-          )}
-        </div>
-      )}
     </Link>
+  );
+}
+
+/** A bookmark ribbon hanging from the top of the cover. */
+export function PickRibbon() {
+  return (
+    <span className="pick-ribbon" title="Librarian's pick">
+      <span className="visually-hidden">Librarian&rsquo;s pick</span>
+    </span>
   );
 }

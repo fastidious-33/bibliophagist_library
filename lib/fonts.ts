@@ -14,8 +14,9 @@ export const basteleur = localFont({
   fallback: ['Georgia', 'serif'],
 });
 
-// Heading + body. Variable font, so every weight 300–700 is real, never
-// synthesised. The italic is a true italic (separate file).
+// Heading, body and labels (call numbers, controls — with tabular figures).
+// Variable font, so every weight 300–700 is real, never synthesised. The
+// italic is a true italic (separate file).
 export const gambetta = localFont({
   src: [
     { path: '../app/fonts/Gambetta-Variable.woff2', weight: '300 700', style: 'normal' },
@@ -26,18 +27,8 @@ export const gambetta = localFont({
   fallback: ['Georgia', 'serif'],
 });
 
-// Labels, call numbers, interface controls.
-export const sligoil = localFont({
-  src: [
-    { path: '../app/fonts/Sligoil-Micro.woff2', weight: '400', style: 'normal' },
-    { path: '../app/fonts/Sligoil-MicroBold.woff2', weight: '700', style: 'normal' },
-  ],
-  variable: '--font-sligoil',
-  display: 'swap',
-  fallback: ['ui-monospace', 'Courier New', 'monospace'],
-});
-
-// Accent — the "Ex Libris" flourish on the bookplate only.
+// Accent — the librarian's marginalia only (the slip's heading and
+// signature on a book page).
 export const pinyon = Pinyon_Script({
   weight: '400',
   subsets: ['latin'],

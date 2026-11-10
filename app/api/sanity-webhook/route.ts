@@ -1,13 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
 import { isValidSignature, SIGNATURE_HEADER_NAME } from '@sanity/webhook';
 import { sanityClient, isSanityConfigured } from '@/lib/sanity/client';
 import { typesenseClient, isTypesenseConfigured, BOOKS_COLLECTION_NAME } from '@/lib/typesense/client';
 import { bookToTypesenseDoc } from '@/lib/typesense/transform';
+import { BOOKS_TAG } from '@/lib/search';
 
-// Real-time counterpart to scripts/sync-typesense.mjs (the manual
-// disaster-recovery fallback) and the container's boot-time full rebuild.
-// This route only ever touches ONE document per call — cheap and fast,
-// which is the point of having it alongside the other two sync paths.
+// Sanity calls this whenever a book is published or deleted. Two jobs:
+//
+// 1. Always: drop the cached catalog search index (tag `books`, see
+//    lib/search/sanity.ts) so the next search reloads it from Sanity.
+// 2. When Typesense is running: re-fetch that ONE document and upsert or
+//    delete it in the index — the real-time counterpart to the container's
+//    boot-time rebuild and scripts/sync-typesense.mjs.
 
 const WEBHOOK_SECRET = process.env.SANITY_WEBHOOK_SECRET;
 
@@ -15,11 +20,10 @@ const WEBHOOK_SECRET = process.env.SANITY_WEBHOOK_SECRET;
 // these in sync if the book schema changes.
 const BOOK_BY_ID_QUERY = `*[_id == $id][0]{
   _id,
+  bookId,
   title,
   author,
-  theme,
   tags,
-  language,
   rating,
   publishingDate,
   "slug": slug.current,
@@ -29,12 +33,6 @@ const BOOK_BY_ID_QUERY = `*[_id == $id][0]{
 export async function POST(request: NextRequest) {
   if (!WEBHOOK_SECRET) {
     return NextResponse.json({ error: 'SANITY_WEBHOOK_SECRET is not configured.' }, { status: 500 });
-  }
-  if (!isTypesenseConfigured || !typesenseClient) {
-    return NextResponse.json({ error: 'Typesense is not configured.' }, { status: 503 });
-  }
-  if (!isSanityConfigured || !sanityClient) {
-    return NextResponse.json({ error: 'Sanity is not configured.' }, { status: 503 });
   }
 
   // Signature verification needs the raw, unparsed body.
@@ -62,6 +60,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ignored: true, reason: 'not a book document' });
   }
 
+  revalidateTag(BOOKS_TAG, { expire: 0 });
+
+  if (!isTypesenseConfigured || !typesenseClient) {
+    return NextResponse.json({ revalidated: true, typesense: 'not configured', id: _id });
+  }
+  if (!isSanityConfigured || !sanityClient) {
+    return NextResponse.json({ error: 'Sanity is not configured.' }, { status: 503 });
+  }
+
   try {
     // Always re-fetch fresh from Sanity rather than trusting the webhook
     // payload's own shape — this also doubles as our delete-detection: if
@@ -73,15 +80,15 @@ export async function POST(request: NextRequest) {
         // Already absent from the index — not an error worth failing over.
         if (err?.httpStatus !== 404) throw err;
       });
-      return NextResponse.json({ deleted: true, id: _id });
+      return NextResponse.json({ revalidated: true, deleted: true, id: _id });
     }
 
     const doc = bookToTypesenseDoc(freshBook);
     if (!doc) {
-      return NextResponse.json({ skipped: true, reason: 'no slug', id: _id });
+      return NextResponse.json({ revalidated: true, skipped: true, reason: 'no slug', id: _id });
     }
     await typesenseClient.collections(BOOKS_COLLECTION_NAME).documents().upsert(doc);
-    return NextResponse.json({ upserted: true, id: _id });
+    return NextResponse.json({ revalidated: true, upserted: true, id: _id });
   } catch (err) {
     console.error('Sanity webhook -> Typesense sync failed:', err);
     return NextResponse.json({ error: 'Sync failed.' }, { status: 502 });

@@ -4,6 +4,10 @@ import type { Metadata } from 'next';
 import { getBooks, getBookBySlug } from '@/lib/sanity';
 import Image from 'next/image';
 import RandomBookLink from '@/components/RandomBookLink';
+import ClothPlate from '@/components/ClothPlate';
+import { PickRibbon } from '@/components/BookCard';
+import { LIBRARIANS_PICK_TAG, WING_LABEL, bookStamps, genreSlug, isGenreTag } from '@/lib/genres/shared';
+import { REQUEST_FORM_URL } from '@/lib/site';
 
 export const revalidate = 60;
 
@@ -40,86 +44,111 @@ export default async function BookPage(props: { params: Promise<{ slug: string }
     notFound();
   }
 
+  const stamps = bookStamps(book.tags);
+  const isPick = Boolean(book.tags?.includes(LIBRARIANS_PICK_TAG));
+  // Fiction / Non-Fiction show as stamps and the pick as a ribbon, so the
+  // tag list is just the genres.
+  const genres = (book.tags || []).filter(isGenreTag);
+  const year = book.publishingDate?.slice(0, 4);
+  const imprint = [book.publisher, year].filter(Boolean).join(' · ');
+
   return (
     <section className="section section--flush">
-      <div className="section-heading">
-        <span className="call-number">{(book.theme && book.theme[0]) || 'Uncategorized'}</span>
-      </div>
-
       <div className="book-detail">
-        {book.coverUrl && (
-          <div className="book-detail-cover-wrap">
+        <div className="book-detail-cover-wrap">
+          {book.coverUrl ? (
             <Image
               className="book-detail-cover"
               src={book.coverUrl}
               alt=""
               fill
-              sizes="(max-width: 600px) 100vw, 220px"
+              sizes="(max-width: 600px) 100vw, 260px"
               priority
             />
-          </div>
-        )}
+          ) : (
+            <ClothPlate title={book.title} bookId={book.bookId} size="page" />
+          )}
+          {isPick && <PickRibbon />}
+        </div>
 
         <div className="book-detail-body">
-          <span className="eyebrow-label eyebrow-label--muted">Now in the stacks</span>
+          {/* Call number + stamps, like the top of a catalog card. */}
+          <div className="stamp-row book-detail-stamps">
+            <span className="call-number">{book.bookId || 'Uncatalogued'}</span>
+            {stamps.map((wing) => (
+              <span
+                key={wing}
+                className={`status-stamp${wing === 'non-fiction' ? ' status-stamp--muted' : ''}`}
+              >
+                {WING_LABEL[wing]}
+              </span>
+            ))}
+          </div>
 
           <h1 className="book-detail-title">{book.title}</h1>
 
-          {book.author && <p className="author book-detail-author">{book.author}</p>}
+          {book.author && <p className="book-detail-author">{book.author}</p>}
+          {imprint && <p className="book-detail-imprint">{imprint}</p>}
+          {isPick && <p className="book-detail-pick">A librarian&rsquo;s pick</p>}
 
-          <div className="meta-pill-row mb-sm">
+          {book.description && <p className="prose prose-lg">{book.description}</p>}
+
+          <aside className="librarian-slip" aria-labelledby="librarian-slip-heading">
+            <h2 id="librarian-slip-heading" className="librarian-slip-heading">
+              From the librarian&rsquo;s desk
+            </h2>
             {book.rating != null && (
-              <span className="meta-pill rating" aria-label={`Rated ${book.rating.toFixed(1)} out of 5`}>
-                {book.rating.toFixed(1)}
-                <span aria-hidden="true">&#9733;</span>
-              </span>
+              <p className="librarian-slip-rating" aria-label={`Rated ${book.rating.toFixed(1)} out of 5`}>
+                <span aria-hidden="true">&#9733;</span> {book.rating.toFixed(1)} / 5
+              </p>
             )}
-            {book.language && book.language.length > 0 && (
-              <span className="meta-pill">{book.language.join(', ')}</span>
+            {book.notes ? (
+              <p className="librarian-slip-notes">{book.notes}</p>
+            ) : (
+              <p className="librarian-slip-notes">
+                No notes yet &mdash; ask me about it when you borrow it.
+              </p>
             )}
-            {book.publisher && <span className="meta-pill">{book.publisher}</span>}
-            {book.publishingDate && (
-              <span className="meta-pill">Published {book.publishingDate.slice(0, 4)}</span>
-            )}
-          </div>
+            <p className="librarian-slip-signature">&mdash; A. Rajwade</p>
+          </aside>
 
-          {book.description && (
-            <>
-              <hr className="hr-dashed" />
-              <p className="prose prose-lg mb-sm">{book.description}</p>
-            </>
-          )}
-
-          {book.notes && (
+          {genres.length > 0 && (
             <div className="mb-md">
-              <h2 className="subhead">Notes</h2>
-              <p className="prose prose-lg">{book.notes}</p>
-            </div>
-          )}
-
-          {book.theme && book.theme.length > 0 && (
-            <div className="mb-sm">
               <h2 className="eyebrow-label">Filed under</h2>
               <div className="book-theme-tags">
-                {book.theme.map((t) => (
-                  <span key={t} className="book-theme-tag">
+                {genres.map((t) => (
+                  <Link key={t} href={`/catalog/genres/${genreSlug(t)}`} className="book-theme-tag">
                     {t}
-                  </span>
+                  </Link>
                 ))}
               </div>
             </div>
           )}
 
-          {book.link && (
-            <a
-              href={book.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-primary book-detail-link"
-            >
-              Find this book &rarr;
-            </a>
+          <div className="btn-row">
+            {REQUEST_FORM_URL ? (
+              <a href={REQUEST_FORM_URL} target="_blank" rel="noopener noreferrer" className="btn btn-primary">
+                Request this book
+              </a>
+            ) : (
+              // /about until /borrow exists (M1 group 4).
+              <Link href="/about#how-to-borrow" className="btn btn-primary">
+                How to borrow this book
+              </Link>
+            )}
+            {book.link && (
+              <a href={book.link} target="_blank" rel="noopener noreferrer" className="btn btn-secondary">
+                Find this book &rarr;
+              </a>
+            )}
+          </div>
+          {REQUEST_FORM_URL && book.bookId && (
+            <p className="book-detail-request-hint">
+              Mention call number <span className="call-number">{book.bookId}</span> in the form.
+            </p>
           )}
+
+          {/* M3: availability ("On the shelf" / "On loan, due X") goes here. */}
         </div>
       </div>
 

@@ -42,8 +42,9 @@ function datum(raw: unknown): Counted | undefined {
   return undefined;
 }
 
-// Sligoil (the mono face) is fixed-pitch at 600/1000 units, so a label's
-// width is exactly chars × 0.6em — no need to measure at runtime.
+// Labels are Gambetta now (Sligoil was dropped in M1). chars × 0.6em was
+// Sligoil's exact fixed pitch; for Gambetta it's a safe overestimate, so
+// labels wrap a little early. Revisit in the ledger restyle (M1 group 4).
 const LABEL_SIZE = 11;
 const MONO_ADVANCE = 0.6 * LABEL_SIZE;
 
@@ -101,14 +102,14 @@ function ChartData({ caption, column, rows }: { caption: string; column: string;
 }
 
 export default function LedgerCharts({
-  themes,
+  tags,
+  authors,
   decades,
-  languages,
   ratings,
 }: {
-  themes: Counted[];
+  tags: Counted[];
+  authors: Counted[];
   decades: Counted[];
-  languages: Counted[];
   ratings: Counted[];
 }) {
   const c = useThemeColors();
@@ -117,7 +118,7 @@ export default function LedgerCharts({
   const animation = usePrefersReducedMotion() ? (false as const) : undefined;
 
   const grid = `rgba(${c.charcoalRgb}, 0.15)`;
-  const font = { family: c.mono, size: LABEL_SIZE };
+  const font = { family: c.label, size: LABEL_SIZE };
 
   const tooltip = {
     backgroundColor: c.kraft,
@@ -155,18 +156,19 @@ export default function LedgerCharts({
     },
   } as const;
 
-  const maxTheme = Math.max(...themes.map((t) => t.count), 1);
-  const themeAlpha = (count: number) => 0.35 + 0.55 * (count / maxTheme);
+  const maxTag = Math.max(...tags.map((t) => t.count), 1);
+  const tagAlpha = (count: number) => 0.35 + 0.55 * (count / maxTag);
 
   return (
     <>
+      {tags.length > 0 && (
       <section className="ledger-block">
-        <h2 className="subhead">Themes</h2>
+        <h2 className="subhead">Tags</h2>
         <p className="ledger-note">
-          Each tile is a theme; its area is how many books carry it. Click one to
-          open that theme in the catalog.
+          Each tile is a tag; its area is how many books carry it. Click one to
+          open that tag in the catalog.
         </p>
-        <ChartData caption="Books per theme" column="Theme" rows={themes} />
+        <ChartData caption="Books per tag" column="Tag" rows={tags} />
         <div className="ledger-chart ledger-chart--tall" aria-hidden="true">
           <Chart
             type="treemap"
@@ -174,7 +176,7 @@ export default function LedgerCharts({
               datasets: [
                 {
                   data: [],
-                  tree: [...themes],
+                  tree: [...tags],
                   key: 'count',
                   labels: {
                     display: true,
@@ -183,7 +185,7 @@ export default function LedgerCharts({
                     // ink swap lightness together.
                     color: (ctx) => {
                       const d = datum(ctx.raw);
-                      return d && themeAlpha(d.count) > 0.6 ? c.paper : c.ink;
+                      return d && tagAlpha(d.count) > 0.6 ? c.paper : c.ink;
                     },
                     font,
                     // 'hidden' drops the label entirely when it can't fit,
@@ -207,7 +209,7 @@ export default function LedgerCharts({
                   backgroundColor: (ctx) => {
                     const d = datum(ctx.raw);
                     if (!d) return 'transparent';
-                    return `rgba(${c.stampRgb}, ${themeAlpha(d.count)})`;
+                    return `rgba(${c.stampRgb}, ${tagAlpha(d.count)})`;
                   },
                 },
               ],
@@ -219,8 +221,8 @@ export default function LedgerCharts({
               onClick: (_e, elements) => {
                 const index = elements[0]?.index;
                 if (index === undefined) return;
-                const theme = themes[index]?.label;
-                if (theme) router.push(`/catalog?theme=${encodeURIComponent(theme)}`);
+                const tag = tags[index]?.label;
+                if (tag) router.push(`/catalog?tags=${encodeURIComponent(tag)}`);
               },
               plugins: {
                 legend: { display: false },
@@ -240,16 +242,39 @@ export default function LedgerCharts({
         </div>
         {/* The keyboard and screen-reader route to what a tile click does.
             Hidden until tabbed into, then shown as a plain list. */}
-        <ul className="ledger-theme-links" aria-label="Open a theme in the catalog">
-          {themes.map((t) => (
+        <ul className="ledger-theme-links" aria-label="Open a tag in the catalog">
+          {tags.map((t) => (
             <li key={t.label}>
-              <Link href={`/catalog?theme=${encodeURIComponent(t.label)}`}>
+              <Link href={`/catalog?tags=${encodeURIComponent(t.label)}`}>
                 {t.label} ({t.count})
               </Link>
             </li>
           ))}
         </ul>
       </section>
+      )}
+
+      {authors.length > 0 && (
+        <section className="ledger-block">
+          <h2 className="subhead">Most-shelved authors</h2>
+          <ChartData caption="Books per author" column="Author" rows={authors} />
+          <div className="ledger-chart" aria-hidden="true">
+            <Chart
+              type="bar"
+              data={{
+                labels: authors.map((a) => a.label),
+                datasets: [
+                  {
+                    ...barDataset,
+                    data: authors.map((a) => a.count),
+                  },
+                ],
+              }}
+              options={{ ...barOptions, indexAxis: 'y' as const }}
+            />
+          </div>
+        </section>
+      )}
 
       <section className="ledger-block">
         <h2 className="subhead">By decade published</h2>
@@ -267,26 +292,6 @@ export default function LedgerCharts({
               ],
             }}
             options={barOptions}
-          />
-        </div>
-      </section>
-
-      <section className="ledger-block">
-        <h2 className="subhead">Languages</h2>
-        <ChartData caption="Books per language" column="Language" rows={languages} />
-        <div className="ledger-chart ledger-chart--short" aria-hidden="true">
-          <Chart
-            type="bar"
-            data={{
-              labels: languages.map((l) => l.label),
-              datasets: [
-                {
-                  ...barDataset,
-                  data: languages.map((l) => l.count),
-                },
-              ],
-            }}
-            options={{ ...barOptions, indexAxis: 'y' as const }}
           />
         </div>
       </section>

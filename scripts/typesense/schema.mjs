@@ -1,8 +1,9 @@
 // Typesense collection schema for the Bibliophagist Library book catalog.
 //
-// Only fields with real filter UI get `facet: true` — see the project's
-// CatalogBrowser, which currently filters on theme / tags / language / year.
-// `rating` is shown on cards but never filtered, so it's not faceted.
+// Fields with filter UI get `facet: true` — CatalogBrowser filters on tags
+// and year. `author` is faceted too, for the /ledger "most-shelved authors"
+// chart. `rating` is shown on cards but never filtered, so it's not faceted.
+// Must match lib/search/types.ts (SearchBook, FACET_FIELDS).
 
 export const BOOKS_COLLECTION_NAME = 'books';
 
@@ -10,10 +11,9 @@ export const booksSchema = {
   name: BOOKS_COLLECTION_NAME,
   fields: [
     { name: 'title', type: 'string' },
-    { name: 'author', type: 'string', optional: true },
-    { name: 'theme', type: 'string[]', facet: true, optional: true },
+    { name: 'author', type: 'string', facet: true, optional: true },
+    { name: 'bookId', type: 'string', optional: true, index: false },
     { name: 'tags', type: 'string[]', facet: true, optional: true },
-    { name: 'language', type: 'string[]', facet: true, optional: true },
     // Derived from the `publishingDate` string on the Sanity document — see
     // transform.mjs. `optional: true` because older entries may have no
     // parseable year at all; we don't fabricate one (see project pitfalls).

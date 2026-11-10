@@ -6,8 +6,10 @@ import MultiSelectFilter, { type FilterOption } from '@/components/MultiSelectFi
 import Pagination from '@/components/Pagination';
 import RandomBookLink from '@/components/RandomBookLink';
 import { useCatalogUrl } from '@/hooks/useCatalogUrl';
-import { YEAR_BANDS, SORT_OPTIONS } from '@/lib/typesense/catalog-facets';
-import { PAGE_SIZE, type BooksSearchResponse, type BookHit } from '@/lib/typesense/search';
+// Client-safe modules only — '@/lib/search' itself pulls in the server backends.
+import { YEAR_BANDS, SORT_OPTIONS } from '@/lib/search/catalog-facets';
+import { PAGE_SIZE, type BooksSearchResponse, type BookHit } from '@/lib/search/types';
+import { LIBRARIANS_PICK_TAG } from '@/lib/genres/shared';
 
 const DEBOUNCE_MS = 300;
 
@@ -16,9 +18,9 @@ function escapeRegExp(value: string): string {
 }
 
 /**
- * Wraps whichever tokens Typesense says matched. Built from the plain text
- * plus a token list rather than Typesense's pre-marked HTML snippet, so
- * nothing from the dataset is ever injected as markup.
+ * Wraps whichever tokens the search says matched. Built from the plain text
+ * plus a token list rather than a pre-marked HTML snippet, so nothing from
+ * the dataset is ever injected as markup.
  */
 function Highlighted({ text, tokens }: { text: string; tokens?: string[] }) {
   const parts = useMemo(() => {
@@ -117,7 +119,11 @@ export default function CatalogBrowser({ initialData }: { initialData: BooksSear
 
   useEffect(() => () => abortRef.current?.abort(), []);
 
-  const themeOptions: FilterOption[] = data.options.theme.map((v) => ({ value: v, label: v }));
+  // Librarian's Pick pinned first (when any book has it); the rest keep
+  // their most-common-first order — the sort is stable.
+  const tagOptions: FilterOption[] = [...data.options.tags]
+    .sort((a, b) => Number(b === LIBRARIANS_PICK_TAG) - Number(a === LIBRARIANS_PICK_TAG))
+    .map((v) => ({ value: v, label: v }));
   const bandOptions: FilterOption[] = YEAR_BANDS.filter((b) =>
     data.options.bands.includes(b.id)
   ).map((b) => ({ value: b.id, label: b.label }));
@@ -134,7 +140,7 @@ export default function CatalogBrowser({ initialData }: { initialData: BooksSear
           name="q"
           autoComplete="off"
           spellCheck={false}
-          placeholder="Title, author, theme, or tag…"
+          placeholder="Title, author, or tag…"
           value={queryInput}
           onChange={(e) => setQueryInput(e.target.value)}
           aria-label="Search the catalog"
@@ -147,12 +153,12 @@ export default function CatalogBrowser({ initialData }: { initialData: BooksSear
         )}
 
         <MultiSelectFilter
-          label="Themes"
+          label="Tags"
           searchable={false}
           typeahead
-          options={themeOptions}
-          selected={state.theme}
-          onChange={(next) => setMulti('theme', next)}
+          options={tagOptions}
+          selected={state.tags}
+          onChange={(next) => setMulti('tags', next)}
         />
 
         <MultiSelectFilter
@@ -208,11 +214,11 @@ export default function CatalogBrowser({ initialData }: { initialData: BooksSear
               key={book.id}
               slug={book.slug}
               title={<Highlighted text={book.title} tokens={book.matched?.title} />}
+              plainTitle={book.title}
               author={<Highlighted text={book.author} tokens={book.matched?.author} />}
               coverUrl={book.coverUrl}
-              theme={book.theme}
-              language={book.language}
-              rating={book.rating}
+              bookId={book.bookId}
+              tags={book.tags}
             />
           ))}
         </div>

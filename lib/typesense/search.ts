@@ -2,76 +2,47 @@ import {
   typesenseClient,
   isTypesenseConfigured,
   BOOKS_COLLECTION_NAME,
-  FACET_FIELDS,
   type TypesenseBookDoc,
-  type FacetField,
 } from './client';
+import { YEAR_BANDS, BAND_BY_ID, bandForYear, type YearBand } from '@/lib/search/catalog-facets';
 import {
-  YEAR_BANDS,
-  BAND_BY_ID,
-  bandForYear,
-  bandClause,
-  SORT_BY_ID,
-} from './catalog-facets';
+  PAGE_SIZE,
+  FACET_FIELDS,
+  EMPTY_RESPONSE,
+  type BookHit,
+  type BooksSearchResponse,
+  type FacetCount,
+  type FacetField,
+} from '@/lib/search/types';
 
-export const PAGE_SIZE = 24;
-const QUERY_BY = 'title,author,theme,tags,language';
+// Not in use until Typesense is deployed (roadmap M4) — lib/search/index.ts
+// picks this backend only when TYPESENSE_HOST and TYPESENSE_API_KEY are set.
 
-// Raised from 50. The year facet is per-distinct-year, and a catalog
-// spanning 1656–2025 can easily exceed 50 distinct years — truncation
-// would silently drop sparse older years, making a band look empty when it
-// isn't and under-counting old decades on /ledger.
+const QUERY_BY = 'title,author,tags';
+
+// The year facet is per-distinct-year, and a catalog spanning 1656–2025 can
+// easily exceed 50 distinct years — truncation would silently drop sparse
+// older years, making a band look empty when it isn't and under-counting
+// old decades on /ledger.
 const MAX_FACET_VALUES = 250;
 
 /** Multi-select facet fields. publishingYear is handled via bands instead. */
-const SELECTABLE_FIELDS = ['theme', 'tags', 'language'] as const;
+const SELECTABLE_FIELDS = ['tags'] as const;
 type SelectableField = (typeof SELECTABLE_FIELDS)[number];
 
-export interface FacetCount {
-  value: string;
-  count: number;
-}
-
-/** A book plus, when a query is active, which tokens matched in which field. */
-export type BookHit = TypesenseBookDoc & {
-  matched?: Partial<Record<'title' | 'author', string[]>>;
+const SORT_BY: Record<string, string | undefined> = {
+  relevance: undefined, // Typesense's own ranking
+  rating: 'rating:desc',
+  newest: 'publishingYear:desc',
+  oldest: 'publishingYear:asc',
 };
 
-export interface BooksSearchResponse {
-  books: BookHit[];
-  found: number;
-  page: number;
-  totalPages: number;
-  /**
-   * The OPTIONS to render for each filter — not the counts for the current
-   * result set. Each field's list reflects every *other* active filter but
-   * ignores its own, so selecting Fiction never hides Non-fiction (which
-   * would break multi-select) while selecting a year band does narrow the
-   * themes on offer.
-   */
-  options: {
-    theme: string[];
-    tags: string[];
-    language: string[];
-    /** Band ids with at least one book under the other active filters. */
-    bands: string[];
-  };
-  /**
-   * Raw counts from the main query, filtered by everything currently
-   * active. The catalog doesn't use these — its filter options come from
-   * `options` above, which is disjunctive. /ledger does, for its charts.
-   */
-  facets: Record<FacetField, FacetCount[]>;
+/** A single band as a Typesense filter clause. */
+function bandClause(band: YearBand): string {
+  if (band.min === undefined && band.max !== undefined) return `publishingYear:<=${band.max}`;
+  if (band.max === undefined && band.min !== undefined) return `publishingYear:>=${band.min}`;
+  return `publishingYear:[${band.min}..${band.max}]`;
 }
-
-export const EMPTY_RESPONSE = (page: number): BooksSearchResponse => ({
-  books: [],
-  found: 0,
-  page,
-  totalPages: 1,
-  options: { theme: [], tags: [], language: [], bands: [] },
-  facets: { theme: [], tags: [], language: [], publishingYear: [] },
-});
 
 /** One field's clause, or undefined when nothing is selected for it. */
 function fieldClause(searchParams: URLSearchParams, field: SelectableField): string | undefined {
@@ -133,17 +104,15 @@ function bandsFromYearFacets(years: FacetCount[]): string[] {
 }
 
 /**
- * Runs a books search against Typesense. Shared by the API route (called
- * from the client on every interaction), app/catalog/page.tsx (the SSR
- * first paint) and app/ledger/page.tsx (facet counts for its charts).
- *
  * Issues one multi_search containing the results query plus one extra
  * facet-only query per *actively filtered* field. Those extras are what
  * make the filter options disjunctive; fields with nothing selected read
  * their options straight off the main query, which is already filtered by
  * everything else and therefore already correct.
  */
-export async function searchBooks(searchParams: URLSearchParams): Promise<BooksSearchResponse> {
+export async function searchBooksWithTypesense(
+  searchParams: URLSearchParams
+): Promise<BooksSearchResponse> {
   const page = Math.max(1, Number(searchParams.get('page')) || 1);
 
   if (!isTypesenseConfigured || !typesenseClient) {
@@ -152,7 +121,7 @@ export async function searchBooks(searchParams: URLSearchParams): Promise<BooksS
 
   const q = searchParams.get('q')?.trim() || '*';
   const clauses = collectClauses(searchParams);
-  const sort = SORT_BY_ID.get(searchParams.get('sort') || 'relevance');
+  const sortBy = SORT_BY[searchParams.get('sort') || 'relevance'];
 
   const base = {
     collection: BOOKS_COLLECTION_NAME,
@@ -169,7 +138,7 @@ export async function searchBooks(searchParams: URLSearchParams): Promise<BooksS
       page,
       per_page: PAGE_SIZE,
       ...(mainFilter ? { filter_by: mainFilter } : {}),
-      ...(sort?.sortBy ? { sort_by: sort.sortBy } : {}),
+      ...(sortBy ? { sort_by: sortBy } : {}),
     },
   ];
 
@@ -208,9 +177,7 @@ export async function searchBooks(searchParams: URLSearchParams): Promise<BooksS
   // Default each field's options to the main query's facets, then override
   // with the disjunctive result for any field that had its own filter.
   const options = {
-    theme: facetValues(main, 'theme').map((f) => f.value),
     tags: facetValues(main, 'tags').map((f) => f.value),
-    language: facetValues(main, 'language').map((f) => f.value),
     bands: bandsFromYearFacets(facetValues(main, 'publishingYear')),
   };
 
@@ -231,5 +198,3 @@ export async function searchBooks(searchParams: URLSearchParams): Promise<BooksS
 
   return { books, found, page, totalPages, options, facets };
 }
-
-export type { FacetField };

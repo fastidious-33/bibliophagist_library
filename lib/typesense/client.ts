@@ -23,18 +23,5 @@ export const typesenseClient = isTypesenseConfigured
 
 export const BOOKS_COLLECTION_NAME = 'books';
 
-export const FACET_FIELDS = ['theme', 'tags', 'language', 'publishingYear'] as const;
-export type FacetField = (typeof FACET_FIELDS)[number];
-
-export interface TypesenseBookDoc {
-  id: string;
-  title: string;
-  author: string;
-  theme: string[];
-  tags: string[];
-  language: string[];
-  publishingYear?: number;
-  rating?: number;
-  slug: string;
-  coverUrl: string;
-}
+/** A Typesense document is exactly what the catalog lists. */
+export type { SearchBook as TypesenseBookDoc } from '@/lib/search/types';

@@ -8,11 +8,10 @@
 
 const SANITY_QUERY = `*[_type == "book"]{
   _id,
+  bookId,
   title,
   author,
-  theme,
   tags,
-  language,
   rating,
   publishingDate,
   "slug": slug.current,
@@ -40,7 +39,7 @@ export async function fetchAllBooksFromSanity({ projectId, dataset }) {
   return result || [];
 }
 
-// Normalizes theme/tags/language into real arrays. Mirrors the same
+// Normalizes tags into a real array. Mirrors the same
 // defensive coercion already used in lib/sanity/queries.ts — old data or a
 // manual Studio edit can leave a scalar where an array is expected, and we
 // don't want every consumer (here, the search index) re-implementing this.
@@ -77,12 +76,11 @@ export function bookToTypesenseDoc(book) {
     id: book._id,
     title: book.title || '(untitled)',
     author: book.author || '',
-    theme: toArray(book.theme),
     tags: toArray(book.tags),
-    language: toArray(book.language),
     slug: book.slug,
     coverUrl: book.coverUrl || '',
   };
+  if (book.bookId) doc.bookId = book.bookId;
   const year = parseYear(book.publishingDate);
   if (year !== undefined) doc.publishingYear = year;
   if (typeof book.rating === 'number') doc.rating = book.rating;

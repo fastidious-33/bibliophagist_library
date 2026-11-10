@@ -20,7 +20,7 @@ export interface ThemeColors {
   charcoal: string;
   charcoalRgb: string;
   stampRgb: string;
-  mono: string;
+  label: string;
 }
 
 function read(): ThemeColors {
@@ -35,22 +35,22 @@ function read(): ThemeColors {
     charcoal: v('--charcoal'),
     charcoalRgb: v('--charcoal-rgb'),
     stampRgb: v('--stamp-rgb'),
-    mono: v('--font-mono'),
+    label: v('--font-label'),
   };
 }
 
 // Light-theme values, matching :root in globals.css. Used on the server and
 // for the hydration render, before the real computed values can be read.
 const FALLBACK: ThemeColors = {
-  paper: '#eaeff2',
-  kraft: '#c7d3da',
-  ink: '#16233f',
-  stamp: '#2b6e75',
-  ledger: '#3e5c76',
-  charcoal: '#2b2f35',
-  charcoalRgb: '43, 47, 53',
-  stampRgb: '43, 110, 117',
-  mono: "ui-monospace, 'Courier New', monospace",
+  paper: '#f3ecdf',
+  kraft: '#e6dac4',
+  ink: '#2a1f17',
+  stamp: '#7a2e2a',
+  ledger: '#2f5544',
+  charcoal: '#3a2f26',
+  charcoalRgb: '58, 47, 38',
+  stampRgb: '122, 46, 42',
+  label: 'Georgia, serif',
 };
 
 const SERVER = '__server__';

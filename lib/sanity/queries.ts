@@ -3,6 +3,7 @@ import { unstable_cache } from 'next/cache';
 import { sanityClient, isSanityConfigured } from './client';
 import { PLACEHOLDER_BOOKS } from './placeholder-books';
 import type { Book } from './types';
+import { LIBRARIANS_PICK_TAG } from '@/lib/genres/shared';
 
 export const BOOKS_QUERY = `*[_type == "book"] | order(title asc) {
   _id,
@@ -10,9 +11,7 @@ export const BOOKS_QUERY = `*[_type == "book"] | order(title asc) {
   title,
   "slug": slug.current,
   author,
-  theme,
   tags,
-  language,
   rating,
   publishingDate,
   publisher,
@@ -31,9 +30,7 @@ const BOOK_BY_SLUG_QUERY = `*[_type == "book" && slug.current == $slug][0]{
   title,
   "slug": slug.current,
   author,
-  theme,
   tags,
-  language,
   rating,
   publishingDate,
   publisher,
@@ -43,35 +40,36 @@ const BOOK_BY_SLUG_QUERY = `*[_type == "book" && slug.current == $slug][0]{
   notes
 }`;
 
-// Same case-insensitive semantics as a JS filter
-// (theme.some(t => t.toLowerCase() === theme.toLowerCase())), but done
-// server-side via GROQ's lower() — Sanity filters before sending data back,
-// instead of fetching every book and filtering after the fact.
-const BOOKS_BY_THEME_QUERY = `*[_type == "book" && count(theme[lower(@) == lower($theme)]) > 0] | order(title asc) {
-  _id,
-  title,
-  "slug": slug.current,
-  author,
-  theme,
-  language,
-  rating,
-  coverUrl,
-  notes
-}`;
-
 // Fields the homepage preview card actually renders — see app/page.tsx.
-// Deliberately narrower than BOOKS_QUERY (skips bookId, publisher,
-// description, link, publishingDate, which that widget never displays).
+// Deliberately narrower than BOOKS_QUERY (skips publisher, description,
+// link, publishingDate, which that widget never displays).
 // Ordered by _createdAt desc (newest additions first) — deliberately NOT
 // the same "order(title asc)" as the main catalog list, since this widget
 // is meant to surface what's recently been added, not an alphabetical slice.
 const BOOKS_PREVIEW_QUERY = `*[_type == "book"] | order(_createdAt desc) [0...$count]{
   _id,
+  bookId,
   title,
   "slug": slug.current,
   author,
-  theme,
-  language,
+  tags,
+  rating,
+  coverUrl,
+  notes
+}`;
+
+export { LIBRARIANS_PICK_TAG };
+
+// Same fields as the preview card. Most recently edited first, so a book
+// you've just picked turns up on the desk. ($pickTag, not $tag: `tag` is
+// reserved by @sanity/client as a request option.)
+const PICKS_QUERY = `*[_type == "book" && $pickTag in tags] | order(_updatedAt desc) [0...$count]{
+  _id,
+  bookId,
+  title,
+  "slug": slug.current,
+  author,
+  tags,
   rating,
   coverUrl,
   notes
@@ -100,12 +98,7 @@ function toArray(value: unknown): string[] {
 }
 
 function normalizeBook(book: Book): Book {
-  return {
-    ...book,
-    theme: toArray(book.theme),
-    tags: toArray(book.tags),
-    language: toArray(book.language),
-  };
+  return { ...book, tags: toArray(book.tags) };
 }
 
 export async function getBooks(): Promise<Book[]> {
@@ -114,8 +107,8 @@ export async function getBooks(): Promise<Book[]> {
   }
   try {
     const books = await sanityClient.fetch<Book[]>(BOOKS_QUERY);
-    // Some existing entries store theme/tags/language as a single string
-    // instead of an array — normalize here so every consumer of
+    // An entry can end up storing tags as a single string instead of an
+    // array — normalize here so every consumer of
     // getBooks() can safely assume these are always arrays.
     return books.map(normalizeBook);
   } catch (err) {
@@ -146,23 +139,6 @@ export const getBookBySlug = cache(async (slug: string): Promise<Book | undefine
   }
 });
 
-export async function getBooksByTheme(theme: string): Promise<Book[]> {
-  if (!isSanityConfigured || !sanityClient) {
-    return PLACEHOLDER_BOOKS.filter((book) =>
-      book.theme?.some((t) => t.toLowerCase() === theme.toLowerCase())
-    );
-  }
-  try {
-    const books = await sanityClient.fetch<Book[]>(BOOKS_BY_THEME_QUERY, { theme });
-    return books.map(normalizeBook);
-  } catch (err) {
-    console.error('Sanity fetch failed for getBooksByTheme, falling back to placeholder data:', err);
-    return PLACEHOLDER_BOOKS.filter((book) =>
-      book.theme?.some((t) => t.toLowerCase() === theme.toLowerCase())
-    );
-  }
-}
-
 /**
  * Lean, count-limited fetch for the homepage's book preview widget — same
  * request count as before (one Sanity call), but only `count` documents
@@ -179,6 +155,22 @@ export async function getBooksPreview(count: number): Promise<Book[]> {
   } catch (err) {
     console.error('Sanity fetch failed for getBooksPreview, falling back to placeholder data:', err);
     return PLACEHOLDER_BOOKS.slice(0, count);
+  }
+}
+
+/** Up to `count` Librarian's Picks for the home desk shelf. */
+export async function getLibrariansPicks(count: number): Promise<Book[]> {
+  const fromPlaceholders = () =>
+    PLACEHOLDER_BOOKS.filter((book) => toArray(book.tags).includes(LIBRARIANS_PICK_TAG)).slice(0, count);
+  if (!isSanityConfigured || !sanityClient) {
+    return fromPlaceholders();
+  }
+  try {
+    const books = await sanityClient.fetch<Book[]>(PICKS_QUERY, { pickTag: LIBRARIANS_PICK_TAG, count });
+    return books.map(normalizeBook);
+  } catch (err) {
+    console.error('Sanity fetch failed for getLibrariansPicks, falling back to placeholder data:', err);
+    return fromPlaceholders();
   }
 }
 

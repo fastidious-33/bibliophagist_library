@@ -1,13 +1,25 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { searchBooks } from '@/lib/typesense/search';
+import { searchBooks, type FacetCount } from '@/lib/search';
 import { getRatingValues } from '@/lib/sanity';
 import LedgerCharts, { type Counted } from './LedgerCharts';
 
 export const metadata: Metadata = {
   title: 'The Ledger',
-  description: 'What the catalog is made of — themes, decades, languages and ratings.',
+  description: 'What the catalog is made of — tags, authors, decades and ratings.',
 };
+
+/** Tiles in the tags treemap. Free-form tags have a long tail of ones; past
+ * this many the tiles get too small to read or click. */
+const TOP_TAGS = 30;
+const TOP_AUTHORS = 10;
+
+function topCounts(facets: FacetCount[], limit: number): Counted[] {
+  return facets
+    .map((f) => ({ label: f.value, count: f.count }))
+    .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label))
+    .slice(0, limit);
+}
 
 export const revalidate = 3600;
 
@@ -49,20 +61,15 @@ function toRatingBuckets(values: number[]): Counted[] {
 
 export default async function LedgerPage() {
   // One catch-all search gives us the total plus every facet the catalog
-  // already computes. NOTE: searchBooks caps facets at 50 values, which is
-  // fine for themes/languages but truncates publishingYear if the catalog
-  // ever spans more than 50 distinct years — the decade bars would then
-  // silently under-count older, sparser decades.
+  // already computes. The Sanity backend counts every value; Typesense caps
+  // each facet at 250 values (lib/typesense/search.ts), which only matters
+  // for the author tally on a very large catalog.
   const usp = new URLSearchParams({ page: '1' });
   const [data, ratingValues] = await Promise.all([searchBooks(usp), getRatingValues()]);
 
-  const themes: Counted[] = data.facets.theme
-    .map((f) => ({ label: f.value, count: f.count }))
-    .sort((a, b) => b.count - a.count);
-
-  const languages: Counted[] = data.facets.language
-    .map((f) => ({ label: f.value, count: f.count }))
-    .sort((a, b) => b.count - a.count);
+  const tags = topCounts(data.facets.tags, TOP_TAGS);
+  const authors = topCounts(data.facets.author, TOP_AUTHORS);
+  const authorCount = data.facets.author.length;
 
   const decades = toDecades(data.facets.publishingYear);
   const ratings = toRatingBuckets(ratingValues);
@@ -83,16 +90,11 @@ export default async function LedgerPage() {
         <span className="ledger-figure-label">
           books filed
           {span && ` · published ${span.from}–${span.to}`}
-          {themes.length > 0 && ` · across ${themes.length} themes`}
+          {authorCount > 0 && ` · by ${authorCount} ${authorCount === 1 ? 'author' : 'authors'}`}
         </span>
       </div>
 
-      <LedgerCharts
-        themes={themes}
-        decades={decades}
-        languages={languages}
-        ratings={ratings}
-      />
+      <LedgerCharts tags={tags} authors={authors} decades={decades} ratings={ratings} />
 
       <div className="back-row">
         <Link href="/catalog" className="btn btn-secondary">

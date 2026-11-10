@@ -3,25 +3,26 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-const TABS = [
+// Two doors and nothing else (M1-DESIGN.md). The Librarian points at
+// /about until /librarian exists (M1 group 5).
+const LINKS = [
   { href: '/catalog', label: 'Catalog' },
-  { href: '/ledger', label: 'Ledger' },
-  { href: '/about', label: 'About' },
+  { href: '/about', label: 'The Librarian' },
 ];
 
 export default function PrimaryNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="drawer-tabs" aria-label="Primary">
-      {TABS.map(({ href, label }) => {
-        // startsWith, so /catalog/some-book still highlights its parent tab.
+    <nav className="primary-nav" aria-label="Primary">
+      {LINKS.map(({ href, label }) => {
+        // startsWith, so /catalog/some-book still highlights its parent link.
         const isActive = pathname === href || pathname.startsWith(`${href}/`);
         return (
           <Link
             key={href}
             href={href}
-            className={`drawer-tab${isActive ? ' is-active' : ''}`}
+            className={`primary-nav-link${isActive ? ' is-active' : ''}`}
             aria-current={isActive ? 'page' : undefined}
           >
             {label}

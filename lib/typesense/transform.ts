@@ -6,11 +6,10 @@ import type { TypesenseBookDoc } from './client';
 
 interface SanityBookForIndex {
   _id: string;
+  bookId?: string;
   title?: string;
   author?: string;
-  theme?: unknown;
   tags?: unknown;
-  language?: unknown;
   rating?: number;
   publishingDate?: string;
   slug?: string;
@@ -35,12 +34,11 @@ export function bookToTypesenseDoc(book: SanityBookForIndex): TypesenseBookDoc |
     id: book._id,
     title: book.title || '(untitled)',
     author: book.author || '',
-    theme: toArray(book.theme),
     tags: toArray(book.tags),
-    language: toArray(book.language),
     slug: book.slug,
     coverUrl: book.coverUrl || '',
   };
+  if (book.bookId) doc.bookId = book.bookId;
   const year = parseYear(book.publishingDate);
   if (year !== undefined) doc.publishingYear = year;
   if (typeof book.rating === 'number') doc.rating = book.rating;
