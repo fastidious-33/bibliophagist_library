@@ -35,7 +35,15 @@ export type PaintingSlot =
   | 'genresIndex'
   | 'genreFiction'
   | 'genreNonFiction'
-  | 'genreBoth';
+  | 'genreBoth'
+  | 'borrow'
+  | 'ledger'
+  | 'librarian'
+  | 'librarianWritings'
+  | 'librarianFeatured'
+  | 'librarianSaved'
+  | 'librarianBodyArt'
+  | 'librarianMusic';
 
 export const PAINTINGS: Record<PaintingSlot, Painting | null> = {
   homeHero: null,
@@ -46,4 +54,12 @@ export const PAINTINGS: Record<PaintingSlot, Painting | null> = {
   genreFiction: null,
   genreNonFiction: null,
   genreBoth: null,
+  borrow: null,
+  ledger: null,
+  librarian: null,
+  librarianWritings: null,
+  librarianFeatured: null,
+  librarianSaved: null,
+  librarianBodyArt: null,
+  librarianMusic: null,
 };

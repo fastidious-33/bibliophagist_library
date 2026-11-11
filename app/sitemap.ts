@@ -2,6 +2,7 @@ import type { MetadataRoute } from 'next';
 import { SITE_URL as BASE_URL } from '@/lib/site';
 import { getBooks } from '@/lib/sanity';
 import { getGenres, type Genre } from '@/lib/genres';
+import { ROOMS } from '@/lib/librarian';
 
 export const revalidate = 86400;
 
@@ -17,6 +18,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }
   return [
     { url: `${BASE_URL}/`, changeFrequency: 'weekly', priority: 1 },
+    { url: `${BASE_URL}/browse`, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${BASE_URL}/catalog`, changeFrequency: 'weekly', priority: 0.9 },
     { url: `${BASE_URL}/catalog/genres`, changeFrequency: 'weekly', priority: 0.7 },
     ...genres.map((g) => ({
@@ -25,7 +27,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.6,
     })),
     { url: `${BASE_URL}/ledger`, changeFrequency: 'weekly', priority: 0.6 },
-    { url: `${BASE_URL}/about`, changeFrequency: 'monthly', priority: 0.5 },
+    { url: `${BASE_URL}/borrow`, changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${BASE_URL}/librarian`, changeFrequency: 'monthly', priority: 0.5 },
+    ...ROOMS.map((room) => ({
+      url: `${BASE_URL}${room.href}`,
+      changeFrequency: 'monthly' as const,
+      priority: 0.4,
+    })),
     ...books
       .filter((book) => typeof book.slug === 'string' && book.slug.length > 0)
       .map((book) => ({

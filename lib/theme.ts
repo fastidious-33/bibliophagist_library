@@ -3,8 +3,8 @@
  * Mirrors --paper in app/globals.css — keep the two in sync.
  */
 export const THEME_COLORS = {
-  light: '#f3ecdf',
-  dark: '#1f1813',
+  light: '#f2e8d5',
+  dark: '#171a15',
 } as const;
 
 export function applyThemeColor(theme: 'light' | 'dark') {

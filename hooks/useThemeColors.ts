@@ -42,14 +42,14 @@ function read(): ThemeColors {
 // Light-theme values, matching :root in globals.css. Used on the server and
 // for the hydration render, before the real computed values can be read.
 const FALLBACK: ThemeColors = {
-  paper: '#f3ecdf',
-  kraft: '#e6dac4',
-  ink: '#2a1f17',
-  stamp: '#7a2e2a',
-  ledger: '#2f5544',
-  charcoal: '#3a2f26',
-  charcoalRgb: '58, 47, 38',
-  stampRgb: '122, 46, 42',
+  paper: '#f2e8d5',
+  kraft: '#e4d3b4',
+  ink: '#2b1d14',
+  stamp: '#8c3b22',
+  ledger: '#2e3a5c',
+  charcoal: '#3b2c22',
+  charcoalRgb: '59, 44, 34',
+  stampRgb: '140, 59, 34',
   label: 'Georgia, serif',
 };
 

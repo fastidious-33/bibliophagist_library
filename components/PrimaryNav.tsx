@@ -2,12 +2,14 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { BROWSE_SECTIONS } from '@/lib/browse';
 
-// Two doors and nothing else (M1-DESIGN.md). The Librarian points at
-// /about until /librarian exists (M1 group 5).
+// Two doors and nothing else (M1-DESIGN.md). Each link stays highlighted
+// across every section it covers: Browse includes the catalog, the ledger
+// and the borrowing page.
 const LINKS = [
-  { href: '/catalog', label: 'Catalog' },
-  { href: '/about', label: 'The Librarian' },
+  { href: '/browse', label: 'Browse', sections: BROWSE_SECTIONS },
+  { href: '/librarian', label: 'The Librarian', sections: ['/librarian'] },
 ];
 
 export default function PrimaryNav() {
@@ -15,15 +17,15 @@ export default function PrimaryNav() {
 
   return (
     <nav className="primary-nav" aria-label="Primary">
-      {LINKS.map(({ href, label }) => {
-        // startsWith, so /catalog/some-book still highlights its parent link.
-        const isActive = pathname === href || pathname.startsWith(`${href}/`);
+      {LINKS.map(({ href, label, sections }) => {
+        // Prefix match, so /catalog/some-book still highlights Browse.
+        const isActive = sections.some((s) => pathname === s || pathname.startsWith(`${s}/`));
         return (
           <Link
             key={href}
             href={href}
             className={`primary-nav-link${isActive ? ' is-active' : ''}`}
-            aria-current={isActive ? 'page' : undefined}
+            aria-current={pathname === href ? 'page' : isActive ? 'true' : undefined}
           >
             {label}
           </Link>

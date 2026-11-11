@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { searchBooks, type FacetCount } from '@/lib/search';
 import { getRatingValues } from '@/lib/sanity';
+import Painting from '@/components/Painting';
 import LedgerCharts, { type Counted } from './LedgerCharts';
 
 export const metadata: Metadata = {
@@ -85,13 +86,19 @@ export default async function LedgerPage() {
         <h1>The Ledger</h1>
       </div>
 
-      <div className="ledger-headline">
-        <span className="ledger-figure">{data.found}</span>
-        <span className="ledger-figure-label">
-          books filed
-          {span && ` · published ${span.from}–${span.to}`}
-          {authorCount > 0 && ` · by ${authorCount} ${authorCount === 1 ? 'author' : 'authors'}`}
-        </span>
+      <div className="genre-hero ledger-hero">
+        <Painting slot="ledger" priority sizes="(max-width: 760px) 100vw, 420px" />
+        <div>
+          <p className="prose prose-lg">What the library is made of, counted.</p>
+          <div className="ledger-headline">
+            <span className="ledger-figure">{data.found}</span>
+            <span className="ledger-figure-label">
+              books filed
+              {span && ` · published ${span.from}–${span.to}`}
+              {authorCount > 0 && ` · by ${authorCount} ${authorCount === 1 ? 'author' : 'authors'}`}
+            </span>
+          </div>
+        </div>
       </div>
 
       <LedgerCharts tags={tags} authors={authors} decades={decades} ratings={ratings} />

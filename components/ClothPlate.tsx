@@ -4,9 +4,10 @@
  * this is a designed state, not a fallback.
  *
  * The cloth colour is picked from the call number (or title), so a book
- * keeps the same binding everywhere and a shelf of them varies.
+ * keeps the same binding everywhere and a shelf of them varies: cognac
+ * leather or moss (see .cloth-plate--* in globals.css).
  */
-const TONES = ['oxblood', 'green'] as const;
+const TONES = ['leather', 'moss'] as const;
 
 function toneFor(key: string): (typeof TONES)[number] {
   let hash = 0;

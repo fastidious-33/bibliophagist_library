@@ -12,6 +12,10 @@ const nextConfig = {
       },
     ],
   },
+  // /about became /librarian in M1.
+  async redirects() {
+    return [{ source: '/about', destination: '/librarian', permanent: true }];
+  },
 };
 
 module.exports = nextConfig;

@@ -131,8 +131,7 @@ export default async function BookPage(props: { params: Promise<{ slug: string }
                 Request this book
               </a>
             ) : (
-              // /about until /borrow exists (M1 group 4).
-              <Link href="/about#how-to-borrow" className="btn btn-primary">
+              <Link href="/borrow" className="btn btn-primary">
                 How to borrow this book
               </Link>
             )}

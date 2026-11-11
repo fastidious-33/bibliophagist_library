@@ -42,11 +42,11 @@ function datum(raw: unknown): Counted | undefined {
   return undefined;
 }
 
-// Labels are Gambetta now (Sligoil was dropped in M1). chars × 0.6em was
-// Sligoil's exact fixed pitch; for Gambetta it's a safe overestimate, so
-// labels wrap a little early. Revisit in the ledger restyle (M1 group 4).
+// Labels are set in Gambetta, a proportional serif, so a character's width
+// varies. 0.5em is its rough average, close enough to wrap treemap labels
+// where they actually run out of room.
 const LABEL_SIZE = 11;
-const MONO_ADVANCE = 0.6 * LABEL_SIZE;
+const AVG_CHAR_WIDTH = 0.5 * LABEL_SIZE;
 
 // One fill strength for every bar chart, so no chart looks more
 // important than another by accident.
@@ -197,7 +197,7 @@ export default function LedgerCharts({
                       // ctx.raw carries the laid-out tile, so we can wrap to
                       // its actual width.
                       const width = (ctx.raw as { w?: number })?.w ?? 0;
-                      const perLine = Math.max(4, Math.floor((width - 8) / MONO_ADVANCE));
+                      const perLine = Math.max(4, Math.floor((width - 8) / AVG_CHAR_WIDTH));
                       return wrap(d.label, perLine);
                     },
                   },

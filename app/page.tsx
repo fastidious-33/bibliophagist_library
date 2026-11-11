@@ -2,7 +2,6 @@ import Link from 'next/link';
 import { getBooksPreview, getBookCount, getLibrariansPicks } from '@/lib/sanity';
 import BookCard from '@/components/BookCard';
 import Painting from '@/components/Painting';
-import RandomBookLink from '@/components/RandomBookLink';
 
 // Revalidate this page at most every 60 seconds so new/updated Sanity
 // books show up on the live site without needing a redeploy.
@@ -56,8 +55,7 @@ export default async function HomePage() {
           <span className="door-title">Enter the catalog</span>
           <span className="door-blurb">Every book on the shelves, searchable.</span>
         </Link>
-        {/* /about until /librarian exists (M1 group 5). */}
-        <Link href="/about" className="door">
+        <Link href="/librarian" className="door">
           <Painting slot="doorLibrarian" sizes="(max-width: 760px) 100vw, 520px" decorative />
           <span className="door-title">Meet the librarian</span>
           <span className="door-blurb">The reader behind the shelves: writings, features, saved reading.</span>
@@ -87,13 +85,6 @@ export default async function HomePage() {
           </div>
         </section>
       )}
-
-      <nav className="quiet-row" aria-label="More of the library">
-        <Link href="/ledger">The ledger</Link>
-        {/* /about until /borrow exists (M1 group 4). */}
-        <Link href="/about#how-to-borrow">How to borrow</Link>
-        <RandomBookLink />
-      </nav>
 
       <section className="section quotes-clock">
         <h2 className="subhead">Why see the time in such a mundane way?</h2>

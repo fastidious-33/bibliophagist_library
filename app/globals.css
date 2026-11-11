@@ -1,8 +1,13 @@
 /* ==========================================================================
    Home of a Bibliophagist — a reading room (M1 redesign, see M1-DESIGN.md)
 
-   Light: warm paper, iron-gall ink, oxblood + bottle-green accents.
-   Dark: the same room at night under a lamp — walnut and warm ivory.
+   "A room full of books, a comfy armchair, a rug, a fireplace, and jazz
+   drifting from a gramophone in the corner."
+
+   Light (Fireside): the room by day — parchment, mahogany ink, an ember /
+   cognac-leather accent, and a Persian rug's indigo as the second accent.
+   Dark (Herbarium): the same room at night under the lamp — dark pressed-
+   leaf paper, ivory ink, ochre and moss.
 
    Type roles (see lib/fonts.ts):
      display  Basteleur Moonlight (300) — wordmark, page titles, ≥1.4rem
@@ -17,23 +22,23 @@
    ========================================================================== */
 
 :root {
-  --paper: #f3ecdf;
-  --kraft: #e6dac4;
-  --ink: #2a1f17;
-  --stamp: #7a2e2a;
-  --ledger: #2f5544;
-  --charcoal: #3a2f26;
+  --paper: #f2e8d5;
+  --kraft: #e4d3b4;
+  --ink: #2b1d14;
+  --stamp: #8c3b22;
+  --ledger: #2e3a5c;
+  --charcoal: #3b2c22;
 
   /* RGB triplets (no # / rgb()) so rgba(var(--x-rgb), alpha) works for
      translucent borders/shadows that need to flip with the theme. */
-  --charcoal-rgb: 58, 47, 38;
-  --ink-rgb: 42, 31, 23;
-  --stamp-rgb: 122, 46, 42;
-  --slate-rgb: 90, 72, 56;
+  --charcoal-rgb: 59, 44, 34;
+  --ink-rgb: 43, 29, 20;
+  --stamp-rgb: 140, 59, 34;
+  --slate-rgb: 100, 80, 62;
 
   /* Always-dark bezel for the embedded literary clock widget —
-     intentionally does not flip with the theme. */
-  --clock-bezel: #2b221b;
+     intentionally does not flip with the theme. Mahogany. */
+  --clock-bezel: #2b1d14;
 
   /* Dimming: one mechanism at a time (alpha), never alpha + light weight.
      Dark theme raises these because text thins out on dark paper. */
@@ -61,20 +66,20 @@
   color-scheme: light;
 }
 
-/* The same room after dark, under a lamp: walnut paper, warm ivory ink,
-   the oxblood and bottle green lifted for contrast. */
+/* The same room after dark, under the lamp (Herbarium): dark pressed-leaf
+   paper, ivory ink, ochre and moss. */
 [data-theme='dark'] {
-  --paper: #1f1813;
-  --kraft: #2b221b;
-  --ink: #f1e6d2;
-  --stamp: #d4836b;
-  --ledger: #8fbf9f;
-  --charcoal: #d9ccb6;
+  --paper: #171a15;
+  --kraft: #20241d;
+  --ink: #e8e6d6;
+  --stamp: #d8975a;
+  --ledger: #9cbc7f;
+  --charcoal: #cfcdbd;
 
-  --charcoal-rgb: 217, 204, 182;
-  --ink-rgb: 241, 230, 210;
-  --stamp-rgb: 212, 131, 107;
-  --slate-rgb: 200, 180, 150;
+  --charcoal-rgb: 207, 205, 189;
+  --ink-rgb: 232, 230, 214;
+  --stamp-rgb: 216, 151, 90;
+  --slate-rgb: 180, 185, 165;
 
   --dim-soft: 0.9;
   --dim: 0.8;
@@ -203,21 +208,30 @@ mark {
 
 /* ---------- Dark mode toggle ---------- */
 
+/* 40px square, matched by the random-book button beside it. */
 .theme-toggle {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: 40px;
+  height: 40px;
   color: var(--stamp);
   background: transparent;
   border: 1px solid var(--stamp);
   border-radius: 3px;
-  padding: 0.35rem 0.5rem;
+  padding: 0;
   cursor: pointer;
   transition: background 0.15s ease;
 }
 
 .theme-toggle:hover {
   background: rgba(var(--stamp-rgb), 0.12);
+}
+
+/* The lamp fills most of its 40px button, so it reads at a glance. */
+.theme-toggle svg {
+  width: 28px;
+  height: 28px;
 }
 
 /* The lamp: a banker's lamp with a green shade. Its light only shows
@@ -248,16 +262,90 @@ mark {
 
 /* ---------- Header: wordmark + two doors ---------- */
 
-/* A double rule under the header, like the one under a title page's
-   imprint. */
+/* At every width: the wordmark centred on its own row; beneath it the two
+   links, flanked by the book icon on both sides (the right one mirrored),
+   as one tight centred group. The lamp leaves the header and floats as a
+   round button in the bottom-right corner. `display: contents` lets each
+   icon take a grid cell of its own; the empty outer columns take up the
+   slack. A double rule underneath, like the one under a title page's
+   imprint. No hamburger. */
 .site-header {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto minmax(0, 1fr);
+  grid-template-areas:
+    'brand brand brand brand brand'
+    '. book nav mirror .';
+  justify-items: center;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem 1.5rem;
+  gap: 0.75rem;
   padding: 2rem 0 1rem;
   border-bottom: 3px double rgba(var(--charcoal-rgb), 0.45);
+}
+
+.site-header .brand {
+  grid-area: brand;
+  text-align: center;
+}
+
+.site-header .primary-nav {
+  grid-area: nav;
+}
+
+.site-header .header-tools {
+  display: contents;
+}
+
+/* The book icons: small, close to the size of the link text. */
+.site-header .random-book-link--header {
+  grid-area: book;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
+}
+
+.site-header .random-book-link--header svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* The mirrored twin (hidden from screen readers and the tab order; see
+   RandomBookLink). */
+.site-header .random-book-link--mirror {
+  grid-area: mirror;
+}
+
+.random-book-link--mirror svg {
+  transform: scaleX(-1);
+}
+
+/* The floating lamp. */
+.site-header .theme-toggle {
+  position: fixed;
+  right: 1rem;
+  bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  z-index: 50;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--paper);
+  box-shadow: 0 2px 10px rgba(var(--charcoal-rgb), 0.25);
+}
+
+.site-header .theme-toggle:hover {
+  background: var(--kraft);
+}
+
+.site-header .theme-toggle svg {
+  width: 30px;
+  height: 30px;
+}
+
+/* Phones: a little less space above. */
+@media (max-width: 640px) {
+  .site-header {
+    padding-top: 1.5rem;
+  }
 }
 
 .brand {
@@ -270,15 +358,16 @@ mark {
   font-feature-settings: 'ss01';
 }
 
-.header-nav {
-  display: flex;
-  align-items: center;
-  gap: 1.25rem;
-}
-
 .primary-nav {
   display: flex;
   gap: 1.25rem;
+}
+
+/* The random-book mark and the lamp, kept together as a pair. */
+.header-tools {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .primary-nav-link {
@@ -302,20 +391,6 @@ mark {
   border-bottom-color: var(--stamp);
 }
 
-/* Phones: the wordmark keeps its full name on its own line; the two
-   links and the lamp share the row beneath it. No hamburger. */
-@media (max-width: 640px) {
-  .site-header {
-    flex-direction: column;
-    align-items: flex-start;
-    padding-top: 1.5rem;
-  }
-
-  .header-nav {
-    width: 100%;
-    justify-content: space-between;
-  }
-}
 
 /* ---------- Footer ---------- */
 
@@ -328,35 +403,66 @@ mark {
   color: rgba(var(--charcoal-rgb), var(--dim));
 }
 
-.footer-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.75rem 1.5rem;
-}
-
 /* A line in the librarian's voice, signed off like a letter. */
 .footer-sign {
-  margin: 0;
+  margin: 0 0 1.25rem;
   font-style: italic;
   font-size: var(--step-0);
   color: var(--ink);
 }
 
-.footer-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 1.25rem;
+/* The site map: Browse and The Librarian side by side, stacked on
+   narrow phones. */
+.footer-map {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 14rem));
+  gap: 1.5rem 3rem;
 }
 
-.footer-links a {
+@media (max-width: 420px) {
+  .footer-map {
+    grid-template-columns: 1fr;
+  }
+}
+
+.footer-heading {
+  margin: 0 0 0.5rem;
+  font-family: var(--font-label);
+  font-size: 0.78rem;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.footer-heading a {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.footer-links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.footer-links a,
+.footer-social a {
   text-decoration: none;
   color: var(--stamp);
 }
 
-.footer-links a:hover {
+.footer-heading a:hover,
+.footer-links a:hover,
+.footer-social a:hover {
   text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.footer-social {
+  margin: 1.5rem 0 0;
 }
 
 /* ---------- Home: the quotes clock ---------- */
@@ -594,25 +700,203 @@ mark {
   color: rgba(var(--charcoal-rgb), var(--dim));
 }
 
-/* ---------- Home: the quiet row ---------- */
+/* ---------- The Librarian (/librarian) ---------- */
 
-.quiet-row {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.75rem 2rem;
-  padding: 2rem 0;
-  border-top: 1px solid rgba(var(--charcoal-rgb), 0.2);
+/* A wide banner: the painting is cropped to a strip, not shown whole. */
+.librarian-banner .painting-frame img {
+  max-height: 360px;
+  object-fit: cover;
 }
 
-.quiet-row a {
+.librarian-banner .painting-frame--empty {
+  aspect-ratio: 16 / 5;
+}
+
+/* The photo beside the bio, like a print pinned to the page. */
+.librarian-intro {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 2.25rem;
+  align-items: start;
+  margin-top: 2.25rem;
+}
+
+@media (max-width: 760px) {
+  .librarian-intro {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
+
+.librarian-portrait {
+  margin: 0;
+  max-width: 240px;
+  padding: 0.6rem 0.6rem 0.4rem;
+  background: var(--paper);
+  border: 1px solid rgba(var(--charcoal-rgb), 0.3);
+  box-shadow: 4px 4px 0 rgba(var(--charcoal-rgb), 0.08);
+  transform: rotate(-1.5deg);
+}
+
+.librarian-portrait img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.librarian-portrait figcaption {
+  margin-top: 0.4rem;
+  text-align: center;
+  font-family: var(--font-label);
+  font-size: var(--step--1);
+  color: rgba(var(--charcoal-rgb), var(--dim));
+}
+
+.librarian-signature {
+  max-width: 62ch;
+}
+
+.librarian-elsewhere {
+  margin: 1.25rem 0 0;
+  font-family: var(--font-label);
+  font-size: 0.85rem;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+}
+
+.librarian-elsewhere a {
   color: var(--stamp);
-  text-decoration: none;
 }
 
-.quiet-row a:hover {
-  text-decoration: underline;
-  text-underline-offset: 3px;
+/* The five rooms: door cards, smaller, three to a row. */
+.rooms {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1.75rem;
+}
+
+.rooms .door-title {
+  font-size: var(--step-1);
+}
+
+/* ---------- The rooms (/librarian/*) ---------- */
+
+/* Outside links as register entries: title, then source and date in the
+   label face, then a line of description. A hairline between entries. */
+.entry-list {
+  list-style: none;
+  max-width: 62ch;
+  margin: 0;
+  padding: 0;
+}
+
+.entry {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(var(--charcoal-rgb), 0.15);
+}
+
+.entry:first-child {
+  border-top: 1px solid rgba(var(--charcoal-rgb), 0.15);
+}
+
+.entry-title {
+  font-size: 1.08rem;
+  line-height: 1.4;
+  color: var(--ink);
+  text-decoration: none;
+  background-image: linear-gradient(var(--stamp), var(--stamp));
+  background-size: 0% 1px;
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  transition: background-size 0.2s ease;
+  align-self: flex-start;
+}
+
+.entry-title:hover {
+  color: var(--stamp);
+  background-size: 100% 1px;
+}
+
+.entry-meta {
+  font-family: var(--font-label);
+  font-size: 0.8rem;
+  color: var(--ledger);
+}
+
+.entry-blurb {
+  margin: 0.15rem 0 0;
+  font-style: italic;
+  line-height: 1.6;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+}
+
+/* An aside in the librarian's voice (a P.S.). */
+.room-note {
+  max-width: 62ch;
+  margin: 2rem 0 0;
+  font-style: italic;
+  line-height: 1.7;
+}
+
+/* Placeholder line where content is still to come. */
+.room-empty {
+  margin: 0;
+  font-style: italic;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+}
+
+.bookmark-topic {
+  margin-top: 1.25rem;
+  scroll-margin-top: 1.5rem;
+}
+
+.bookmark-topic h3 {
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0 0 0.3rem;
+}
+
+/* Body art: a photo beside its story; stacked on phones. */
+.ink-row {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  gap: 2rem;
+  align-items: start;
+}
+
+@media (max-width: 760px) {
+  .ink-row {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+}
+
+.ink-photo {
+  margin: 0;
+  max-width: 420px;
+  padding: 0.5rem;
+  background: var(--kraft);
+  border: 1px solid rgba(var(--charcoal-rgb), 0.35);
+}
+
+.ink-photo img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.dream-inks {
+  max-width: 62ch;
+  margin: 0;
+  padding-left: 1.4rem;
+  font-style: italic;
+  line-height: 1.7;
 }
 
 /* ---------- Due-date slip (home "Next up") ----------
@@ -975,6 +1259,22 @@ mark {
   color: var(--stamp);
 }
 
+/* The genre currently filtering the catalog search. */
+/* A second line of stamp via box-shadow, so the frame doesn't shift. */
+.genre-card.is-active .painting-frame {
+  border-color: var(--stamp);
+  box-shadow: 0 0 0 1px var(--stamp);
+}
+
+.genre-card.is-active .genre-card-name {
+  color: var(--stamp);
+}
+
+/* Where a genre card scrolls to: a little air above the results. */
+.catalog-results {
+  scroll-margin-top: 1.5rem;
+}
+
 .genre-card-count {
   font-family: var(--font-label);
   font-variant-numeric: tabular-nums;
@@ -1112,7 +1412,7 @@ mark {
   color: var(--ledger);
 }
 
-/* Librarian's Pick: an oxblood bookmark ribbon hanging from the top of
+/* Librarian's Pick: an ember bookmark ribbon hanging from the top of
    the cover, cut with a V at the tail. */
 .pick-ribbon {
   position: absolute;
@@ -1120,7 +1420,7 @@ mark {
   right: 12%;
   width: 16px;
   height: 34px;
-  background: #7a2e2a;
+  background: #8c3b22; /* ember; fixed in both themes, like a real ribbon */
   clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 78%, 0 100%);
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
 }
@@ -1142,12 +1442,13 @@ mark {
   box-shadow: inset 0 0 0 4px rgba(0, 0, 0, 0.12), inset 0 0 0 5px rgba(233, 217, 176, 0.35);
 }
 
-.cloth-plate--oxblood {
-  background: #6e2a26;
+/* Cognac leather from the room by day, moss from the room at night. */
+.cloth-plate--leather {
+  background: #7a3b1e;
 }
 
-.cloth-plate--green {
-  background: #2c4a3c;
+.cloth-plate--moss {
+  background: #3e5530;
 }
 
 .cloth-plate-title {
@@ -1518,6 +1819,85 @@ mark {
   line-height: 1.65;
 }
 
+/* ---------- How to borrow (/borrow) ---------- */
+
+/* The house rules, numbered like entries in a register: call-number
+   figures in the margin, a hairline between entries. */
+.borrow-rules {
+  list-style: none;
+  counter-reset: rule;
+  max-width: 62ch;
+  margin: 0;
+  padding: 0;
+}
+
+.borrow-rules li {
+  counter-increment: rule;
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr);
+  gap: 0.75rem;
+  padding: 0.7rem 0;
+  line-height: 1.65;
+  border-bottom: 1px solid rgba(var(--charcoal-rgb), 0.15);
+}
+
+.borrow-rules li:first-child {
+  border-top: 1px solid rgba(var(--charcoal-rgb), 0.15);
+}
+
+.borrow-rules li::before {
+  content: counter(rule, decimal-leading-zero);
+  font-family: var(--font-label);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.85rem;
+  color: var(--stamp);
+  padding-top: 0.2rem;
+}
+
+/* Pennac's rights: short lines, so two columns where there's room. */
+.reader-rights {
+  columns: 2 16rem;
+  column-gap: 2.5rem;
+  max-width: 44rem;
+  margin: 1rem 0 0;
+  padding-left: 1.6rem;
+  font-style: italic;
+  line-height: 1.7;
+}
+
+.reader-rights li {
+  break-inside: avoid;
+  padding-left: 0.25rem;
+}
+
+.reader-rights li::marker {
+  font-family: var(--font-label);
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+  color: var(--stamp);
+}
+
+.reader-rights-figure {
+  max-width: 640px;
+  margin: 1rem 0 0;
+}
+
+.reader-rights-figure img {
+  width: 100%;
+  height: auto;
+}
+
+.reader-warning {
+  max-width: 62ch;
+  margin: 1.5rem 0 0;
+  padding-left: 1rem;
+  border-left: 3px solid var(--stamp);
+  font-style: italic;
+  font-size: 1.15rem;
+  line-height: 1.6;
+  color: var(--stamp);
+}
+
 /* ---------- 404 / error screens ---------- */
 
 .not-found {
@@ -1729,6 +2109,16 @@ a.book-theme-tag:hover {
   margin-bottom: 2.75rem;
 }
 
+/* Painting beside the intro and the headline figure; the hero takes over
+   the headline's gap before the charts. */
+.ledger-hero {
+  margin-bottom: 2.75rem;
+}
+
+.ledger-hero .ledger-headline {
+  margin-bottom: 0;
+}
+
 .ledger-figure {
   font-size: var(--step-5);
   line-height: 0.9;
@@ -1905,6 +2295,50 @@ a.book-theme-tag:hover {
   .random-book-link--icon {
     min-width: 44px;
     min-height: 44px;
+  }
+}
+
+/* In the header: a button the same size and border as the lamp beside it.
+   Fixed at 40px, overriding the 44px touch minimum above for the heading
+   version, so the pair always match. */
+.random-book-link--header {
+  font-size: 1rem;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  border: 1px solid var(--stamp);
+  padding: 0;
+}
+
+/* Optically level with the lamp beside it (the lamp is drawn with more
+   empty space above it, so it gets 2px more). */
+.random-book-link--header svg {
+  width: 26px;
+  height: 26px;
+}
+
+/* The pull: on hover or focus the middle book slides up and tips further
+   out, with a little overshoot, then settles back when you move away. */
+.pulled-book {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  transition: transform 0.35s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+
+.random-book-link:hover .pulled-book,
+.random-book-link:focus-visible .pulled-book {
+  transform: translateY(-2.5px) rotate(-9deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulled-book {
+    transition: none;
+  }
+
+  .random-book-link:hover .pulled-book,
+  .random-book-link:focus-visible .pulled-book {
+    transform: none;
   }
 }
 

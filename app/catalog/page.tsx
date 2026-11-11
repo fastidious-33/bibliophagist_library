@@ -57,6 +57,7 @@ export default async function CatalogPage({
     }),
   ]);
   const shelf = genres.slice(0, SHELF_SIZE);
+  const selectedTags = toArray(resolved.tags);
 
   return (
     <section className="section section--flush">
@@ -85,29 +86,44 @@ export default async function CatalogPage({
               All {genres.length} genres &rarr;
             </Link>
           </div>
+          {/* Here a genre card filters the search below rather than opening
+              the genre page: a fresh search for just that genre, scrolled to
+              the results. Clicking the selected genre again clears it. The
+              genre pages are reached from "All N genres", /browse and the
+              tags on book pages. */}
           <ul className="genre-shelf">
-            {shelf.map((g) => (
-              <li key={g.slug}>
-                <Link href={`/catalog/genres/${g.slug}`} className="genre-card">
-                  <Painting
-                    slot={defaultPaintingSlot(g.stamps)}
-                    override={GENRE_CONTENT[g.tag]?.painting}
-                    sizes="180px"
-                    decorative
-                    showLabel={false}
-                  />
-                  <span className="genre-card-name">{g.tag}</span>
-                  <span className="genre-card-count">
-                    {g.count} {g.count === 1 ? 'book' : 'books'}
-                  </span>
-                </Link>
-              </li>
-            ))}
+            {shelf.map((g) => {
+              const isActive = selectedTags.includes(g.tag);
+              const href = isActive
+                ? '/catalog#catalog-results'
+                : `/catalog?${new URLSearchParams({ tags: g.tag })}#catalog-results`;
+              return (
+                <li key={g.slug}>
+                  <Link
+                    href={href}
+                    className={`genre-card${isActive ? ' is-active' : ''}`}
+                    aria-current={isActive ? 'true' : undefined}
+                  >
+                    <Painting
+                      slot={defaultPaintingSlot(g.stamps)}
+                      override={GENRE_CONTENT[g.tag]?.painting}
+                      sizes="180px"
+                      decorative
+                      showLabel={false}
+                    />
+                    <span className="genre-card-name">{g.tag}</span>
+                    <span className="genre-card-count">
+                      {g.count} {g.count === 1 ? 'book' : 'books'}
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         </nav>
       )}
 
-      <div className="subsection">
+      <div className="subsection catalog-results" id="catalog-results">
         <Suspense fallback={<p className="catalog-count">Loading…</p>}>
           <CatalogBrowser initialData={initialData} />
         </Suspense>

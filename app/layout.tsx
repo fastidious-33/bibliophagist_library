@@ -7,7 +7,10 @@ import ThemeToggle from '../components/ThemeToggle';
 import { basteleur, gambetta, pinyon } from '@/lib/fonts';
 import PrimaryNav from '@/components/PrimaryNav';
 import { THEME_COLORS } from '@/lib/theme';
-import { SITE_URL } from '@/lib/site';
+import { SITE_URL, CONTACT } from '@/lib/site';
+import RandomBookLink from '@/components/RandomBookLink';
+import { BROWSE_LINKS } from '@/lib/browse';
+import { ROOMS } from '@/lib/librarian';
 
 // Runs before first paint (blocking, in <head>) so the correct theme is
 // applied immediately \u2014 no flash of light mode before dark mode kicks in.
@@ -25,13 +28,6 @@ const THEME_INIT_SCRIPT = `
 
 const SITE_NAME = 'Home of a Bibliophagist';
 const SITE_DESCRIPTION = 'A personal lending library: browse the catalog, meet the librarian, borrow a book.';
-
-// Placeholder email until the real one is decided (M1-DESIGN.md).
-const CONTACT = {
-  substack: 'https://abibliophagist.substack.com/',
-  instagram: 'https://www.instagram.com/a.bibliophagist/',
-  email: 'testemail@gmail.com',
-};
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -72,30 +68,58 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <Link href="/" className="brand">
               Home of a Bibliophagist
             </Link>
-            <div className="header-nav">
-              <PrimaryNav />
+            {/* Grid cells, placed in globals.css: the book flanks the links
+                on both sides and the lamp floats in the bottom-right
+                corner. */}
+            <PrimaryNav />
+            <div className="header-tools">
+              <RandomBookLink iconOnly inHeader />
+              {/* The book's mirrored twin, so it flanks the links. */}
+              <RandomBookLink iconOnly inHeader mirror />
               <ThemeToggle />
             </div>
           </header>
           <main id="main-content" tabIndex={-1}>
             {children}
           </main>
+          {/* A small site map: the same links as /browse and /librarian. */}
           <footer className="site-footer">
-            <div className="footer-row">
-              <p className="footer-sign">Let&rsquo;s read together!</p>
-              <nav className="footer-links" aria-label="Footer">
-                {/* /about until /borrow exists (M1 group 4). */}
-                <Link href="/about#how-to-borrow">How to borrow</Link>
-                <Link href="/ledger">Ledger</Link>
-                <a href={CONTACT.substack} target="_blank" rel="noopener noreferrer">
-                  Substack
-                </a>
-                <a href={CONTACT.instagram} target="_blank" rel="noopener noreferrer">
-                  Instagram
-                </a>
-                <a href={`mailto:${CONTACT.email}`}>Email</a>
+            <p className="footer-sign">Let&rsquo;s read together!</p>
+            <div className="footer-map">
+              <nav aria-labelledby="footer-browse">
+                <h2 id="footer-browse" className="footer-heading">
+                  <Link href="/browse">Browse</Link>
+                </h2>
+                <ul className="footer-links">
+                  {BROWSE_LINKS.map((link) => (
+                    <li key={link.href}>
+                      <Link href={link.href}>{link.title}</Link>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+              <nav aria-labelledby="footer-librarian">
+                <h2 id="footer-librarian" className="footer-heading">
+                  <Link href="/librarian">The Librarian</Link>
+                </h2>
+                <ul className="footer-links">
+                  {ROOMS.map((room) => (
+                    <li key={room.href}>
+                      <Link href={room.href}>{room.title}</Link>
+                    </li>
+                  ))}
+                </ul>
               </nav>
             </div>
+            <p className="footer-social">
+              <a href={CONTACT.substack} target="_blank" rel="noopener noreferrer">
+                Substack
+              </a>
+              <span aria-hidden="true"> &middot; </span>
+              <a href={CONTACT.instagram} target="_blank" rel="noopener noreferrer">
+                Instagram
+              </a>
+            </p>
           </footer>
         </div>
         <Analytics />
