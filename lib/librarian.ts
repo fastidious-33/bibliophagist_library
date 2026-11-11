@@ -8,10 +8,10 @@ import type { PaintingSlot } from './paintings';
 export const LIBRARIAN_NAME = 'Aditya Rajwade';
 
 export const LIBRARIAN_PHOTO = {
-  src: '/librarian/aditya-rajwade.jpeg',
-  width: 2448,
-  height: 2710,
-  alt: 'Aditya Rajwade',
+  src: '/librarian/aditya-reading.jpg',
+  width: 1200,
+  height: 1500,
+  alt: 'Aditya Rajwade reading a paperback on the grass in a park, in a pink kurta.',
 };
 
 export const LIBRARIAN_BIO = [
