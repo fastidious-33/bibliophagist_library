@@ -111,12 +111,18 @@ understanding the project:
 
 | Route | Notes |
 | --- | --- |
-| `/` | Landing page: hero, book count, three most recent books |
-| `/catalog` | Searchable, filterable catalog |
+| `/` | The vision: painting, intro with the live book count, the two doors ("Which way in?": a secret bookcase to the catalog, a castle door to the librarian), the librarian's desk shelf, the quotes clock |
+| `/browse` | Every way into the library: how to borrow, search, genres, Librarian's Picks, the ledger |
+| `/catalog` | Searchable, filterable catalog, with a genre shelf that filters in place |
 | `/catalog/[slug]` | Book detail |
+| `/catalog/genres` | All genres (tags), grouped Fiction / Non-Fiction / Both |
+| `/catalog/genres/[slug]` | One genre: its books, picks and related genres. ISR, static params from the tags |
 | `/catalog/random` | Redirects to a random book. Always dynamic |
+| `/borrow` | How to borrow, the rules, the rights of the reader |
 | `/ledger` | What the catalog is made of — tags, authors, decades, ratings |
-| `/about` | Static content page |
+| `/librarian` | The librarian: portrait, bio, and the rooms below |
+| `/librarian/writings`, `/featured`, `/saved`, `/body-art`, `/music` | The rooms. Content hardcoded in `lib/librarian.ts` until M2 |
+| `/about` | Permanent redirect to `/librarian` (`next.config.js`) |
 | `/api/books/search` | JSON catalog search (Sanity or Typesense, see above) |
 | `/api/sanity-webhook` | Refreshes the search index on publish/delete (+ Typesense sync when configured) |
 | `/api/health` | Sanity reachability check, hit daily by Vercel Cron |
@@ -262,6 +268,27 @@ Things that look wrong but are deliberate:
   `remotePatterns`. New domains must be added there.
 - **Design system** — all of it is in `app/globals.css`. There's no CSS
   framework.
+- **`hooks/useDoorOpening.ts`** — the home page doors' resting state
+  (`data-rest`, `data-ajar-leaf`) is set on the DOM after mount, not held in
+  React state. The server always renders the doors shut, so there's no
+  hydration mismatch, and an ajar door eases open by itself. A click is held
+  (2.7s bookcase, 2.3s castle) before `router.push`, so the visitor sees
+  the room first; modified clicks and reduced motion go straight through.
+- **A third "pull a random book" icon on `/catalog`** — the header already
+  has two (either side of the nav), and the catalog page puts another by
+  its title. That's on purpose: it's where browsing happens. Don't remove
+  it as a duplicate.
+- **Unused images live outside the site** — spare paintings and textures
+  are kept in `bibliophagist_library/prototypes/assets/`, not `public/`, so
+  they aren't deployed.
+- **Home page textures** — `public/textures/` holds CC0 photo textures
+  (Poly Haven walnut, castle stone and medieval oak; a CC0 shelf photo from
+  Wikimedia Commons, graded and composed into `bookshelf-wall.jpg`, with the
+  lever book cut from it). The bookcase's lever and shelf-front positions in
+  `globals.css` are measured from that image; re-cropping it means
+  re-measuring them.
+- **Prototypes** — earlier door designs are archived outside the repo, in
+  `bibliophagist_library/prototypes/home-doors/`, with restore steps.
 
 ## Working on this
 

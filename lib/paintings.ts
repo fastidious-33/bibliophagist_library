@@ -3,8 +3,9 @@
  * painting per page, with a museum-label caption).
  *
  * To hang one: put the image in public/paintings/ and fill in its slot —
- * `src` plus the label fields. A slot left as `null` renders an empty frame
- * ("A painting will hang here."), so a page never breaks for want of one.
+ * `src` plus the label fields. A slot left as `null` shows nothing, so a
+ * page never breaks for want of one; only the home page asks for an empty
+ * frame ("A painting will hang here.") via <Painting emptyFrame>.
  */
 export type Painting = {
   /** Path under public/, e.g. '/paintings/spitzweg-bookworm.jpg'. */
@@ -29,10 +30,11 @@ export type Painting = {
  */
 export type PaintingSlot =
   | 'homeHero'
-  /** The Librarian's Picks card on /browse (the name predates the wardrobes). */
-  | 'doorCatalog'
-  /** Seen through the home page doors when they open. */
-  | 'wardrobeInside'
+  /** The Librarian's Picks tab on /browse. */
+  | 'browsePicks'
+  /** Seen through the home page doors when they open: behind the secret
+      bookcase (the Catalog) and behind the castle door (the Librarian). */
+  | 'catalogDoorInside'
   | 'castleInside'
   | 'catalog'
   | 'genresIndex'
@@ -61,7 +63,7 @@ export const PAINTINGS: Record<PaintingSlot, Painting | null> = {
     sourceUrl: 'https://commons.wikimedia.org/wiki/File:Carl_Larsson-Lath%C3%B6rnet.jpg',
     alt: 'A sunlit sitting room: a striped sofa with a rug thrown over it, a chair, framed pictures on pale green panelled walls, and a dog asleep on the floor.',
   },
-  doorCatalog: {
+  browsePicks: {
     src: '/paintings/harnett-my-gems.jpg',
     width: 1210,
     height: 1600,
@@ -73,7 +75,7 @@ export const PAINTINGS: Record<PaintingSlot, Painting | null> = {
   },
   // Behind the secret bookcase (BookshelfWall). Graded slightly lighter
   // and warmer than the source, which is very dark.
-  wardrobeInside: {
+  catalogDoorInside: {
     src: '/paintings/spitzweg-bookworm.jpg',
     width: 900,
     height: 1614,
@@ -84,7 +86,8 @@ export const PAINTINGS: Record<PaintingSlot, Painting | null> = {
     alt: 'A dim, vaulted library: an old scholar in a dark coat stands high on a ladder reading, lit by a glow from the shelves, the room falling away into shadow.',
   },
   // A Gothic library behind the Gothic arch. (Until 2026-11-12 this was the
-  // Thorne miniature room, public/paintings/thorne-french-library.jpg.)
+  // Thorne miniature room, now kept outside the site in
+  // bibliophagist_library/prototypes/assets/thorne-french-library.jpg.)
   castleInside: {
     src: '/paintings/bennett-winchester-library.jpg',
     width: 1353,

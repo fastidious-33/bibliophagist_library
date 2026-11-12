@@ -6,7 +6,7 @@ import { useEffect, useRef, type MouseEvent } from 'react';
 /** Default time the doors stand open (and the room draws you in) before
     the page changes: the armoire and the castle. The same on desktop and
     on phones. */
-const DEFAULT_HOLD_MS = 1750;
+const DEFAULT_HOLD_MS = 2300;
 
 type DoorOptions = {
   /** How long to hold the doors open before navigating. */

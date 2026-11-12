@@ -5,19 +5,6 @@ import type { ReactNode } from 'react';
 import Ivy from '@/components/Ivy';
 import { useDoorOpening } from '@/hooks/useDoorOpening';
 
-/**
- * The castle door on the home page: a doorway in an old, weathered stone
- * wall that crumbles away at its edges, overgrown with ivy. The name is
- * cut into a dressed stone above a pointed arch; an iron lantern hangs
- * beside it, lit after dark. The two oak doors are modelled on surviving
- * medieval doors: vertical planks, crescent-ended iron strap hinges, ring
- * pulls, an iron peephole grille, and a small wicket door cut into one
- * leaf. They open inward, away from the viewer. What's behind them is
- * `children`, usually <DoorInside>.
- *
- * Opening behaviour lives in useDoorOpening; the look and the swing are in
- * globals.css (.castle*).
- */
 export default function CastleDoor({
   href,
   title,
@@ -46,11 +33,30 @@ export default function CastleDoor({
           floor line (globals.css, .door-piece). */}
       <span className="door-piece">
         <span className="castle-wall">
+          {/* The parapet, built of separate stones: merlons with coping
+              caps on a solid band, carried on a row of stepped corbels. */}
+          <span className="castle-parapet" aria-hidden="true">
+            <span className="castle-parapet-merlons">
+              {Array.from({ length: 7 }, (_, i) => (
+                <span key={i} className="castle-merlon" />
+              ))}
+            </span>
+            <span className="castle-parapet-band" />
+            <span className="castle-corbels">
+              {Array.from({ length: 9 }, (_, i) => (
+                <span key={i} className="castle-corbel" />
+              ))}
+            </span>
+          </span>
           <span className="castle-archway" aria-hidden="true">
-            <span className="castle-opening">
-              {children}
-              {leaf('left')}
-              {leaf('right')}
+            {/* The rim: a soft highlight along the arch stones' inner edge,
+                following the opening's pointed outline. */}
+            <span className="castle-opening-rim">
+              <span className="castle-opening">
+                {children}
+                {leaf('left')}
+                {leaf('right')}
+              </span>
             </span>
           </span>
           <Ivy />

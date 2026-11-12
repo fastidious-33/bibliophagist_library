@@ -4,7 +4,7 @@
  */
 export const THEME_COLORS = {
   light: '#f2e8d5',
-  dark: '#171a15',
+  dark: '#1a2118',
 } as const;
 
 export function applyThemeColor(theme: 'light' | 'dark') {

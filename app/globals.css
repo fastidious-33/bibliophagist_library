@@ -70,8 +70,8 @@
 /* The same room after dark, under the lamp (Herbarium): dark pressed-leaf
    paper, ivory ink, ochre and moss. */
 [data-theme='dark'] {
-  --paper: #171a15;
-  --kraft: #20241d;
+  --paper: #1a2118;
+  --kraft: #232c20;
   --ink: #e8e6d6;
   --stamp: #d8975a;
   --ledger: #9cbc7f;
@@ -774,7 +774,7 @@ mark {
 .door-inside-picture {
   object-fit: cover;
   filter: brightness(0.85) saturate(0.95);
-  transition: transform 1.8s cubic-bezier(0.2, 0.6, 0.2, 1), filter 1.4s ease;
+  transition: transform 2.4s cubic-bezier(0.2, 0.6, 0.2, 1), filter 1.8s ease;
 }
 
 [data-theme='dark'] .door-inside-picture {
@@ -800,7 +800,7 @@ mark {
   background: radial-gradient(ellipse 70% 55% at 50% 45%, rgba(255, 196, 120, 0.22), transparent 70%),
     radial-gradient(ellipse at center, transparent 45%, rgba(0, 0, 0, 0.6));
   opacity: 0.7;
-  transition: opacity 1.4s ease;
+  transition: opacity 1.8s ease;
 }
 
 /* At night the light inside is the brightest thing in the room, so an
@@ -863,17 +863,129 @@ mark {
   right: -0.62rem;
 }
 
-/* Where the lever book stood: dark, shadowed from above. */
+/* Where the lever book stood: the bookcase's walnut back panel, in the
+   shadow of the books either side and the shelf above (not a black hole). */
 .bookshelf-wall-gap {
-  background: linear-gradient(90deg, #050302, #120b07 50%, #050302);
-  box-shadow: inset 0 6px 8px rgba(0, 0, 0, 0.8);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.25) 35%, rgba(0, 0, 0, 0.45)),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.55), transparent 28%, transparent 72%, rgba(0, 0, 0, 0.55)),
+    var(--wood-surface);
+  box-shadow: inset 0 6px 8px rgba(0, 0, 0, 0.6);
+}
+
+/* At night the walnut is already dark, so lighter shadow: still wood. */
+[data-theme='dark'] .bookshelf-wall-gap {
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.08) 35%, rgba(0, 0, 0, 0.22)),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.3), transparent 28%, transparent 72%, rgba(0, 0, 0, 0.3)),
+    var(--wood-surface);
+  box-shadow: inset 0 5px 7px rgba(0, 0, 0, 0.45);
 }
 
 /* The lever, cut from the same graded photo and laid exactly over itself. */
 .bookshelf-wall-lever {
   background: url('/textures/bookshelf-lever.jpg') 0 0 / 100% 100%;
   transform-origin: 50% 100%;
-  transition: transform 0.4s cubic-bezier(0.3, 0.7, 0.3, 1), box-shadow 0.4s ease;
+  transition: transform 0.4s cubic-bezier(0.3, 0.7, 0.3, 1), box-shadow 0.4s ease, border-radius 0.4s ease;
+}
+
+/* The top of the book, which shows as it tips forward: hidden at rest (the
+   photo's spine is all you see), fading in as it tips. Drawn as an 18th–
+   19th-century calf binding's top would look: the leather headcap curled
+   over at the spine (front), the two boards' edges standing proud either
+   side, and between them the page block, toned with age and finished with
+   red-brown sprinkled edges, the commonest edge of the period. */
+.bookshelf-wall-lever::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  /* Height: set per tip angle, below. */
+  /* One continuous shape with the spine below: square where they meet,
+     the book's end softly rounded at the outer corners, like its
+     neighbours in the photo. */
+  border-radius: 25% 25% 0 0 / 50% 50% 0 0;
+  background:
+    /* Most of the top slides under the shelf above, into its shadow:
+       darkest toward the shelf, so wherever it meets the shelf's edge the
+       two read as separate surfaces, the book going under, not light
+       leaking out. Only a thin sliver by the spine stays lit. */
+    linear-gradient(180deg, rgba(0, 0, 0, 0.85) 0 12%, rgba(0, 0, 0, 0.6) 35%, rgba(0, 0, 0, 0.3) 58%, transparent 74%),
+    /* Headcap: the spine's leather folding over, fading into the pages
+       (no hard seam). */
+    linear-gradient(0deg, rgba(46, 34, 25, 0.9), rgba(74, 54, 40, 0.5) 18%, transparent 32%),
+    /* The top faces up, toward the light: a lit edge of page just above
+       the headcap, well away from the shelf. */
+    linear-gradient(0deg, transparent 14%, rgba(255, 248, 228, 0.38) 22%, transparent 34%),
+    /* The boards' top edges, either side. */
+    linear-gradient(90deg, #3e2d20 0 9%, rgba(0, 0, 0, 0.35) 9% 11%, transparent 11% 89%, rgba(0, 0, 0, 0.35) 89% 91%, #3e2d20 91%),
+    /* Sprinkled edges: fine red-brown speckles, in three layers at uneven
+       spacings so they never line up into a visible grid. */
+    radial-gradient(circle, rgba(138, 52, 30, 0.45) 0 0.4px, transparent 0.8px) 0 0 / 5px 7px,
+    radial-gradient(circle, rgba(105, 58, 30, 0.35) 0 0.4px, transparent 0.8px) 2px 3px / 7px 5px,
+    radial-gradient(circle, rgba(130, 60, 35, 0.3) 0 0.35px, transparent 0.7px) 4px 1px / 11px 9px,
+    /* Toned paper, darker toward the edges. */
+    linear-gradient(90deg, rgba(90, 58, 28, 0.22), transparent 28%, transparent 72%, rgba(90, 58, 28, 0.22)),
+    #dbc397;
+  opacity: 0;
+}
+
+/* The top of the spine coming out of the shelf's shadow (baked into the
+   photo) as the book tips forward, so the spine doesn't seem to end early. */
+.bookshelf-wall-lever::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    linear-gradient(180deg, rgba(255, 236, 205, 0.16), rgba(255, 236, 205, 0.06) 55%, transparent) 0 0 / 100% 16% no-repeat,
+    /* A rounded spine catches the light down its middle. */
+    linear-gradient(90deg, transparent 28%, rgba(255, 240, 215, 0.1) 50%, transparent 72%);
+  mix-blend-mode: screen;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.bookshelf-wall:where([data-rest='ajar-one'], [data-opening], :focus-visible) .bookshelf-wall-lever::before,
+.bookshelf-wall:where([data-rest='ajar-one'], [data-opening], :focus-visible) .bookshelf-wall-lever::after {
+  opacity: 1;
+}
+
+@media (hover: hover) {
+  .bookshelf-wall:hover .bookshelf-wall-lever::before,
+  .bookshelf-wall:hover .bookshelf-wall-lever::after {
+    opacity: 1;
+  }
+}
+
+/* At night: warmer and darker, toward the amber of the lit books. */
+[data-theme='dark'] .bookshelf-wall-lever::before {
+  filter: sepia(0.4) saturate(1.2) brightness(0.72);
+}
+
+/* The further the book tips, the more of its top you see: a thin band at
+   the phone rest, more on hover, a clear wedge as it swings out on click. */
+.bookshelf-wall-lever::before {
+  height: 6%;
+  transition: opacity 0.4s ease, height 0.4s cubic-bezier(0.3, 0.7, 0.3, 1);
+}
+
+.bookshelf-wall:focus-visible .bookshelf-wall-lever::before {
+  height: 11%;
+}
+
+@media (hover: hover) {
+  .bookshelf-wall:hover .bookshelf-wall-lever::before {
+    height: 11%;
+  }
+}
+
+.bookshelf-wall[data-opening] .bookshelf-wall-lever::before {
+  height: 14%;
+  transition-duration: 0.35s;
+}
+
+[data-theme='dark'] .bookshelf-wall-lever::after {
+  filter: brightness(0.7);
 }
 
 /* Per bay, the shadow each shelf throws onto the books below. */
@@ -907,6 +1019,12 @@ mark {
   height: 2.2%;
 }
 
+/* Shelf fronts always in front of the lever book, so its top tucks under
+   the shelf as it tips rather than running over it. */
+.bookshelf-wall-door .bookshelf-wall-board {
+  z-index: 1;
+}
+
 .bookshelf-wall-board--1 {
   top: 20.1%;
   height: 4.3%;
@@ -923,16 +1041,17 @@ mark {
   box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.35);
 }
 
-/* The door's slide: wait while the book tips (0.35s), pop back a hair as
-   the catch releases (0.15s), then slide left (0.85s). Starts from the
-   hover / ajar position, which is where a click always finds it. */
+/* The door's slide, 1.9s in all: wait while the book tips (0.35s), pop
+   back a hair as the catch releases (0.15s), then glide left, heavily
+   (1.4s). Starts from the hover / ajar position, which is where a click
+   always finds it. */
 @keyframes shelf-door-open {
   0%,
-  26% {
+  18% {
     transform: translateX(-6%);
   }
 
-  37% {
+  26% {
     transform: translateX(-6%) scale(0.985);
   }
 
@@ -1000,7 +1119,7 @@ mark {
   position: absolute;
   z-index: 6;
   inset: 0;
-  background: radial-gradient(ellipse 70% 75% at 95% 45%, rgba(255, 168, 88, 0.2), transparent 70%);
+  background: radial-gradient(ellipse 70% 75% at 95% 45%, rgba(255, 168, 88, 0.12), transparent 70%);
   mix-blend-mode: screen;
   pointer-events: none;
 }
@@ -1160,7 +1279,21 @@ mark {
   background: url('/textures/bookshelf-wall.jpg') 50% 0 / 200% 100%;
   box-shadow: 8px 0 12px rgba(0, 0, 0, 0.55);
   perspective: 600px;
-  transition: transform 1s cubic-bezier(0.3, 0.7, 0.3, 1);
+  transition: transform 1.4s cubic-bezier(0.3, 0.7, 0.3, 1);
+}
+
+/* The door's right side panel: the depth of the case, seen as it slides
+   away, so a heavy box moves rather than a flat picture. Walnut, darkening
+   as it recedes. Hidden behind the right bay while the door is shut. */
+.bookshelf-wall-door::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 100%;
+  width: 4%;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.65)), var(--wood-surface);
+  box-shadow: inset 1px 0 0 var(--edge-light), 6px 0 10px rgba(0, 0, 0, 0.5);
 }
 
 /* The fixed bays either side, above the door so it slides behind the left. */
@@ -1255,6 +1388,8 @@ mark {
 
 .bookshelf-wall[data-rest='ajar-one'] .bookshelf-wall-lever {
   transform: rotateX(-11deg);
+  border-radius: 0 0 3px 3px;
+  box-shadow: inset 4px 0 5px -2px rgba(0, 0, 0, 0.4), inset -4px 0 5px -2px rgba(0, 0, 0, 0.4);
 }
 
 .bookshelf-wall[data-rest='ajar-one'] .bookshelf-wall-face::before {
@@ -1263,7 +1398,9 @@ mark {
 
 .bookshelf-wall:focus-visible .bookshelf-wall-lever {
   transform: rotateX(-22deg);
-  box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.55);
+  border-radius: 0 0 3px 3px;
+  box-shadow: inset 4px 0 5px -2px rgba(0, 0, 0, 0.4), inset -4px 0 5px -2px rgba(0, 0, 0, 0.4),
+    0 -4px 8px rgba(0, 0, 0, 0.55);
 }
 
 .bookshelf-wall:focus-visible .bookshelf-wall-door {
@@ -1285,7 +1422,9 @@ mark {
 @media (hover: hover) {
   .bookshelf-wall:hover .bookshelf-wall-lever {
     transform: rotateX(-22deg);
-    box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.55);
+    border-radius: 0 0 3px 3px;
+    box-shadow: inset 4px 0 5px -2px rgba(0, 0, 0, 0.4), inset -4px 0 5px -2px rgba(0, 0, 0, 0.4),
+      0 -4px 8px rgba(0, 0, 0, 0.55);
   }
 
   .bookshelf-wall:hover .bookshelf-wall-door {
@@ -1306,15 +1445,17 @@ mark {
 }
 
 /* Clicked: book tips, door pops back, slides left behind the left bay
-   (shelf-door-open), room draws you in. Held 2.2s in all. */
+   (shelf-door-open), room draws you in. Held 2.7s in all. */
 .bookshelf-wall[data-opening] .bookshelf-wall-lever {
   transform: rotateX(-45deg);
-  box-shadow: 0 -6px 10px rgba(0, 0, 0, 0.6);
+  border-radius: 0 0 3px 3px;
+  box-shadow: inset 4px 0 5px -2px rgba(0, 0, 0, 0.4), inset -4px 0 5px -2px rgba(0, 0, 0, 0.4),
+    0 -6px 10px rgba(0, 0, 0, 0.6);
   transition-duration: 0.35s;
 }
 
 .bookshelf-wall[data-opening] .bookshelf-wall-door {
-  animation: shelf-door-open 1.35s ease-in-out forwards;
+  animation: shelf-door-open 1.9s ease-in-out forwards;
 }
 
 .bookshelf-wall[data-opening] .bookshelf-wall-face::before {
@@ -1341,10 +1482,113 @@ mark {
   }
 }
 
+/* Light on the books at night, from small brass puck lights fixed under
+   every shelf of every bay: the top of the case (2.2% of the face), the
+   upper shelf front (24.4%) and the lower shelf front (66.5%). The outer
+   bays' pucks and cones sit on the face; the door's ride inside the door,
+   so they slide away with it. Lit evenly, the door bay never stands out.
+   Each cone is overlay, not screen, so the shadows between the books stay
+   dark (screen washed them into fog). */
+.bookshelf-wall-glow {
+  display: none;
+  position: absolute;
+  z-index: 3;
+  background: radial-gradient(
+    ellipse 58% 90% at 50% 0%,
+    rgba(255, 186, 105, 0.6),
+    rgba(255, 170, 90, 0.26) 45%,
+    transparent 80%
+  );
+  mix-blend-mode: overlay;
+  pointer-events: none;
+}
+
+[data-theme='dark'] .bookshelf-wall-glow {
+  display: block;
+}
+
+/* Across: centred on its bay, spilling a little either side. */
+.bookshelf-wall-glow--left {
+  left: -2%;
+  width: 29%;
+}
+
+.bookshelf-wall-glow--right {
+  right: -2%;
+  width: 29%;
+}
+
+/* Within the door, which is half the face wide. */
+.bookshelf-wall-glow--door {
+  left: 20%;
+  width: 60%;
+}
+
+/* Down: from its puck to the next shelf. */
+.bookshelf-wall-glow--top {
+  top: 2.2%;
+  height: 17.9%;
+}
+
+.bookshelf-wall-glow--mid {
+  top: 24.4%;
+  height: 39.05%;
+}
+
+.bookshelf-wall-glow--low {
+  top: 66.5%;
+  height: 30.9%;
+}
+
+/* The pucks: shallow aged-brass half-domes, only just visible by day; at
+   night a small warm point glows at the underside. */
+.bookshelf-wall-puck {
+  position: absolute;
+  z-index: 4;
+  width: 0.45rem;
+  height: 0.18rem;
+  margin-left: -0.225rem;
+  border-radius: 0 0 50% 50% / 0 0 100% 100%;
+  background: radial-gradient(ellipse 60% 70% at 40% 20%, rgba(255, 236, 190, 0.35), transparent 70%),
+    linear-gradient(180deg, #a0803e, #6e5424);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+}
+
+.bookshelf-wall-puck--left {
+  left: 12.5%;
+}
+
+.bookshelf-wall-puck--right {
+  left: 87.5%;
+}
+
+.bookshelf-wall-puck--door {
+  left: 50%;
+}
+
+.bookshelf-wall-puck--top {
+  top: 2.2%;
+}
+
+.bookshelf-wall-puck--mid {
+  top: 24.4%;
+}
+
+.bookshelf-wall-puck--low {
+  top: 66.5%;
+}
+
+[data-theme='dark'] .bookshelf-wall-puck {
+  background: radial-gradient(ellipse 45% 60% at 50% 100%, #fff1cf, #f3c47e 55%, transparent 80%),
+    linear-gradient(180deg, #7a5e2c, #4e3a18);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.4), 0 2px 5px rgba(255, 190, 100, 0.45);
+}
+
 /* ---------- Home: the castle door (components/CastleDoor.tsx) ----------
 
    A doorway in an old wall (CC0 Poly Haven "Castle Wall Variation"): the
-   wall has dressed quoins, a worn parapet on corbels, a mid-tone wash
+   wall has a worn parapet on corbels, a mid-tone wash
    to calm the stone, and damp darkening toward the ground.
    Ivy climbs it (components/Ivy.tsx); the name is cut into a dressed
    stone; an iron lantern beside the arch is lit after dark.
@@ -1372,7 +1616,6 @@ mark {
   --name-ink: rgba(28, 22, 15, 0.84);
   --name-shadow: 0 1px 0 rgba(255, 244, 222, 0.5), 0 -1px 0 rgba(0, 0, 0, 0.35);
   --name-wash: rgba(230, 218, 195, 0.5);
-  --quoin: rgba(225, 212, 188, 0.2);
   --oak-tex: url('/textures/oak-planks.jpg');
   --oak-tint: #8a5a32;
   --iron: linear-gradient(180deg, #4d4238, #2a221c 55%, #18120e);
@@ -1382,12 +1625,8 @@ mark {
   --swing: cubic-bezier(0.34, 1.1, 0.5, 1);
 
   /* Ivy (Ivy.tsx): oldest/darkest to youngest/lightest. */
-  --ivy-1: #34502a;
-  --ivy-2: #48663a;
-  --ivy-3: #5f7f43;
-  --ivy-4: #7b9852;
-  --ivy-vein: rgba(225, 235, 190, 0.35);
-  --ivy-stem: #4e3c28;
+  --ivy-vein: rgba(190, 215, 150, 0.4);
+  --ivy-stem: #4a3826;
 
   /* Day: pale old glass catching the sky. */
   --lantern-glass: linear-gradient(135deg, rgba(240, 238, 225, 0.8), rgba(180, 185, 170, 0.5) 45%, rgba(110, 110, 100, 0.6));
@@ -1407,16 +1646,9 @@ mark {
   --name-ink: rgba(214, 202, 180, 0.86);
   --name-shadow: 0 -1px 0 rgba(0, 0, 0, 0.65), 0 1px 0 rgba(0, 0, 0, 0.25);
   --name-wash: rgba(255, 236, 205, 0.06);
-  --quoin: rgba(225, 212, 188, 0.08);
   --oak-tint: #5a3a20;
   --edge-light: rgba(255, 236, 205, 0.12);
 
-  --ivy-1: #1f3020;
-  --ivy-2: #2a3f2a;
-  --ivy-3: #364f33;
-  --ivy-4: #47613d;
-  --ivy-vein: rgba(200, 210, 170, 0.18);
-  --ivy-stem: #3b2e20;
 
   /* Night: lit from within. */
   --lantern-glass: radial-gradient(circle at 50% 70%, #fff3c4, #ffd27a 40%, #e8a040);
@@ -1432,32 +1664,22 @@ mark {
   outline-offset: 10px;
 }
 
-/* A rectangular curtain wall with a parapet, built the way real ones are:
-   dressed quoin stones at the corners (long and short in turn), a
-   parapet that overhangs on a row of corbels and casts a shadow down the
-   wall, merlons worn and one chipped. Damp darkens the foot. Light from
-   the top left. */
+/* A rectangular curtain wall of rubble stone, with a parapet
+   (.castle-parapet, below) that overhangs on corbels and casts a shadow
+   down the wall. Damp darkens the foot. Light from the top left. (Dressed
+   corner stones were tried and removed: they read as an applied frame.) */
 .castle-wall {
   position: relative;
   display: block;
   width: 100%;
-  aspect-ratio: 13 / 18;
+  /* 0.6rem shorter than 13 : 18 at full width, to give the merlons that
+     height without making the castle any taller. */
+  aspect-ratio: 13 / 17.6;
   /* Room for the corbels and parapet above. */
-  margin-top: 2.4rem;
+  margin-top: 3rem;
   background:
-    /* Shadow cast by the overhanging parapet. */
-    linear-gradient(to bottom, rgba(0, 0, 0, 0.4), transparent 0.8rem),
-    /* Quoins, left: long blocks (11%) and short (7%) in alternate courses,
-       with their joints. */
-    repeating-linear-gradient(180deg, transparent 0 1.5rem, rgba(0, 0, 0, 0.35) 1.5rem calc(1.5rem + 1px)) 0 0 /
-      9% 100% no-repeat,
-    repeating-linear-gradient(180deg, var(--quoin) 0 1.5rem, transparent 1.5rem 3rem) 0 0 / 11% 100% no-repeat,
-    repeating-linear-gradient(180deg, transparent 0 1.5rem, var(--quoin) 1.5rem 3rem) 0 0 / 7% 100% no-repeat,
-    /* Quoins, right, offset by one course. */
-    repeating-linear-gradient(180deg, transparent 0 1.5rem, rgba(0, 0, 0, 0.35) 1.5rem calc(1.5rem + 1px)) 100% 0 /
-      9% 100% no-repeat,
-    repeating-linear-gradient(180deg, transparent 0 1.5rem, var(--quoin) 1.5rem 3rem) 100% 0 / 11% 100% no-repeat,
-    repeating-linear-gradient(180deg, var(--quoin) 0 1.5rem, transparent 1.5rem 3rem) 100% 0 / 7% 100% no-repeat,
+    /* Shadow cast by the overhanging parapet and its corbels. */
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.5), transparent 1rem),
     /* Damp at the foot. */
     linear-gradient(to top, rgba(40, 34, 22, 0.38), transparent 28%),
     radial-gradient(ellipse 60% 35% at 50% 100%, rgba(30, 42, 20, 0.2), transparent 70%),
@@ -1465,44 +1687,215 @@ mark {
   box-shadow: inset 3px 0 0 var(--edge-light), inset -4px -4px 8px var(--edge-dark);
 }
 
-/* The parapet: seven merlons on a solid band, overhanging the wall a
-   little each side. Worn: uneven tops, one corner broken off, one crenel
-   floor crumbled (a blurred SVG mask). Lighter on top, where the sky
-   catches it. */
-.castle-wall::before {
-  content: '';
-  position: absolute;
-  left: -3%;
-  right: -3%;
-  bottom: calc(100% + 0.5rem);
-  height: 1.9rem;
-  background: linear-gradient(180deg, var(--edge-light), transparent 40%, rgba(0, 0, 0, 0.3)),
-    var(--stone-surface);
-  background-position: 0 0, 0 0, 0 -60px;
-  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 106 20' preserveAspectRatio='none'%3E%3Cfilter id='b'%3E%3CfeGaussianBlur stdDeviation='0.18'/%3E%3C/filter%3E%3Cpath filter='url(%23b)' d='M0 21 L0 1 L10 1 L10 12 L16 12 L16 0.5 L26 0.5 L26 12 L32 12 L32 1 L39 1 L40 2.6 L42 3.2 L42 12 L48 12 L48 0.8 L58 0.8 L58 12 L60 12 L61 13.2 L62.5 12.7 L64 12.9 L64 1 L74 1 L74 12 L80 12 L80 0.6 L90 0.6 L90 12 L96 12 L96 1.4 L97.5 0.9 L106 0.9 L106 21 Z'/%3E%3C/svg%3E")
-    0 0 / 100% 100% no-repeat;
-  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 106 20' preserveAspectRatio='none'%3E%3Cfilter id='b'%3E%3CfeGaussianBlur stdDeviation='0.18'/%3E%3C/filter%3E%3Cpath filter='url(%23b)' d='M0 21 L0 1 L10 1 L10 12 L16 12 L16 0.5 L26 0.5 L26 12 L32 12 L32 1 L39 1 L40 2.6 L42 3.2 L42 12 L48 12 L48 0.8 L58 0.8 L58 12 L60 12 L61 13.2 L62.5 12.7 L64 12.9 L64 1 L74 1 L74 12 L80 12 L80 0.6 L90 0.6 L90 12 L96 12 L96 1.4 L97.5 0.9 L106 0.9 L106 21 Z'/%3E%3C/svg%3E")
-    0 0 / 100% 100% no-repeat;
+/* The parapet, built of separate stones so it has depth and wear (a cut-
+   out mask read as a drawing). From the top: seven merlons, each its own
+   dressed block with an overhanging coping cap, a shaded right side and a
+   shadow cast onto the sill beside it; uneven, one chipped, one worn
+   down, the corner merlons wider. Below them a solid band with a coped
+   sill (the floor of each gap). Below that, nine heavy stepped corbels
+   with dark shadow between, carrying the whole parapet out over the wall.
+   Light from the top left. Dressed stone: the wall's texture at a larger
+   scale and a paler wash, so it reads as bigger cut blocks than the rubble
+   below. */
+.castle {
+  /* The arch ring: paler dressed stone by day; at night in the same
+     shadow as the wall, warmed on its right by the lantern. */
+  --arch-wash: rgba(242, 234, 216, 0.22);
+  --arch-flatten: rgba(140, 126, 104, 0.26);
+  --arch-rim: rgba(255, 242, 218, 0.6);
+  --arch-rim-soft: rgba(255, 242, 218, 0.28);
+  --arch-lantern: transparent;
+  --ashlar-wash: rgba(150, 134, 110, 0.32);
+  --ashlar-surface: linear-gradient(var(--ashlar-wash), var(--ashlar-wash)),
+    var(--stone-tex) 0 0 / 520px auto;
 }
 
-/* Corbels: the row of projecting stones the parapet rests on, each
-   with the shadowed wall showing between. */
-.castle-wall::after {
-  content: '';
+[data-theme='dark'] .castle {
+  --arch-wash: rgba(16, 15, 12, 0.46);
+  --arch-flatten: rgba(30, 28, 24, 0.2);
+  --arch-rim: rgba(205, 195, 175, 0.3);
+  --arch-rim-soft: rgba(205, 195, 175, 0.12);
+  --arch-lantern: rgba(255, 180, 100, 0.14);
+  /* Lighter than the wall at night, so the battlements stand clear of
+     the moss-green page. */
+  --ashlar-wash: rgba(14, 13, 11, 0.4);
+}
+
+/* Night: a faint cool rim of moonlight on the coping caps' tops and the
+   merlons' left edges, so the battlements' outline reads against the sky. */
+[data-theme='dark'] .castle-merlon {
+  box-shadow: inset 1px 0 0 rgba(205, 215, 195, 0.2);
+}
+
+[data-theme='dark'] .castle-merlon::before {
+  box-shadow: inset 0 1px 0 rgba(205, 215, 195, 0.38), 0 2px 2px rgba(0, 0, 0, 0.35);
+}
+
+.castle-parapet {
   position: absolute;
   left: -3%;
   right: -3%;
   bottom: 100%;
-  height: 0.5rem;
-  background: repeating-linear-gradient(
+  height: 3rem;
+}
+
+.castle-parapet > span {
+  position: absolute;
+  display: block;
+  left: 0;
+  right: 0;
+}
+
+/* The merlons stand on the band. */
+.castle-parapet > .castle-parapet-merlons {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  bottom: 1.2rem;
+  height: 1.75rem;
+}
+
+.castle-merlon {
+  position: relative;
+  display: block;
+  width: 10%;
+  height: 100%;
+  background: linear-gradient(
       90deg,
-      transparent 0 0.6rem,
-      rgba(0, 0, 0, 0.5) 0.6rem 0.85rem
+      rgba(255, 240, 215, 0.14) 0 5%,
+      transparent 5% 68%,
+      rgba(0, 0, 0, 0.32) 100%
     ),
-    linear-gradient(180deg, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.4)),
-    var(--stone-surface);
-  background-position: 0 0, 0 0, 0 0, 0 -40px;
-  box-shadow: 0 3px 3px rgba(0, 0, 0, 0.3);
+    linear-gradient(180deg, transparent 55%, rgba(0, 0, 0, 0.18)), var(--ashlar-surface);
+}
+
+/* The coping cap: a paler dressed stone, overhanging a little, chamfered
+   (light on its top face, dark under its lip). */
+.castle-merlon::before {
+  content: '';
+  position: absolute;
+  left: -7%;
+  right: -7%;
+  top: -0.2rem;
+  height: 0.28rem;
+  border-radius: 1px;
+  background: linear-gradient(
+      180deg,
+      rgba(255, 245, 225, 0.32) 0 35%,
+      rgba(0, 0, 0, 0.12) 65%,
+      rgba(0, 0, 0, 0.38)
+    ),
+    var(--ashlar-surface);
+  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.35);
+}
+
+/* Its shadow on the sill, falling to the right. */
+.castle-merlon::after {
+  content: '';
+  position: absolute;
+  left: 100%;
+  bottom: -0.05rem;
+  width: 45%;
+  height: 0.22rem;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.4), transparent);
+}
+
+/* The last merlon has no sill to its right to shadow. */
+.castle-merlon:last-child::after {
+  display: none;
+}
+
+/* Uneven, like the real thing: corner merlons wider, heights and stones
+   varied, one chipped, one worn down. */
+.castle-merlon:nth-child(1),
+.castle-merlon:nth-child(7) {
+  width: 12%;
+}
+
+.castle-merlon:nth-child(2) {
+  height: 95%;
+  background-position: 0 0, 0 0, 0 0, -73px -20px;
+}
+
+.castle-merlon:nth-child(3) {
+  background-position: 0 0, 0 0, 0 0, -151px -44px;
+  clip-path: polygon(0 -40%, 70% -40%, 80% 14%, 100% 26%, 100% 200%, 0 200%);
+}
+
+.castle-merlon:nth-child(4) {
+  height: 91%;
+  width: 9.5%;
+  background-position: 0 0, 0 0, 0 0, -229px -8px;
+}
+
+.castle-merlon:nth-child(5) {
+  background-position: 0 0, 0 0, 0 0, -307px -60px;
+}
+
+.castle-merlon:nth-child(6) {
+  height: 86%;
+  background-position: 0 0, 0 0, 0 0, -389px -30px;
+}
+
+/* Worn down: the cap is gone, the top edge rounded by weather. */
+.castle-merlon:nth-child(6)::before {
+  height: 0.12rem;
+  top: -0.06rem;
+  border-radius: 40% 55% 0 0 / 100% 100% 0 0;
+}
+
+.castle-merlon:nth-child(7) {
+  height: 97%;
+  background-position: 0 0, 0 0, 0 0, -463px -16px;
+}
+
+/* The solid band, its coped sill catching the light along the top. */
+.castle-parapet > .castle-parapet-band {
+  bottom: 0.5rem;
+  height: 0.7rem;
+  background: linear-gradient(
+      180deg,
+      rgba(255, 245, 225, 0.28) 0 2px,
+      rgba(0, 0, 0, 0.25) 2px 4px,
+      transparent 4px
+    ),
+    linear-gradient(180deg, transparent 60%, rgba(0, 0, 0, 0.2)), var(--ashlar-surface);
+  background-position: 0 0, 0 0, 0 0, -40px -70px;
+}
+
+/* The corbels: heavy stepped stones, two courses each, deep shadow
+   between them (the dark strip behind) and under the band. */
+.castle-parapet > .castle-corbels {
+  display: flex;
+  justify-content: space-between;
+  bottom: 0;
+  height: 0.5rem;
+  padding: 0 2%;
+  /* Behind the corbels: the wall itself, in the parapet's shadow. Opaque,
+     so the page (green at night) never shows through the gaps. */
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0.32)), var(--stone-surface);
+  background-position: 0 0, 0 0, -30px -12px;
+}
+
+.castle-corbel {
+  display: block;
+  width: 6.5%;
+  height: 100%;
+  background: linear-gradient(
+      180deg,
+      rgba(255, 240, 215, 0.24) 0 1px,
+      transparent 1px 44%,
+      rgba(0, 0, 0, 0.38) 46% 52%,
+      transparent 54% 70%,
+      rgba(0, 0, 0, 0.42)
+    ),
+    linear-gradient(90deg, rgba(255, 240, 215, 0.1) 0 12%, transparent 12% 68%, rgba(0, 0, 0, 0.35)),
+    var(--ashlar-surface);
+  clip-path: polygon(0 0, 100% 0, 100% 48%, 84% 48%, 84% 100%, 16% 100%, 16% 48%, 0 48%);
+}
+
+.castle-corbel:nth-child(odd) {
+  background-position: 0 0, 0 0, 0 0, -120px -90px;
 }
 
 /* The name cut straight into the wall: no plaque. Dark inside the cut
@@ -1511,7 +1904,7 @@ mark {
 .castle-name {
   position: absolute;
   z-index: 3;
-  top: 10%;
+  top: 8%;
   left: 50%;
   transform: translateX(-50%);
   white-space: nowrap;
@@ -1544,35 +1937,44 @@ mark {
   pointer-events: none;
 }
 
-.castle-ivy-stems path {
+/* At night the whole layer drops into the dark (each leaf's own green is
+   set in Ivy.tsx). */
+[data-theme='dark'] .castle-ivy {
+  filter: brightness(0.7) saturate(0.85);
+}
+
+/* Stems: a dark woody line with a faint sheen along it, so it reads round. */
+.castle-ivy-stem,
+.castle-ivy-stem-sheen {
   fill: none;
-  stroke: var(--ivy-stem);
   stroke-linecap: round;
-  opacity: 0.7;
+  stroke-linejoin: round;
+}
+
+.castle-ivy-stem {
+  stroke: var(--ivy-stem);
+  opacity: 0.85;
+}
+
+.castle-ivy-stem-sheen {
+  stroke: rgba(160, 128, 90, 0.45);
+}
+
+/* The aerial rootlets ivy climbs by. */
+.castle-ivy-rootlet {
+  stroke: rgba(70, 52, 34, 0.55);
+  stroke-width: 0.12;
+  stroke-linecap: round;
 }
 
 .castle-ivy-vein {
   fill: none;
   stroke: var(--ivy-vein);
-  stroke-width: 0.05;
+  stroke-width: 0.03;
   stroke-linecap: round;
 }
 
-.castle-ivy-tone-1 {
-  fill: var(--ivy-1);
-}
 
-.castle-ivy-tone-2 {
-  fill: var(--ivy-2);
-}
-
-.castle-ivy-tone-3 {
-  fill: var(--ivy-3);
-}
-
-.castle-ivy-tone-4 {
-  fill: var(--ivy-4);
-}
 
 /* Iron wall lantern to the right of the arch, hung the way real ones
    are: an iron plate bolted to the wall, an arm reaching out from it
@@ -1722,8 +2124,12 @@ mark {
     radial-gradient(circle at 27% 6.5%, rgba(0, 0, 0, 0.24) 0 1.3%, transparent 2%),
     radial-gradient(circle at 93% 20%, rgba(0, 0, 0, 0.26) 0 1.5%, transparent 2.2%),
     radial-gradient(circle at 98% 64%, rgba(0, 0, 0, 0.22) 0 1.4%, transparent 2.1%),
-    linear-gradient(rgba(235, 222, 196, 0.24), rgba(235, 222, 196, 0.24)),
-    var(--stone-tex) 30% 20% / 260px auto;
+    radial-gradient(circle at 100% 42%, var(--arch-lantern), transparent 55%),
+    linear-gradient(var(--arch-wash), var(--arch-wash)),
+    /* Dressed, not rubble: the stone at a larger scale, flattened by a
+       mid-tone wash, so the ring reads as big cut blocks. */
+    linear-gradient(var(--arch-flatten), var(--arch-flatten)),
+    var(--stone-tex) 30% 20% / 440px auto;
   clip-path: polygon(
     0 38.62%,
     0.93% 31.8%,
@@ -1748,28 +2154,68 @@ mark {
 }
 
 /* Voussoirs: joints radiating from the springing line, in the arch head
-   only. */
+   only. Stones of uneven width (as cut stone is), soft mortar lines rather
+   than ink, and a broader, paler keystone at the apex (83–97deg). */
 .castle-archway::before {
   content: '';
   position: absolute;
   inset: 0 0 61.38% 0;
-  background: repeating-conic-gradient(
-    from -90deg at 50% 100%,
-    transparent 0 8.4deg,
-    rgba(0, 0, 0, 0.32) 8.4deg 9deg
-  );
+  background: conic-gradient(
+      from -90deg at 50% 100%,
+      transparent 0 83deg,
+      rgba(255, 245, 225, 0.1) 83deg 97deg,
+      transparent 97deg
+    ),
+    conic-gradient(
+      from -90deg at 50% 100%,
+      transparent 0deg,
+      transparent 9.8deg, rgba(70, 58, 44, 0.55) 10.5deg, transparent 11.2deg,
+      transparent 20.3deg, rgba(70, 58, 44, 0.55) 21deg, transparent 21.7deg,
+      transparent 32.8deg, rgba(70, 58, 44, 0.55) 33.5deg, transparent 34.2deg,
+      transparent 43.3deg, rgba(70, 58, 44, 0.55) 44deg, transparent 44.7deg,
+      transparent 55.8deg, rgba(70, 58, 44, 0.55) 56.5deg, transparent 57.2deg,
+      transparent 66.3deg, rgba(70, 58, 44, 0.55) 67deg, transparent 67.7deg,
+      transparent 75.8deg, rgba(70, 58, 44, 0.55) 76.5deg, transparent 77.2deg,
+      transparent 82.3deg, rgba(70, 58, 44, 0.55) 83deg, transparent 83.7deg,
+      transparent 96.3deg, rgba(70, 58, 44, 0.55) 97deg, transparent 97.7deg,
+      transparent 102.8deg, rgba(70, 58, 44, 0.55) 103.5deg, transparent 104.2deg,
+      transparent 112.3deg, rgba(70, 58, 44, 0.55) 113deg, transparent 113.7deg,
+      transparent 123.8deg, rgba(70, 58, 44, 0.55) 124.5deg, transparent 125.2deg,
+      transparent 134.3deg, rgba(70, 58, 44, 0.55) 135deg, transparent 135.7deg,
+      transparent 146.3deg, rgba(70, 58, 44, 0.55) 147deg, transparent 147.7deg,
+      transparent 157.8deg, rgba(70, 58, 44, 0.55) 158.5deg, transparent 159.2deg,
+      transparent 168.8deg, rgba(70, 58, 44, 0.55) 169.5deg, transparent 170.2deg,
+      transparent 360deg
+    );
 }
 
-/* Jambs: level courses below the springing line. */
+/* Jambs: level courses below the springing line, of uneven height. */
 .castle-archway::after {
   content: '';
   position: absolute;
   inset: 38.62% 0 0 0;
-  background: repeating-linear-gradient(
+  background: linear-gradient(
     180deg,
-    transparent 0 calc(12.5% - 1px),
-    rgba(0, 0, 0, 0.32) calc(12.5% - 1px) 12.5%
+    transparent 0%,
+    transparent 12.3%, rgba(70, 58, 44, 0.55) 13%, transparent 13.7%,
+    transparent 26.8%, rgba(70, 58, 44, 0.55) 27.5%, transparent 28.2%,
+    transparent 38.3%, rgba(70, 58, 44, 0.55) 39%, transparent 39.7%,
+    transparent 53.3%, rgba(70, 58, 44, 0.55) 54%, transparent 54.7%,
+    transparent 65.8%, rgba(70, 58, 44, 0.55) 66.5%, transparent 67.2%,
+    transparent 79.3%, rgba(70, 58, 44, 0.55) 80%, transparent 80.7%,
+    transparent 90.3%, rgba(70, 58, 44, 0.55) 91%, transparent 91.7%,
+    transparent 100%
   );
+}
+
+/* Wraps the opening (CastleDoor.tsx) so a drop-shadow can follow its
+   clipped, pointed outline: a soft pale line where the arch stones meet
+   the doors, so the ring reads as a separate frame of cut stone. */
+.castle-opening-rim {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  filter: drop-shadow(0 0 0.6px var(--arch-rim)) drop-shadow(-1px -1px 0 var(--arch-rim-soft));
 }
 
 .castle-opening {
@@ -2071,7 +2517,7 @@ mark {
 .castle:focus-visible .castle-leaf::after,
 .castle[data-opening] .castle-leaf,
 .castle[data-opening] .castle-leaf::after {
-  transition-duration: 1.4s;
+  transition-duration: 2s;
 }
 
 .castle:focus-visible .castle-leaf--left {
@@ -2097,7 +2543,7 @@ mark {
 @media (hover: hover) {
   .castle:hover .castle-leaf,
   .castle:hover .castle-leaf::after {
-    transition-duration: 1.4s;
+    transition-duration: 2s;
   }
 
   .castle:hover .castle-leaf--left {
@@ -2378,11 +2824,131 @@ mark {
   scroll-margin-top: 1.5rem;
 }
 
+/* Lists that open from their heading (bookmark topics, newsletters): a
+   small arrow that turns as it opens, and the number of links beside the
+   title. */
+:is(.bookmark-topic, .entry-fold) summary {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+:is(.bookmark-topic, .entry-fold) summary::-webkit-details-marker {
+  display: none;
+}
+
+:is(.bookmark-topic, .entry-fold) summary::before {
+  content: '▸';
+  flex: none;
+  font-size: 0.85rem;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+  transition: transform 0.2s ease;
+}
+
+.bookmark-topic[open] summary {
+  margin-bottom: 0.3rem;
+}
+
+.entry-fold[open] summary {
+  margin-bottom: 0.6rem;
+}
+
+:is(.bookmark-topic, .entry-fold)[open] summary::before {
+  transform: rotate(90deg);
+}
+
 .bookmark-topic h3 {
   font-family: var(--font-heading);
   font-size: 1.05rem;
   font-weight: 700;
-  margin: 0 0 0.3rem;
+  margin: 0;
+}
+
+.entry-fold .subhead {
+  margin: 0;
+}
+
+:is(.bookmark-topic, .entry-fold) summary:hover :is(h2, h3) {
+  color: var(--stamp);
+}
+
+.fold-count {
+  font-size: 0.85rem;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+}
+
+/* "Open all" / "Close all": a quiet text link (a button underneath). */
+.toggle-all {
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.toggle-all:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Newsletters: the toggle sits above the two lists, at the right. */
+.fold-tools {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 2.25rem;
+}
+
+.fold-tools + .subsection {
+  margin-top: 0.4rem;
+}
+
+.entry-fold + .entry-fold {
+  margin-top: 1.25rem;
+}
+
+/* Bookmarks: the toggle on the heading's line, at the right. */
+.fold-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.6rem;
+}
+
+.fold-heading .subhead {
+  margin: 0;
+}
+
+/* The bookmarks' contents line: every topic with its count, wrapping. */
+.topic-index {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 1.1rem;
+  margin: 0.6rem 0 0.4rem;
+  padding: 0;
+  list-style: none;
+  font-size: 0.95rem;
+}
+
+.topic-index a {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: rgba(var(--charcoal-rgb), 0.25);
+  text-underline-offset: 3px;
+}
+
+.topic-index a:hover {
+  color: var(--stamp);
+  text-decoration-color: currentColor;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :is(.bookmark-topic, .entry-fold) summary::before {
+    transition: none;
+  }
 }
 
 /* Body art: a photo beside its story; stacked on phones. */
@@ -2558,101 +3124,6 @@ mark {
   line-height: 1.3;
   color: var(--ink);
   margin: 0 0 0.6rem;
-}
-
-/* ---------- Contents index (About) ----------
-   The nav comes after the first section in the DOM: on phones it reads as
-   a contents list under the intro; from 960px the grid lifts it into a
-   sticky rail spanning every section. */
-
-.with-index .section {
-  scroll-margin-top: 1.5rem;
-}
-
-.page-index {
-  padding: 1rem 0 1.25rem;
-  border-top: 1px solid rgba(var(--charcoal-rgb), 0.2);
-}
-
-.page-index-label {
-  display: block;
-  font-family: var(--font-label);
-  font-size: var(--step--2);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--ledger);
-  margin-bottom: 0.5rem;
-}
-
-.page-index ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem 1.25rem;
-}
-
-.page-index a {
-  font-size: 0.98rem;
-  color: var(--charcoal);
-  text-decoration: none;
-}
-
-.page-index a:hover {
-  color: var(--stamp);
-}
-
-.page-index a.is-active {
-  color: var(--ink);
-  font-weight: 700;
-}
-
-@media (min-width: 960px) {
-  .with-index {
-    display: grid;
-    grid-template-columns: 10.5rem minmax(0, 1fr);
-    column-gap: 3rem;
-  }
-
-  .with-index > .section {
-    grid-column: 2;
-  }
-
-  /* Spans all five section rows so sticky has room to travel. */
-  .with-index > .page-index {
-    grid-column: 1;
-    grid-row: 1 / span 5;
-    align-self: start;
-    position: sticky;
-    top: 1.5rem;
-    margin-top: 3rem;
-    padding: 0 0 0 0.9rem;
-    border-top: none;
-    border-left: 1px solid rgba(var(--charcoal-rgb), 0.25);
-  }
-
-  .with-index > .page-index ul {
-    flex-direction: column;
-    gap: 0.55rem;
-  }
-
-  /* A stamp-coloured tick on the rule marks where you are. */
-  .with-index > .page-index a {
-    position: relative;
-    display: block;
-    font-size: 0.95rem;
-  }
-
-  .with-index > .page-index a.is-active::before {
-    content: '';
-    position: absolute;
-    left: calc(-0.9rem - 1px);
-    top: 0.15em;
-    bottom: 0.15em;
-    width: 3px;
-    background: var(--stamp);
-  }
 }
 
 /* Status, stamped: ACTIVE / ARCHIVED, UPCOMING / PAST. */

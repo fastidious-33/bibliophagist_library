@@ -20,7 +20,7 @@ import { useDoorOpening } from '@/hooks/useDoorOpening';
  *
  * Click: the book tips, the door pops back as the catch releases, then
  * slides left behind the left bay, and the room behind (`children`,
- * usually <DoorInside>) draws you in. Held 2.2s; always shut at rest with
+ * usually <DoorInside>) draws you in. Held 2.7s; always shut at rest with
  * a mouse. The look and motion are in globals.css (.bookshelf-wall*).
  */
 export default function BookshelfWall({
@@ -34,7 +34,17 @@ export default function BookshelfWall({
   blurb: string;
   children: ReactNode;
 }) {
-  const { ref, onClick } = useDoorOpening(href, { holdMs: 2200, desktopRest: 'shut' });
+  const { ref, onClick } = useDoorOpening(href, { holdMs: 2700, desktopRest: 'shut' });
+
+  /** A puck light (or its cone of light) under each of the three shelves —
+      the top of the case, the upper shelf, the lower shelf — in one bay. */
+  const lights = (bay: 'left' | 'right' | 'door', part: 'puck' | 'glow') =>
+    (['top', 'mid', 'low'] as const).map((level) => (
+      <span
+        key={`${part}-${bay}-${level}`}
+        className={`bookshelf-wall-${part} bookshelf-wall-${part}--${bay} bookshelf-wall-${part}--${level}`}
+      />
+    ));
 
   return (
     <Link href={href} ref={ref} onClick={onClick} className="bookshelf-wall">
@@ -45,6 +55,9 @@ export default function BookshelfWall({
             <span className="bookshelf-wall-card">{title}</span>
           </span>
           <span className="bookshelf-wall-face" aria-hidden="true">
+            {/* The outer bays' light cones (dark theme only), one per shelf. */}
+            {lights('left', 'glow')}
+            {lights('right', 'glow')}
             <span className="bookshelf-wall-room">{children}</span>
             <span className="bookshelf-wall-door">
               <span className="bookshelf-wall-gap" />
@@ -54,6 +67,10 @@ export default function BookshelfWall({
               <span className="bookshelf-wall-board bookshelf-wall-board--1" />
               <span className="bookshelf-wall-board bookshelf-wall-board--2" />
               <span className="bookshelf-wall-board bookshelf-wall-board--bottom" />
+              {/* The door's own lights, fixed to its shelves: they slide
+                  away with it, as fittings on a real secret door would. */}
+              {lights('door', 'glow')}
+              {lights('door', 'puck')}
             </span>
             <span className="bookshelf-wall-bay bookshelf-wall-bay--left">
               <span className="bookshelf-wall-shading" />
@@ -73,6 +90,10 @@ export default function BookshelfWall({
             <span className="bookshelf-wall-stile bookshelf-wall-stile--right" />
             <span className="bookshelf-wall-end bookshelf-wall-end--left" />
             <span className="bookshelf-wall-end bookshelf-wall-end--right" />
+            {/* Small round brass puck lights under every shelf of the outer
+                bays (the door has its own). */}
+            {lights('left', 'puck')}
+            {lights('right', 'puck')}
           </span>
           <span className="bookshelf-wall-plinth" aria-hidden="true" />
         </span>

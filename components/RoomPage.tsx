@@ -79,16 +79,29 @@ export function EntryList({ entries }: { entries: Entry[] }) {
   );
 }
 
-/** Headed groups of entries, each its own subsection. */
-export function EntryGroups({ groups }: { groups: EntryGroup[] }) {
+/**
+ * Headed groups of entries, each its own subsection. `collapsible`: each
+ * starts closed and opens from its heading, which shows the link count.
+ */
+export function EntryGroups({ groups, collapsible = false }: { groups: EntryGroup[]; collapsible?: boolean }) {
   return (
     <>
-      {groups.map((g) => (
-        <section key={g.heading} className="subsection">
-          <h2 className="subhead">{g.heading}</h2>
-          <EntryList entries={g.entries} />
-        </section>
-      ))}
+      {groups.map((g) =>
+        collapsible ? (
+          <details key={g.heading} className="subsection entry-fold">
+            <summary>
+              <h2 className="subhead">{g.heading}</h2>
+              <span className="fold-count">{g.entries.length}</span>
+            </summary>
+            <EntryList entries={g.entries} />
+          </details>
+        ) : (
+          <section key={g.heading} className="subsection">
+            <h2 className="subhead">{g.heading}</h2>
+            <EntryList entries={g.entries} />
+          </section>
+        ),
+      )}
     </>
   );
 }

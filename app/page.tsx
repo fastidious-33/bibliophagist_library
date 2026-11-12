@@ -60,7 +60,7 @@ export default async function HomePage() {
         </h2>
         <div className="doors">
           <BookshelfWall href="/catalog" title="The Catalog" blurb="Every book on the shelves, searchable.">
-            <DoorInside slot="wardrobeInside" sizes={DOOR_SIZES} />
+            <DoorInside slot="catalogDoorInside" sizes={DOOR_SIZES} />
           </BookshelfWall>
           <CastleDoor
             href="/librarian"

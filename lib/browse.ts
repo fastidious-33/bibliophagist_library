@@ -36,7 +36,7 @@ export const BROWSE_LINKS: BrowseLink[] = [
     href: `/catalog?${new URLSearchParams({ tags: LIBRARIANS_PICK_TAG })}`,
     title: 'Librarian’s Picks',
     blurb: 'The books I’d hand you first.',
-    slot: 'doorCatalog',
+    slot: 'browsePicks',
   },
   {
     href: '/ledger',
