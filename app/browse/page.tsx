@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
-import Painting from '@/components/Painting';
+import PaintedCard from '@/components/PaintedCard';
 import { BROWSE_LINKS } from '@/lib/browse';
 
 export const metadata: Metadata = {
@@ -19,11 +18,7 @@ export default function BrowsePage() {
       <ul className="rooms">
         {BROWSE_LINKS.map((link) => (
           <li key={link.href}>
-            <Link href={link.href} className="door">
-              <Painting slot={link.slot} sizes="(max-width: 760px) 100vw, 340px" decorative showLabel={false} />
-              <span className="door-title">{link.title}</span>
-              <span className="door-blurb">{link.blurb}</span>
-            </Link>
+            <PaintedCard href={link.href} title={link.title} blurb={link.blurb} slot={link.slot} />
           </li>
         ))}
       </ul>

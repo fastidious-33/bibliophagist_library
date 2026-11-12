@@ -11,5 +11,5 @@ export const REQUEST_FORM_URL: string = '';
 export const CONTACT = {
   substack: 'https://abibliophagist.substack.com/',
   instagram: 'https://www.instagram.com/a.bibliophagist/',
-  email: 'testemail@gmail.com',
+  email: 'rajwadeaditya@gmail.com',
 };

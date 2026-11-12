@@ -2,6 +2,11 @@ import Link from 'next/link';
 import { getBooksPreview, getBookCount, getLibrariansPicks } from '@/lib/sanity';
 import BookCard from '@/components/BookCard';
 import Painting from '@/components/Painting';
+import BookshelfWall from '@/components/BookshelfWall';
+import CastleDoor from '@/components/CastleDoor';
+import DoorInside from '@/components/DoorInside';
+
+const DOOR_SIZES = '(max-width: 760px) 300px, 340px';
 
 // Revalidate this page at most every 60 seconds so new/updated Sanity
 // books show up on the live site without needing a redeploy.
@@ -22,7 +27,7 @@ export default async function HomePage() {
   return (
     <>
       <section className="vision">
-        <Painting slot="homeHero" className="vision-painting" priority />
+        <Painting slot="homeHero" className="vision-painting" priority emptyFrame />
 
         <div className="vision-copy">
           <h1 className="vision-title">Home of a Bibliophagist</h1>
@@ -49,17 +54,22 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="section doors" aria-label="Where to go next">
-        <Link href="/catalog" className="door">
-          <Painting slot="doorCatalog" sizes="(max-width: 760px) 100vw, 520px" decorative />
-          <span className="door-title">Enter the catalog</span>
-          <span className="door-blurb">Every book on the shelves, searchable.</span>
-        </Link>
-        <Link href="/librarian" className="door">
-          <Painting slot="doorLibrarian" sizes="(max-width: 760px) 100vw, 520px" decorative />
-          <span className="door-title">Meet the librarian</span>
-          <span className="door-blurb">The reader behind the shelves: writings, features, saved reading.</span>
-        </Link>
+      <section className="section doors-room" aria-labelledby="doors-heading">
+        <h2 id="doors-heading" className="doors-heading">
+          Which way in?
+        </h2>
+        <div className="doors">
+          <BookshelfWall href="/catalog" title="The Catalog" blurb="Every book on the shelves, searchable.">
+            <DoorInside slot="wardrobeInside" sizes={DOOR_SIZES} />
+          </BookshelfWall>
+          <CastleDoor
+            href="/librarian"
+            title="The Librarian"
+            blurb="The reader behind the shelves: writings, features, saved reading."
+          >
+            <DoorInside slot="castleInside" sizes={DOOR_SIZES} />
+          </CastleDoor>
+        </div>
       </section>
 
       {deskBooks.length > 0 && (

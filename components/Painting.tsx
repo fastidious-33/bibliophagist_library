@@ -3,8 +3,9 @@ import { PAINTINGS, type Painting as PaintingData, type PaintingSlot } from '@/l
 
 /**
  * A framed painting with a museum label underneath (title, artist, year).
- * An empty slot in lib/paintings.ts renders the bare frame instead, so pages
- * can be laid out before the paintings are chosen.
+ * An empty slot in lib/paintings.ts renders nothing, so a page shows no
+ * placeholder until a painting is hung, unless `emptyFrame` asks for the
+ * bare cross-hatched frame (the home page, laid out around its paintings).
  */
 export default function Painting({
   slot,
@@ -14,7 +15,10 @@ export default function Painting({
   decorative = false,
   override,
   showLabel = true,
+  emptyFrame = false,
 }: {
+  /** Show the bare placeholder frame when the slot is empty. */
+  emptyFrame?: boolean;
   /** False for thumbnails (e.g. genre cards), where a label per card is clutter. */
   showLabel?: boolean;
   slot: PaintingSlot;
@@ -29,6 +33,7 @@ export default function Painting({
   decorative?: boolean;
 }) {
   const painting = override ?? PAINTINGS[slot];
+  if (!painting && !emptyFrame) return null;
 
   return (
     <figure className={`painting${className ? ` ${className}` : ''}`} aria-hidden={decorative || undefined}>

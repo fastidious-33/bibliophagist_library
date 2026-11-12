@@ -6,7 +6,6 @@ import Painting from '@/components/Painting';
 import RandomBookLink from '@/components/RandomBookLink';
 import { searchBooks, FILTER_KEYS } from '@/lib/search';
 import { getGenres, type Genre } from '@/lib/genres';
-import { GENRE_CONTENT, defaultPaintingSlot } from '@/lib/genres/content';
 
 export const metadata: Metadata = {
   title: 'Catalog',
@@ -104,13 +103,6 @@ export default async function CatalogPage({
                     className={`genre-card${isActive ? ' is-active' : ''}`}
                     aria-current={isActive ? 'true' : undefined}
                   >
-                    <Painting
-                      slot={defaultPaintingSlot(g.stamps)}
-                      override={GENRE_CONTENT[g.tag]?.painting}
-                      sizes="180px"
-                      decorative
-                      showLabel={false}
-                    />
                     <span className="genre-card-name">{g.tag}</span>
                     <span className="genre-card-count">
                       {g.count} {g.count === 1 ? 'book' : 'books'}

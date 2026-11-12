@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
-import Link from 'next/link';
 import Painting from '@/components/Painting';
+import PaintedCard from '@/components/PaintedCard';
 import { CONTACT } from '@/lib/site';
 import { LIBRARIAN_BIO, LIBRARIAN_NAME, LIBRARIAN_PHOTO, ROOMS } from '@/lib/librarian';
 
@@ -59,11 +59,7 @@ export default function LibrarianPage() {
         <ul className="rooms">
           {ROOMS.map((room) => (
             <li key={room.href}>
-              <Link href={room.href} className="door">
-                <Painting slot={room.slot} sizes="(max-width: 760px) 100vw, 340px" decorative showLabel={false} />
-                <span className="door-title">{room.title}</span>
-                <span className="door-blurb">{room.blurb}</span>
-              </Link>
+              <PaintedCard href={room.href} title={room.title} blurb={room.blurb} slot={room.slot} />
             </li>
           ))}
         </ul>
