@@ -1,16 +1,21 @@
 import type { Metadata } from 'next';
 import RoomPage, { EntryGroups } from '@/components/RoomPage';
-import { WRITINGS, WRITINGS_INTRO } from '@/lib/librarian';
+import { filledGroups, getRoom } from '@/lib/sanity/content';
 
 export const metadata: Metadata = {
   title: 'Writings',
   description: 'Book reviews, poetry and city guides by the librarian.',
 };
 
-export default function WritingsPage() {
+// Content from Sanity; the webhook refreshes it on publish.
+export const revalidate = 3600;
+
+export default async function WritingsPage() {
+  const room = await getRoom('writings');
+  const groups = filledGroups(room);
   return (
-    <RoomPage title="Writings" slot="librarianWritings" intro={WRITINGS_INTRO}>
-      <EntryGroups groups={WRITINGS} />
+    <RoomPage title="Writings" slot="librarianWritings" intro={room?.intro ?? []}>
+      {groups.length > 0 ? <EntryGroups groups={groups} /> : <p className="room-empty">Writings to come.</p>}
     </RoomPage>
   );
 }

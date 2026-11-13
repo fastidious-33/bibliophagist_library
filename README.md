@@ -104,6 +104,11 @@ understanding the project:
   your own edits may take longer than a minute to show up.
 - Book detail pages are prerendered at build time via
   `generateStaticParams`, and new ones render on demand.
+- The Librarian rooms (Writings, Featured, Saved, Music) cache their Sanity
+  content under the `content` tag for an hour. Publishing a heading,
+  subheading or entry refreshes them through the webhook. If Sanity can't be
+  reached, a room shows an honest "… to come." line; there is no hardcoded
+  fallback.
 
 ---
 
@@ -121,10 +126,11 @@ understanding the project:
 | `/borrow` | How to borrow, the rules, the rights of the reader |
 | `/ledger` | What the catalog is made of — tags, authors, decades, ratings |
 | `/librarian` | The librarian: portrait, bio, and the rooms below |
-| `/librarian/writings`, `/featured`, `/saved`, `/body-art`, `/music` | The rooms. Content hardcoded in `lib/librarian.ts` until M2 |
+| `/librarian/writings`, `/featured`, `/saved`, `/music` | The rooms. Lists and intros from Sanity (Heading → Subheading → Entry, `lib/sanity/content.ts`) |
+| `/librarian/body-art` | Body art. Text and photos hardcoded in `lib/librarian.ts` |
 | `/about` | Permanent redirect to `/librarian` (`next.config.js`) |
 | `/api/books/search` | JSON catalog search (Sanity or Typesense, see above) |
-| `/api/sanity-webhook` | Refreshes the search index on publish/delete (+ Typesense sync when configured) |
+| `/api/sanity-webhook` | On publish/delete: books refresh the search index (+ Typesense sync when configured); room documents refresh the rooms |
 | `/api/health` | Sanity reachability check, hit daily by Vercel Cron |
 
 ---
@@ -230,11 +236,11 @@ In [manage.sanity.io](https://manage.sanity.io) → API → Webhooks:
 
 - **URL:** `https://bibliophagist-library.vercel.app/api/sanity-webhook`
 - **Trigger on:** create, update, delete
-- **Filter:** `_type == "book"`
+- **Filter:** `_type in ["book","heading","subheading","entry"]`
 - **Secret:** same value as `SANITY_WEBHOOK_SECRET` on Vercel
 
 Without the matching secret every call is rejected with a 401, and new or
-edited books only reach catalog search on the hourly revalidate.
+edited books and room entries only show up on the hourly revalidate.
 
 ---
 
@@ -315,8 +321,8 @@ Honest list, so future-you doesn't rediscover these from scratch.
   apply to an existing collection. The boot-time path gets away with this
   because it always starts empty. **This also blocks a "recently added" sort
   option on the catalog**, which would need a new indexed field.
-- **The webhook only refreshes search.** The catalog's search index updates
-  right away; the book's own page and the home page are ISR and can lag by a
-  minute or more.
+- **The webhook refreshes search and the rooms, not book pages.** The
+  catalog's search index and the Librarian rooms update right away; the
+  book's own page and the home page are ISR and can lag by a minute or more.
 - **Substring search.** The Sanity backend matches substrings, so "fiction"
   also finds books tagged "Non-Fiction". Typesense would rank these better.

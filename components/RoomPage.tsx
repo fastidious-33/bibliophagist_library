@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import Link from 'next/link';
 import Painting from '@/components/Painting';
 import type { PaintingSlot } from '@/lib/paintings';
-import type { Entry, EntryGroup } from '@/lib/librarian';
+import type { Entry, EntryGroup } from '@/lib/sanity/content';
 
 /**
  * The shared frame for a room in the Librarian section: title, painting

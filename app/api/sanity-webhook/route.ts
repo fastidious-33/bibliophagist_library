@@ -5,14 +5,23 @@ import { sanityClient, isSanityConfigured } from '@/lib/sanity/client';
 import { typesenseClient, isTypesenseConfigured, BOOKS_COLLECTION_NAME } from '@/lib/typesense/client';
 import { bookToTypesenseDoc } from '@/lib/typesense/transform';
 import { BOOKS_TAG } from '@/lib/search';
+import { CONTENT_TAG } from '@/lib/sanity/content';
 
-// Sanity calls this whenever a book is published or deleted. Two jobs:
+// Sanity calls this whenever a book or a Librarian room document is
+// published or deleted.
 //
+// Room documents (heading, subheading, entry): drop the cached room content
+// (tag `content`, see lib/sanity/content.ts), so the room pages rebuild on
+// their next visit. Nothing else to do.
+//
+// Books, two jobs:
 // 1. Always: drop the cached catalog search index (tag `books`, see
 //    lib/search/sanity.ts) so the next search reloads it from Sanity.
 // 2. When Typesense is running: re-fetch that ONE document and upsert or
 //    delete it in the index — the real-time counterpart to the container's
 //    boot-time rebuild and scripts/sync-typesense.mjs.
+
+const CONTENT_TYPES = ['heading', 'subheading', 'entry'];
 
 const WEBHOOK_SECRET = process.env.SANITY_WEBHOOK_SECRET;
 
@@ -54,10 +63,14 @@ export async function POST(request: NextRequest) {
   if (!_id) {
     return NextResponse.json({ error: 'Missing _id in webhook payload.' }, { status: 400 });
   }
+  if (_type && CONTENT_TYPES.includes(_type)) {
+    revalidateTag(CONTENT_TAG, { expire: 0 });
+    return NextResponse.json({ revalidated: true, tag: CONTENT_TAG, id: _id });
+  }
   if (_type && _type !== 'book') {
     // Defense in depth — the webhook's own filter (configured in Sanity's
-    // dashboard) should already restrict this to book documents.
-    return NextResponse.json({ ignored: true, reason: 'not a book document' });
+    // dashboard) should already restrict this to books and room documents.
+    return NextResponse.json({ ignored: true, reason: 'not a book or room document' });
   }
 
   revalidateTag(BOOKS_TAG, { expire: 0 });
