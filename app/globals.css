@@ -4146,45 +4146,201 @@ a.book-theme-tag:hover {
   height: 320px;
 }
 
-.ledger-chart--tall { height: 460px; }
-.ledger-chart--short { height: 220px; }
+/* Horizontal charts: one row per label, so the box grows with --rows. */
+.ledger-chart--rows {
+  height: calc(var(--rows, 8) * 1.75rem + 2.5rem);
+}
 
 @media (max-width: 640px) {
   .ledger-chart { height: 260px; }
-  .ledger-chart--tall { height: 380px; }
+  .ledger-chart--rows { height: calc(var(--rows, 8) * 1.6rem + 2.5rem); }
 }
 
-/* Keyboard route into the treemap: visually hidden until focus lands on a
-   link inside, then laid out as a plain wrapped list under the chart. */
-.ledger-theme-links {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-  list-style: none;
+/* At a glance: one entry ruled into a ledger. Account-book paper has blue
+   lines across and red rules down the columns; --ledger and --stamp are
+   those two inks, so the ruling follows the theme. */
+.ledger-tallied {
+  margin: 0 0 0.4rem;
+  text-align: right;
+  font-family: var(--font-label);
+  font-size: 0.75rem;
+  font-style: italic;
+  color: var(--ledger);
 }
 
-.ledger-theme-links:focus-within {
-  position: static;
-  width: auto;
-  height: auto;
-  margin: 0.9rem 0 0;
-  overflow: visible;
-  clip-path: none;
-  white-space: normal;
+.ledger-entry {
+  display: grid;
+  /* Equal columns, as on ruled paper. */
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin: 0;
+  padding: 0.85rem 0 0.95rem;
+  /* Double rule above, single rule below. */
+  border-top: 3px double var(--ledger);
+  border-bottom: 1px solid var(--ledger);
+}
+
+.ledger-entry > div {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem 1rem;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-width: 0;
+  padding: 0 clamp(0.4rem, 2.5vw, 1.5rem);
+  border-left: 1px solid rgba(var(--stamp-rgb), 0.55);
 }
 
-.ledger-theme-links a {
+.ledger-entry > div:first-child {
+  padding-left: 0;
+  border-left: 0;
+}
+
+.ledger-entry > div:last-child {
+  padding-right: 0;
+}
+
+.ledger-entry dt {
+  font-family: var(--font-label);
+  font-size: clamp(0.56rem, 1.9vw, 0.72rem);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  line-height: 1.25;
+  color: var(--stamp);
+}
+
+.ledger-entry dd {
+  margin: 0;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: clamp(0.95rem, 4.4vw, var(--step-3));
+  font-variant-numeric: tabular-nums lining-nums;
+  line-height: 1;
+  color: var(--ink);
+}
+
+/* Two blocks side by side on wide screens, stacked on phones. */
+.ledger-pair {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem 3rem;
+}
+
+@media (min-width: 900px) {
+  .ledger-pair {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.ledger-block .ledger-pair {
+  margin-top: 2rem;
+}
+
+.ledger-subhead {
   font-family: var(--font-label);
   font-size: 0.8rem;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ledger);
+  margin: 0 0 0.75rem;
+}
+
+/* Crowd favourites and sceptics: a numbered list of linked titles. */
+.ledger-list {
+  margin: 0;
+  padding-left: 1.4rem;
+}
+
+.ledger-list li {
+  margin-bottom: 0.6rem;
+  line-height: 1.4;
+}
+
+.ledger-list a {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: rgba(var(--charcoal-rgb), var(--rule));
+  text-underline-offset: 0.2em;
+}
+
+.ledger-list a:hover {
   color: var(--stamp);
+  text-decoration-color: currentColor;
+}
+
+.ledger-list-meta {
+  display: block;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+}
+
+/* "Show the numbers": each chart's figures, folded away. */
+.ledger-numbers {
+  margin-top: 0.75rem;
+}
+
+.ledger-numbers summary {
+  cursor: pointer;
+  width: fit-content;
+  font-family: var(--font-label);
+  font-size: 0.78rem;
+  color: var(--stamp);
+}
+
+.ledger-numbers summary:hover {
+  text-decoration: underline;
+}
+
+.ledger-table {
+  margin-top: 0.6rem;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.ledger-table th,
+.ledger-table td {
+  padding: 0.3rem 1.25rem 0.3rem 0;
+  border-bottom: 1px solid rgba(var(--charcoal-rgb), var(--rule));
+  text-align: left;
+  font-weight: 400;
+}
+
+.ledger-table thead th {
+  font-family: var(--font-label);
+  font-size: 0.75rem;
+  color: var(--ledger);
+}
+
+.ledger-table td {
+  text-align: right;
+}
+
+.ledger-table a {
+  color: var(--ink);
+}
+
+.ledger-table a:hover {
+  color: var(--stamp);
+}
+
+/* Firsts and lasts: a label above each book card. */
+.ledger-extreme .eyebrow-label {
+  margin: 0 0 0.6rem;
+}
+
+.ledger-extreme-detail {
+  text-transform: none;
+  letter-spacing: 0.02em;
+  color: var(--ledger);
+}
+
+/* One-line notes on what a chart leaves out. */
+.ledger-footnote {
+  margin: 0.75rem 0 0;
+  max-width: 62ch;
+  font-size: 0.82rem;
+  font-style: italic;
+  color: rgba(var(--charcoal-rgb), var(--dim));
 }
 
 /* ---------- Shared utilities ---------- */

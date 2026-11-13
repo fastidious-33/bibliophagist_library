@@ -1,7 +1,7 @@
 import { unstable_cache } from 'next/cache';
 import { sanityClient, isSanityConfigured } from '@/lib/sanity/client';
 import { PLACEHOLDER_BOOKS } from '@/lib/sanity/placeholder-books';
-import { BAND_BY_ID, YEAR_BANDS, bandForYear } from './catalog-facets';
+import { BAND_BY_ID, YEAR_BANDS, bandForYear, cleanSeries } from './catalog-facets';
 import {
   PAGE_SIZE,
   FACET_FIELDS,
@@ -21,7 +21,9 @@ import {
  * once, keeps it in Next's Data Cache under the `books` tag, and does the
  * text match, filters, facet counts, sorting and paging in memory. The
  * Sanity webhook (app/api/sanity-webhook) revalidates the tag on every
- * publish or delete; the hourly revalidate is only a safety net.
+ * publish or delete; the daily revalidate is only a safety net.
+ *
+ * The same cached list feeds /ledger (getAllBooks below).
  */
 
 export const BOOKS_TAG = 'books';
@@ -32,8 +34,11 @@ const INDEX_QUERY = `*[_type == "book" && defined(slug.current)]{
   title,
   author,
   tags,
+  series,
   rating,
+  pages,
   publishingDate,
+  originalPublicationYear,
   "slug": slug.current,
   coverUrl
 }`;
@@ -44,8 +49,11 @@ interface RawBook {
   title?: string;
   author?: string;
   tags?: unknown;
+  series?: unknown;
   rating?: number;
+  pages?: number;
   publishingDate?: string;
+  originalPublicationYear?: string | number;
   slug?: string;
   coverUrl?: string;
 }
@@ -56,9 +64,10 @@ function toArray(value: unknown): string[] {
   return [];
 }
 
-function parseYear(publishingDate?: string): number | undefined {
-  if (!publishingDate) return undefined;
-  const y = String(publishingDate).slice(0, 4);
+/** The first 4 characters as a year ("1966", "1966-01-01"), else undefined. */
+function parseYear(value?: string | number): number | undefined {
+  if (value === undefined || value === null || value === '') return undefined;
+  const y = String(value).slice(0, 4);
   return /^\d{4}$/.test(y) ? Number(y) : undefined;
 }
 
@@ -73,9 +82,14 @@ function toSearchBook(raw: RawBook): SearchBook | null {
     coverUrl: raw.coverUrl || '',
   };
   if (raw.bookId) book.bookId = raw.bookId;
+  const series = cleanSeries(raw.series);
+  if (series) book.series = series;
   const year = parseYear(raw.publishingDate);
   if (year !== undefined) book.publishingYear = year;
+  const originalYear = parseYear(raw.originalPublicationYear);
+  if (originalYear !== undefined) book.originalYear = originalYear;
   if (typeof raw.rating === 'number') book.rating = raw.rating;
+  if (typeof raw.pages === 'number' && raw.pages > 0) book.pages = raw.pages;
   return book;
 }
 
@@ -89,7 +103,7 @@ const loadIndex = unstable_cache(
     return (raw || []).map(toSearchBook).filter((b): b is SearchBook => b !== null);
   },
   ['books-search-index'],
-  { tags: [BOOKS_TAG], revalidate: 3600 }
+  { tags: [BOOKS_TAG], revalidate: 86400 }
 );
 
 async function getIndex(): Promise<SearchBook[]> {
@@ -97,6 +111,15 @@ async function getIndex(): Promise<SearchBook[]> {
     return PLACEHOLDER_BOOKS.map(toSearchBook).filter((b): b is SearchBook => b !== null);
   }
   return loadIndex();
+}
+
+/**
+ * Every book in the catalog (with a slug), from the same cached list the
+ * search uses. For /ledger, which needs the whole collection rather than a
+ * page of results. Throws if Sanity can't be reached.
+ */
+export async function getAllBooks(): Promise<SearchBook[]> {
+  return getIndex();
 }
 
 // ---------------------------------------------------------------------------
@@ -167,12 +190,19 @@ function scoreBook(book: SearchBook, tokens: string[]): Scored | null {
 
 interface Filters {
   tags: Set<string>;
+  series: Set<string>;
   bands: string[];
 }
 
 function readFilters(searchParams: URLSearchParams): Filters {
   return {
     tags: new Set(searchParams.getAll('tags')),
+    series: new Set(
+      searchParams
+        .getAll('series')
+        .map(cleanSeries)
+        .filter((s): s is string => s !== undefined)
+    ),
     bands: searchParams.getAll('band').filter((id) => BAND_BY_ID.has(id)),
   };
 }
@@ -180,6 +210,10 @@ function readFilters(searchParams: URLSearchParams): Filters {
 /** Within a field the selected values are OR'd; across fields, AND'd. */
 function passesTags(book: SearchBook, f: Filters): boolean {
   return f.tags.size === 0 || book.tags.some((t) => f.tags.has(t));
+}
+
+function passesSeries(book: SearchBook, f: Filters): boolean {
+  return f.series.size === 0 || (book.series !== undefined && f.series.has(book.series));
 }
 
 function passesBands(book: SearchBook, f: Filters): boolean {
@@ -274,7 +308,9 @@ export async function searchBooksInSanity(
       ? index.map((book) => ({ book, score: 0, matched: undefined }))
       : index.map((book) => scoreBook(book, tokens)).filter((s): s is Scored => s !== null);
 
-  const results = queried.filter((s) => passesTags(s.book, filters) && passesBands(s.book, filters));
+  const results = queried.filter(
+    (s) => passesTags(s.book, filters) && passesSeries(s.book, filters) && passesBands(s.book, filters)
+  );
   sortResults(results, searchParams.get('sort') || 'relevance', tokens.length > 0);
 
   const found = results.length;
@@ -288,10 +324,18 @@ export async function searchBooksInSanity(
   // Disjunctive options: each filter's list ignores its own selection.
   const options = {
     tags: facetValues(
-      queried.filter((s) => passesBands(s.book, filters)).map((s) => s.book),
+      queried.filter((s) => passesSeries(s.book, filters) && passesBands(s.book, filters)).map((s) => s.book),
       'tags'
     ).map((f) => f.value),
-    bands: bandsPresent(queried.filter((s) => passesTags(s.book, filters)).map((s) => s.book)),
+    series: countValues(
+      queried
+        .filter((s) => passesTags(s.book, filters) && passesBands(s.book, filters))
+        .map((s) => s.book.series)
+        .filter((s): s is string => s !== undefined)
+    ).map((f) => f.value),
+    bands: bandsPresent(
+      queried.filter((s) => passesTags(s.book, filters) && passesSeries(s.book, filters)).map((s) => s.book)
+    ),
   };
 
   const resultBooks = results.map((s) => s.book);

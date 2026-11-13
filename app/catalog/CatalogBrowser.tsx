@@ -124,6 +124,7 @@ export default function CatalogBrowser({ initialData }: { initialData: BooksSear
   const tagOptions: FilterOption[] = [...data.options.tags]
     .sort((a, b) => Number(b === LIBRARIANS_PICK_TAG) - Number(a === LIBRARIANS_PICK_TAG))
     .map((v) => ({ value: v, label: v }));
+  const seriesOptions: FilterOption[] = data.options.series.map((v) => ({ value: v, label: v }));
   const bandOptions: FilterOption[] = YEAR_BANDS.filter((b) =>
     data.options.bands.includes(b.id)
   ).map((b) => ({ value: b.id, label: b.label }));
@@ -159,6 +160,15 @@ export default function CatalogBrowser({ initialData }: { initialData: BooksSear
           options={tagOptions}
           selected={state.tags}
           onChange={(next) => setMulti('tags', next)}
+        />
+
+        <MultiSelectFilter
+          label="Series"
+          searchable={false}
+          typeahead
+          options={seriesOptions}
+          selected={state.series}
+          onChange={(next) => setMulti('series', next)}
         />
 
         <MultiSelectFilter

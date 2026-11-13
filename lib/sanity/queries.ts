@@ -30,6 +30,7 @@ const BOOK_BY_SLUG_QUERY = `*[_type == "book" && slug.current == $slug][0]{
   title,
   "slug": slug.current,
   author,
+  series,
   tags,
   rating,
   publishingDate,
@@ -217,25 +218,4 @@ export async function getBookSlugAt(offset: number): Promise<string | undefined>
     offset,
   });
   return result?.slug;
-}
-
-const RATING_VALUES_QUERY = `*[_type == "book" && defined(rating)].rating`;
-
-/**
- * Just the numbers — a projection down to a bare array of floats, not full
- * documents. Used only by /ledger for the ratings histogram.
- */
-export async function getRatingValues(): Promise<number[]> {
-  if (!isSanityConfigured || !sanityClient) {
-    return PLACEHOLDER_BOOKS.map((b) => b.rating).filter(
-      (r): r is number => typeof r === 'number'
-    );
-  }
-  try {
-    const values = await sanityClient.fetch<number[]>(RATING_VALUES_QUERY);
-    return Array.isArray(values) ? values : [];
-  } catch (err) {
-    console.error('Sanity fetch failed for getRatingValues:', err);
-    return [];
-  }
 }

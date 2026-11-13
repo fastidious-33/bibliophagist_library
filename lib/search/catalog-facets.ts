@@ -50,9 +50,21 @@ export interface SortOption {
  */
 export const SORT_OPTIONS: SortOption[] = [
   { id: 'relevance', label: 'Best match' },
-  { id: 'rating', label: 'Highest rated' },
+  { id: 'rating', label: 'Highest rated on Goodreads' },
   { id: 'newest', label: 'Newest first' },
   { id: 'oldest', label: 'Oldest first' },
 ];
 
 export const SORT_BY_ID = new Map(SORT_OPTIONS.map((s) => [s.id, s]));
+
+/**
+ * A series name as the catalog filters on it: inner whitespace collapsed,
+ * stray spaces and trailing commas trimmed ("Poirot ," → "Poirot").
+ * Undefined when nothing is left. The filter and the book page's series
+ * link both use it, so the link always matches a filter option.
+ */
+export function cleanSeries(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const cleaned = value.replace(/\s+/g, ' ').replace(/[\s,]+$/, '').trim();
+  return cleaned || undefined;
+}

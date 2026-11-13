@@ -15,8 +15,16 @@ export interface SearchBook {
   title: string;
   author: string;
   tags: string[];
+  /** Series name, tidied by cleanSeries(). */
+  series?: string;
+  /** Year of the edition on the shelf. */
   publishingYear?: number;
+  /** Year the book first appeared. */
+  originalYear?: number;
+  /** Goodreads community average, 0–5. */
   rating?: number;
+  /** Page count of the copy on the shelf. */
+  pages?: number;
   slug: string;
   coverUrl: string;
 }
@@ -43,6 +51,7 @@ export interface BooksSearchResponse {
    */
   options: {
     tags: string[];
+    series: string[];
     /** Band ids with at least one book under the other active filters. */
     bands: string[];
   };
@@ -59,10 +68,10 @@ export const EMPTY_RESPONSE = (page: number): BooksSearchResponse => ({
   found: 0,
   page,
   totalPages: 1,
-  options: { tags: [], bands: [] },
+  options: { tags: [], series: [], bands: [] },
   facets: { tags: [], author: [], publishingYear: [] },
 });
 
 /** URL keys the catalog filters on (multi-valued). */
-export const FILTER_KEYS = ['tags', 'band'] as const;
+export const FILTER_KEYS = ['tags', 'series', 'band'] as const;
 export type FilterKey = (typeof FILTER_KEYS)[number];

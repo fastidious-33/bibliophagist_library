@@ -7,6 +7,7 @@ import { FILTER_KEYS, type FilterKey } from '@/lib/search/types';
 export interface CatalogState {
   q: string;
   tags: string[];
+  series: string[];
   band: string[];
   sort: string;
   page: number;
@@ -46,6 +47,7 @@ export function useCatalogUrl() {
     return {
       q: sp.get('q') || '',
       tags: sp.getAll('tags'),
+      series: sp.getAll('series'),
       band: sp.getAll('band'),
       sort: sp.get('sort') || 'relevance',
       page: Math.max(1, Number(sp.get('page')) || 1),
@@ -128,7 +130,8 @@ export function useCatalogUrl() {
     }, 'replace');
   }, [write]);
 
-  const hasActiveFilters = state.q !== '' || state.tags.length > 0 || state.band.length > 0;
+  const hasActiveFilters =
+    state.q !== '' || state.tags.length > 0 || state.series.length > 0 || state.band.length > 0;
 
   return { state, search, setPage, setQuery, setMulti, setSort, clearAll, hasActiveFilters };
 }

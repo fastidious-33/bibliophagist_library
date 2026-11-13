@@ -1,125 +1,49 @@
 'use client';
 
+import type { CSSProperties, ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Chart as ChartJS, BarController, BarElement, CategoryScale, LinearScale, Tooltip } from 'chart.js';
-import { TreemapController, TreemapElement } from 'chartjs-chart-treemap';
+import {
+  Chart as ChartJS,
+  BarController,
+  BarElement,
+  CategoryScale,
+  LineController,
+  LineElement,
+  LinearScale,
+  PointElement,
+  Tooltip,
+  type ChartData,
+  type ChartOptions,
+} from 'chart.js';
 import { Chart } from 'react-chartjs-2';
-import { useThemeColors } from '@/hooks/useThemeColors';
+import { useThemeColors, type ThemeColors } from '@/hooks/useThemeColors';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import type { Column, GenreRating, Ranked, Spread } from '@/lib/ledger';
 
 ChartJS.register(
   BarController,
   BarElement,
   CategoryScale,
+  LineController,
+  LineElement,
   LinearScale,
-  Tooltip,
-  TreemapController,
-  TreemapElement
+  PointElement,
+  Tooltip
 );
 
-/**
- * A type alias rather than an interface, deliberately: the treemap plugin
- * types `tree` as Record<string, unknown>[], and TypeScript only gives
- * implicit index signatures to type aliases. An interface with identical
- * fields fails to assign.
- */
-export type Counted = {
-  label: string;
-  count: number;
-};
-
-/**
- * The plugin wraps each row as { _data: <your object> } and types it as
- * AnyObject, so narrow it here rather than annotating callback parameters —
- * annotating those would override Chart.js's own contextual typing.
- */
-function datum(raw: unknown): Counted | undefined {
-  const d = (raw as { _data?: unknown } | undefined)?._data;
-  if (d && typeof d === 'object' && 'label' in d && 'count' in d) {
-    return d as Counted;
-  }
-  return undefined;
-}
-
-// Labels are set in Gambetta, a proportional serif, so a character's width
-// varies. 0.5em is its rough average, close enough to wrap treemap labels
-// where they actually run out of room.
 const LABEL_SIZE = 11;
-const AVG_CHAR_WIDTH = 0.5 * LABEL_SIZE;
 
-// One fill strength for every bar chart, so no chart looks more
-// important than another by accident.
+// One fill strength for every bar chart, so no chart looks more important
+// than another by accident.
 const BAR_ALPHA = 0.65;
 
-/** Greedy word wrap into lines of at most `max` characters. */
-function wrap(text: string, max: number): string[] {
-  const words = text.split(/\s+/);
-  const lines: string[] = [];
-  let line = '';
-
-  for (const word of words) {
-    if (!line) {
-      line = word;
-    } else if (line.length + 1 + word.length <= max) {
-      line += ` ${word}`;
-    } else {
-      lines.push(line);
-      line = word;
-    }
-  }
-  if (line) lines.push(line);
-
-  // Small tiles can't show four lines of text — cap it.
-  return lines.slice(0, 3);
-}
-
-/**
- * The chart's numbers as a table, for screen readers. The canvas itself is
- * aria-hidden — it's pixels, so without this the figures don't exist for
- * anyone not looking at it.
- */
-function ChartData({ caption, column, rows }: { caption: string; column: string; rows: Counted[] }) {
-  return (
-    <table className="visually-hidden">
-      <caption>{caption}</caption>
-      <thead>
-        <tr>
-          <th scope="col">{column}</th>
-          <th scope="col">Books</th>
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((row) => (
-          <tr key={row.label}>
-            <th scope="row">{row.label}</th>
-            <td>{row.count}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
-}
-
-export default function LedgerCharts({
-  tags,
-  authors,
-  decades,
-  ratings,
-}: {
-  tags: Counted[];
-  authors: Counted[];
-  decades: Counted[];
-  ratings: Counted[];
-}) {
+/** Shared look: theme colours, label font, tooltip, reduced motion. */
+function useChartStyle() {
   const c = useThemeColors();
-  const router = useRouter();
-  // `false` switches Chart.js animation off; `undefined` keeps its default.
   const animation = usePrefersReducedMotion() ? (false as const) : undefined;
-
   const grid = `rgba(${c.charcoalRgb}, 0.15)`;
   const font = { family: c.label, size: LABEL_SIZE };
-
   const tooltip = {
     backgroundColor: c.kraft,
     titleColor: c.ink,
@@ -130,197 +54,341 @@ export default function LedgerCharts({
     bodyFont: font,
     displayColors: false,
   };
+  return { c, animation, grid, font, tooltip };
+}
 
-  const barDataset = {
-    backgroundColor: `rgba(${c.stampRgb}, ${BAR_ALPHA})`,
-    borderColor: c.stamp,
-    borderWidth: 1,
-    borderRadius: 2,
+/** A chart box whose height grows with its number of rows (one per label). */
+function rowsStyle(rows: number): CSSProperties {
+  return { '--rows': rows } as CSSProperties;
+}
+
+/** A canvas is pixels: the wrapper speaks a one-line summary instead. */
+function ChartBox({ summary, rows, children }: { summary: string; rows: number; children: ReactNode }) {
+  return (
+    <div className="ledger-chart ledger-chart--rows" style={rowsStyle(rows)} role="img" aria-label={summary}>
+      {children}
+    </div>
+  );
+}
+
+export type NumberRow = { key: string; label: ReactNode; value: string };
+
+/** The chart's figures as a table, folded behind "Show the numbers". */
+export function Numbers({
+  caption,
+  head,
+  rows,
+}: {
+  caption: string;
+  head: [string, string];
+  rows: NumberRow[];
+}) {
+  return (
+    <details className="ledger-numbers">
+      <summary>Show the numbers</summary>
+      <table className="ledger-table">
+        <caption className="visually-hidden">{caption}</caption>
+        <thead>
+          <tr>
+            <th scope="col">{head[0]}</th>
+            <th scope="col">{head[1]}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.key}>
+              <th scope="row">{row.label}</th>
+              <td>{row.value}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </details>
+  );
+}
+
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
+
+/**
+ * Each genre's Goodreads average as a dot on a shared scale, highest first.
+ * The axis starts near 3.5, not 0, so the differences can be seen; the
+ * note above the chart says so.
+ */
+export function GenreRatingDots({ rows, axisMin, axisMax }: { rows: GenreRating[]; axisMin: number; axisMax: number }) {
+  const { c, animation, grid, font, tooltip } = useChartStyle();
+  const top = rows[0];
+  const bottom = rows[rows.length - 1];
+  const summary =
+    top && bottom
+      ? `Goodreads average by genre: highest ${top.tag} at ${top.average.toFixed(2)}, lowest ${bottom.tag} at ${bottom.average.toFixed(2)}.`
+      : 'Goodreads average by genre.';
+
+  return (
+    <>
+      <ChartBox summary={summary} rows={rows.length}>
+        <Chart
+          type="line"
+          data={{
+            labels: rows.map((r) => r.tag),
+            datasets: [
+              {
+                data: rows.map((r) => Number(r.average.toFixed(2))),
+                showLine: false,
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                pointBackgroundColor: c.stamp,
+                pointBorderColor: c.stamp,
+              },
+            ],
+          }}
+          options={{
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            animation,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                ...tooltip,
+                callbacks: {
+                  label: (item) => {
+                    const r = rows[item.dataIndex];
+                    return r ? `${r.average.toFixed(2)} · ${plural(r.rated, 'rated book')}` : '';
+                  },
+                },
+              },
+            },
+            scales: {
+              x: {
+                min: axisMin,
+                max: axisMax,
+                ticks: { color: c.charcoal, font, stepSize: 0.1 },
+                grid: { color: grid },
+              },
+              y: { ticks: { color: c.charcoal, font }, grid: { display: false } },
+            },
+          }}
+        />
+      </ChartBox>
+      <Numbers
+        caption="Goodreads average by genre"
+        head={['Genre', 'Average (rated books)']}
+        rows={rows.map((r) => ({
+          key: r.tag,
+          label: r.tag,
+          value: `${r.average.toFixed(2)} (${r.rated})`,
+        }))}
+      />
+    </>
+  );
+}
+
+/** Horizontal bars, largest first; a bar click opens its catalog view. */
+export function RankedBars({
+  rows,
+  caption,
+  column,
+  summary,
+}: {
+  rows: Ranked[];
+  caption: string;
+  column: string;
+  summary: string;
+}) {
+  const { c, animation, grid, font, tooltip } = useChartStyle();
+  const router = useRouter();
+
+  return (
+    <>
+      <ChartBox summary={summary} rows={rows.length}>
+        <Chart
+          type="bar"
+          data={{
+            labels: rows.map((r) => r.label),
+            datasets: [
+              {
+                data: rows.map((r) => r.count),
+                ...barColours(c),
+              },
+            ],
+          }}
+          options={{
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            animation,
+            onClick: (_e, elements) => {
+              const row = rows[elements[0]?.index ?? -1];
+              if (row) router.push(row.href);
+            },
+            onHover: (e, elements) => {
+              const target = e.native?.target as HTMLElement | undefined;
+              if (target) target.style.cursor = elements.length ? 'pointer' : 'default';
+            },
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                ...tooltip,
+                callbacks: { label: (item) => plural(Number(item.raw), 'book') },
+              },
+            },
+            scales: {
+              x: { beginAtZero: true, ticks: { color: c.charcoal, font, precision: 0 }, grid: { color: grid } },
+              y: { ticks: { color: c.charcoal, font }, grid: { display: false } },
+            },
+          }}
+        />
+      </ChartBox>
+      {/* The keyboard route to what a bar click does: every row links. */}
+      <Numbers
+        caption={caption}
+        head={[column, 'Books']}
+        rows={rows.map((r) => ({
+          key: r.label,
+          label: <Link href={r.href}>{r.label}</Link>,
+          value: String(r.count),
+        }))}
+      />
+    </>
+  );
+}
+
+/** Upright columns in a fixed order (decades, page counts). Not clickable. */
+export function ColumnBars({
+  rows,
+  caption,
+  column,
+  summary,
+}: {
+  rows: Column[];
+  caption: string;
+  column: string;
+  summary: string;
+}) {
+  const { c, animation, grid, font, tooltip } = useChartStyle();
+
+  return (
+    <>
+      <div className="ledger-chart" role="img" aria-label={summary}>
+        <Chart
+          type="bar"
+          data={{
+            labels: rows.map((r) => r.label),
+            datasets: [{ data: rows.map((r) => r.count), ...barColours(c) }],
+          }}
+          options={{
+            responsive: true,
+            maintainAspectRatio: false,
+            animation,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                ...tooltip,
+                callbacks: { label: (item) => plural(Number(item.raw), 'book') },
+              },
+            },
+            scales: {
+              x: { ticks: { color: c.charcoal, font }, grid: { display: false } },
+              y: { beginAtZero: true, ticks: { color: c.charcoal, font, precision: 0 }, grid: { color: grid } },
+            },
+          }}
+        />
+      </div>
+      <Numbers
+        caption={caption}
+        head={[column, 'Books']}
+        rows={rows.map((r) => ({ key: r.label, label: r.label, value: String(r.count) }))}
+      />
+    </>
+  );
+}
+
+/**
+ * A spread per genre: a pale bar across its middle half, an ink dot at the
+ * median, in the order given. `unit` names the values ("pages").
+ */
+export function RangeBars({
+  rows,
+  unit,
+  caption,
+  summary,
+}: {
+  rows: Spread[];
+  unit: string;
+  caption: string;
+  summary: string;
+}) {
+  const { c, animation, grid, font, tooltip } = useChartStyle();
+
+  // A bar layer (the middle half) and a dot layer (the median) in one chart,
+  // so the types are spelled out for both.
+  const data: ChartData<'bar' | 'line', (number | [number, number])[], string> = {
+    labels: rows.map((r) => r.tag),
+    datasets: [
+      {
+        type: 'bar',
+        data: rows.map((r) => [r.q1, r.q3] as [number, number]),
+        minBarLength: 3,
+        ...barColours(c),
+        backgroundColor: `rgba(${c.stampRgb}, 0.3)`,
+      },
+      {
+        type: 'line',
+        data: rows.map((r) => r.median),
+        showLine: false,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        pointBackgroundColor: c.ink,
+        pointBorderColor: c.ink,
+      },
+    ],
   };
 
-  const barOptions = {
+  const options: ChartOptions<'bar' | 'line'> = {
+    indexAxis: 'y',
     responsive: true,
     maintainAspectRatio: false,
     animation,
     plugins: {
       legend: { display: false },
-      tooltip,
-    },
-    scales: {
-      x: { ticks: { color: c.charcoal, font }, grid: { display: false } },
-      y: {
-        beginAtZero: true,
-        ticks: { color: c.charcoal, font, precision: 0 },
-        grid: { color: grid },
+      tooltip: {
+        ...tooltip,
+        callbacks: {
+          label: (item) => {
+            const r = rows[item.dataIndex];
+            if (!r) return '';
+            return item.datasetIndex === 0
+              ? `Middle half: ${r.q1}–${r.q3} ${unit}`
+              : `Median: ${r.median} ${unit}`;
+          },
+        },
       },
     },
-  } as const;
-
-  const maxTag = Math.max(...tags.map((t) => t.count), 1);
-  const tagAlpha = (count: number) => 0.35 + 0.55 * (count / maxTag);
+    scales: {
+      x: { ticks: { color: c.charcoal, font, precision: 0 }, grid: { color: grid } },
+      y: { ticks: { color: c.charcoal, font }, grid: { display: false } },
+    },
+  };
 
   return (
     <>
-      {tags.length > 0 && (
-      <section className="ledger-block">
-        <h2 className="subhead">Tags</h2>
-        <p className="ledger-note">
-          Each tile is a tag; its area is how many books carry it. Click one to
-          open that tag in the catalog.
-        </p>
-        <ChartData caption="Books per tag" column="Tag" rows={tags} />
-        <div className="ledger-chart ledger-chart--tall" aria-hidden="true">
-          <Chart
-            type="treemap"
-            data={{
-              datasets: [
-                {
-                  data: [],
-                  tree: [...tags],
-                  key: 'count',
-                  labels: {
-                    display: true,
-                    // Dense tiles take paper-coloured text, pale ones ink.
-                    // The same rule holds in both themes, because paper and
-                    // ink swap lightness together.
-                    color: (ctx) => {
-                      const d = datum(ctx.raw);
-                      return d && tagAlpha(d.count) > 0.6 ? c.paper : c.ink;
-                    },
-                    font,
-                    // 'hidden' drops the label entirely when it can't fit,
-                    // instead of slicing a word mid-character.
-                    overflow: 'hidden',
-                    formatter: (ctx) => {
-                      const d = datum(ctx.raw);
-                      if (!d) return '';
-                      // ctx.raw carries the laid-out tile, so we can wrap to
-                      // its actual width.
-                      const width = (ctx.raw as { w?: number })?.w ?? 0;
-                      const perLine = Math.max(4, Math.floor((width - 8) / AVG_CHAR_WIDTH));
-                      return wrap(d.label, perLine);
-                    },
-                  },
-                  spacing: 1,
-                  borderWidth: 1,
-                  borderColor: c.paper,
-                  // Single hue, opacity by count — keeps the card-catalog
-                  // palette instead of introducing a rainbow.
-                  backgroundColor: (ctx) => {
-                    const d = datum(ctx.raw);
-                    if (!d) return 'transparent';
-                    return `rgba(${c.stampRgb}, ${tagAlpha(d.count)})`;
-                  },
-                },
-              ],
-            }}
-            options={{
-              responsive: true,
-              maintainAspectRatio: false,
-              animation,
-              onClick: (_e, elements) => {
-                const index = elements[0]?.index;
-                if (index === undefined) return;
-                const tag = tags[index]?.label;
-                if (tag) router.push(`/catalog?tags=${encodeURIComponent(tag)}`);
-              },
-              plugins: {
-                legend: { display: false },
-                tooltip: {
-                  ...tooltip,
-                  callbacks: {
-                    title: (items) => datum(items[0]?.raw)?.label ?? '',
-                    label: (item) => {
-                      const n = datum(item.raw)?.count ?? 0;
-                      return `${n} ${n === 1 ? 'book' : 'books'}`;
-                    },
-                  },
-                },
-              },
-            }}
-          />
-        </div>
-        {/* The keyboard and screen-reader route to what a tile click does.
-            Hidden until tabbed into, then shown as a plain list. */}
-        <ul className="ledger-theme-links" aria-label="Open a tag in the catalog">
-          {tags.map((t) => (
-            <li key={t.label}>
-              <Link href={`/catalog?tags=${encodeURIComponent(t.label)}`}>
-                {t.label} ({t.count})
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </section>
-      )}
-
-      {authors.length > 0 && (
-        <section className="ledger-block">
-          <h2 className="subhead">Most-shelved authors</h2>
-          <ChartData caption="Books per author" column="Author" rows={authors} />
-          <div className="ledger-chart" aria-hidden="true">
-            <Chart
-              type="bar"
-              data={{
-                labels: authors.map((a) => a.label),
-                datasets: [
-                  {
-                    ...barDataset,
-                    data: authors.map((a) => a.count),
-                  },
-                ],
-              }}
-              options={{ ...barOptions, indexAxis: 'y' as const }}
-            />
-          </div>
-        </section>
-      )}
-
-      <section className="ledger-block">
-        <h2 className="subhead">By decade published</h2>
-        <ChartData caption="Books per decade published" column="Decade" rows={decades} />
-        <div className="ledger-chart" aria-hidden="true">
-          <Chart
-            type="bar"
-            data={{
-              labels: decades.map((d) => d.label),
-              datasets: [
-                {
-                  ...barDataset,
-                  data: decades.map((d) => d.count),
-                },
-              ],
-            }}
-            options={barOptions}
-          />
-        </div>
-      </section>
-
-      {ratings.length > 0 && (
-        <section className="ledger-block">
-          <h2 className="subhead">Ratings</h2>
-          <p className="ledger-note">
-            One reader&rsquo;s score at the time of recommending, not a group
-            average — so it leans high by design.
-          </p>
-          <ChartData caption="Books per rating" column="Rating" rows={ratings} />
-          <div className="ledger-chart ledger-chart--short" aria-hidden="true">
-            <Chart
-              type="bar"
-              data={{
-                labels: ratings.map((r) => r.label),
-                datasets: [
-                  {
-                    ...barDataset,
-                    data: ratings.map((r) => r.count),
-                  },
-                ],
-              }}
-              options={barOptions}
-            />
-          </div>
-        </section>
-      )}
+      <ChartBox summary={summary} rows={rows.length}>
+        <Chart type="bar" data={data} options={options} />
+      </ChartBox>
+      <Numbers
+        caption={caption}
+        head={['Genre', `Median ${unit} (middle half)`]}
+        rows={rows.map((r) => ({ key: r.tag, label: r.tag, value: `${r.median} (${r.q1}–${r.q3})` }))}
+      />
     </>
   );
+}
+
+function barColours(c: ThemeColors) {
+  return {
+    backgroundColor: `rgba(${c.stampRgb}, ${BAR_ALPHA})`,
+    borderColor: c.stamp,
+    borderWidth: 1,
+    borderRadius: 2,
+  };
 }

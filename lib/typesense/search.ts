@@ -178,6 +178,8 @@ export async function searchBooksWithTypesense(
   // with the disjunctive result for any field that had its own filter.
   const options = {
     tags: facetValues(main, 'tags').map((f) => f.value),
+    // Not indexed in Typesense yet (backlog, M4): no series filter here.
+    series: [] as string[],
     bands: bandsFromYearFacets(facetValues(main, 'publishingYear')),
   };
 

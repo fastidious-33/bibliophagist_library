@@ -8,6 +8,7 @@ import ClothPlate from '@/components/ClothPlate';
 import { PickRibbon } from '@/components/BookCard';
 import { LIBRARIANS_PICK_TAG, WING_LABEL, bookStamps, genreSlug, isGenreTag } from '@/lib/genres/shared';
 import { REQUEST_FORM_URL } from '@/lib/site';
+import { cleanSeries } from '@/lib/search/catalog-facets';
 
 export const revalidate = 60;
 
@@ -51,6 +52,7 @@ export default async function BookPage(props: { params: Promise<{ slug: string }
   const genres = (book.tags || []).filter(isGenreTag);
   const year = book.publishingDate?.slice(0, 4);
   const imprint = [book.publisher, year].filter(Boolean).join(' · ');
+  const series = cleanSeries(book.series);
 
   return (
     <section className="section section--flush">
@@ -88,6 +90,14 @@ export default async function BookPage(props: { params: Promise<{ slug: string }
           <h1 className="book-detail-title">{book.title}</h1>
 
           {book.author && <p className="book-detail-author">{book.author}</p>}
+          {series && (
+            <p className="book-detail-imprint">
+              Series:{' '}
+              <Link href={`/catalog?${new URLSearchParams({ series })}`} className="read-link">
+                {series} &rarr;
+              </Link>
+            </p>
+          )}
           {imprint && <p className="book-detail-imprint">{imprint}</p>}
           {isPick && <p className="book-detail-pick">A librarian&rsquo;s pick</p>}
 
@@ -97,11 +107,6 @@ export default async function BookPage(props: { params: Promise<{ slug: string }
             <h2 id="librarian-slip-heading" className="librarian-slip-heading">
               From the librarian&rsquo;s desk
             </h2>
-            {book.rating != null && (
-              <p className="librarian-slip-rating" aria-label={`Rated ${book.rating.toFixed(1)} out of 5`}>
-                <span aria-hidden="true">&#9733;</span> {book.rating.toFixed(1)} / 5
-              </p>
-            )}
             {book.notes ? (
               <p className="librarian-slip-notes">{book.notes}</p>
             ) : (

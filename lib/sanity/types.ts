@@ -5,7 +5,8 @@ export interface Book {
   slug: string;
   author?: string;
   tags?: string[]; // collections and genres, e.g. Fiction, Non-Fiction, Indian Authors
-  rating?: number; // the librarian's own score, 0–5
+  series?: string; // e.g. "Hercule Poirot"; tidy with cleanSeries() before use
+  rating?: number; // the Goodreads community average, 0–5 (not shown on book pages)
   publishingDate?: string; // publication year as plain text, e.g. "1966" (may also appear as "1966-01-01" from older imports — always take just the first 4 chars)
   publisher?: string;
   description?: string; // book blurb/synopsis, distinct from `notes`
