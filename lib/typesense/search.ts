@@ -23,7 +23,7 @@ const QUERY_BY = 'title,author,tags';
 // The year facet is per-distinct-year, and a catalog spanning 1656–2025 can
 // easily exceed 50 distinct years — truncation would silently drop sparse
 // older years, making a band look empty when it isn't and under-counting
-// old decades on /ledger.
+// old decades (the old /ledger read these; /story now uses getAllBooks).
 const MAX_FACET_VALUES = 250;
 
 /** Multi-select facet fields. publishingYear is handled via bands instead. */

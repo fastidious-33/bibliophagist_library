@@ -39,12 +39,12 @@ export const BROWSE_LINKS: BrowseLink[] = [
     slot: 'browsePicks',
   },
   {
-    href: '/ledger',
-    title: 'The Ledger',
+    href: '/story',
+    title: 'The Story of the Shelves',
     blurb: 'What the library is made of, counted.',
-    slot: 'ledger',
+    slot: 'story',
   },
 ];
 
 /** Paths that sit under Browse, for the header's highlight. */
-export const BROWSE_SECTIONS = ['/browse', '/catalog', '/ledger', '/borrow'];
+export const BROWSE_SECTIONS = ['/browse', '/catalog', '/story', '/borrow'];

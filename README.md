@@ -1,7 +1,7 @@
 # Bibliophagist Library
 
-Website for a small lending library: a searchable book catalog, a stats
-ledger, and (coming) loan tracking — which books are on the shelf and which
+Website for a small lending library: a searchable book catalog, the story
+of its shelves told in charts, and (coming) loan tracking — which books are on the shelf and which
 are out on loan.
 
 Started as a copy of The Saturday Book Community site (`tsbc_website`), with
@@ -117,14 +117,14 @@ understanding the project:
 | Route | Notes |
 | --- | --- |
 | `/` | The vision: painting, intro with the live book count, the two doors ("Which way in?": a secret bookcase to the catalog, a castle door to the librarian), the librarian's desk shelf, the quotes clock |
-| `/browse` | Every way into the library: how to borrow, search, genres, Librarian's Picks, the ledger |
+| `/browse` | Every way into the library: how to borrow, search, genres, Librarian's Picks, the story of the shelves |
 | `/catalog` | Searchable, filterable catalog, with a genre shelf that filters in place |
 | `/catalog/[slug]` | Book detail |
 | `/catalog/genres` | All genres (tags), grouped Fiction / Non-Fiction / Both |
 | `/catalog/genres/[slug]` | One genre: its books, picks and related genres. ISR, static params from the tags |
 | `/catalog/random` | Redirects to a random book. Always dynamic |
 | `/borrow` | How to borrow, the rules, the rights of the reader |
-| `/ledger` | What the catalog is made of — tags, authors, decades, ratings |
+| `/story` | The Story of the Shelves: what the catalog is made of, in chapters with charts. The server draws the whole shelf from the cached book list; `?genre=` / `?wing=` selections are read in the browser (`app/story/Story.tsx`). `/ledger` redirects here |
 | `/librarian` | The librarian: portrait, bio, and the rooms below |
 | `/librarian/writings`, `/featured`, `/saved`, `/music` | The rooms. Lists and intros from Sanity (Heading → Subheading → Entry, `lib/sanity/content.ts`) |
 | `/librarian/body-art` | Body art. Text and photos hardcoded in `lib/librarian.ts` |
@@ -260,7 +260,7 @@ Things that look wrong but are deliberate:
   pages don't run the blocking theme script, so the theme needs correcting
   client-side after mount.
 - **`hooks/useThemeColors.ts`** — Chart.js draws to canvas and can't read CSS
-  variables, so `/ledger` resolves them in JS and watches `data-theme` with a
+  variables, so `/story` resolves them in JS and watches `data-theme` with a
   MutationObserver to restyle on theme change.
 - **Error boundaries are segment-scoped.** `app/catalog/error.tsx` exists so
   a Typesense or Sanity

@@ -5,8 +5,8 @@ import { usePathname } from 'next/navigation';
 import { BROWSE_SECTIONS } from '@/lib/browse';
 
 // Two doors and nothing else (M1-DESIGN.md). Each link stays highlighted
-// across every section it covers: Browse includes the catalog, the ledger
-// and the borrowing page.
+// across every section it covers: Browse includes the catalog, the story
+// of the shelves and the borrowing page.
 const LINKS = [
   { href: '/browse', label: 'Browse', sections: BROWSE_SECTIONS },
   { href: '/librarian', label: 'The Librarian', sections: ['/librarian'] },

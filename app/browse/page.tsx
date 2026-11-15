@@ -4,7 +4,7 @@ import { BROWSE_LINKS } from '@/lib/browse';
 
 export const metadata: Metadata = {
   title: 'Browse',
-  description: 'Borrow a book, search the catalog, wander the genres, see the librarian’s picks and the ledger.',
+  description: 'Borrow a book, search the catalog, wander the genres, see the librarian’s picks and the story of the shelves.',
 };
 
 export default function BrowsePage() {

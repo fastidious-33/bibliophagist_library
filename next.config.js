@@ -16,9 +16,13 @@ const nextConfig = {
   // phone on the same Wi-Fi load dev assets via this machine's LAN address.
   // If the router hands the machine a new address, update it here. Never '*'.
   allowedDevOrigins: ['192.168.1.39'],
-  // /about became /librarian in M1.
+  // /about became /librarian in M1; /ledger became /story (The Story of the
+  // Shelves) on 2026-11-14. Query strings carry over.
   async redirects() {
-    return [{ source: '/about', destination: '/librarian', permanent: true }];
+    return [
+      { source: '/about', destination: '/librarian', permanent: true },
+      { source: '/ledger', destination: '/story', permanent: true },
+    ];
   },
 };
 

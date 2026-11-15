@@ -4,7 +4,7 @@ import { searchBooksInSanity } from './sanity';
 import type { BooksSearchResponse } from './types';
 
 // getAllBooks reads Sanity's cached list whichever backend searches; the
-// ledger needs every book, not a page of results.
+// story of the shelves (/story) needs every book, not a page of results.
 export { BOOKS_TAG, getAllBooks } from './sanity';
 export * from './types';
 

@@ -1,8 +1,8 @@
 // Typesense collection schema for the Bibliophagist Library book catalog.
 //
 // Fields with filter UI get `facet: true` — CatalogBrowser filters on tags
-// and year. `author` is faceted too, for the /ledger "most-shelved authors"
-// chart. `rating` is shown on cards but never filtered, so it's not faceted.
+// and year. `author` is faceted too (the old /ledger's "most-shelved authors"
+// chart used it; /story now works from getAllBooks). `rating` is shown on cards but never filtered, so it's not faceted.
 // Must match lib/search/types.ts (SearchBook, FACET_FIELDS).
 
 export const BOOKS_COLLECTION_NAME = 'books';

@@ -122,8 +122,8 @@ export default async function CatalogPage({
       </div>
 
       <div className="back-row">
-        <Link href="/ledger" className="read-link">
-          The ledger: what this library is made of &rarr;
+        <Link href="/story" className="read-link">
+          The story of the shelves: what this library is made of &rarr;
         </Link>
       </div>
     </section>

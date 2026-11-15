@@ -58,7 +58,8 @@ export interface BooksSearchResponse {
   /**
    * Counts over the current result set, filtered by everything active. The
    * catalog doesn't use these — its filter options come from `options`
-   * above, which is disjunctive. /ledger does, for its charts.
+   * above, which is disjunctive. Nothing reads them since /ledger became
+   * /story, which works from getAllBooks instead.
    */
   facets: Record<FacetField, FacetCount[]>;
 }

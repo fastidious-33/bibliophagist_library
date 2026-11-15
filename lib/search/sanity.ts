@@ -23,7 +23,7 @@ import {
  * Sanity webhook (app/api/sanity-webhook) revalidates the tag on every
  * publish or delete; the daily revalidate is only a safety net.
  *
- * The same cached list feeds /ledger (getAllBooks below).
+ * The same cached list feeds /story (getAllBooks below).
  */
 
 export const BOOKS_TAG = 'books';
@@ -115,7 +115,7 @@ async function getIndex(): Promise<SearchBook[]> {
 
 /**
  * Every book in the catalog (with a slug), from the same cached list the
- * search uses. For /ledger, which needs the whole collection rather than a
+ * search uses. For /story, which needs the whole collection rather than a
  * page of results. Throws if Sanity can't be reached.
  */
 export async function getAllBooks(): Promise<SearchBook[]> {

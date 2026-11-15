@@ -42,7 +42,7 @@ export type PaintingSlot =
   | 'genreNonFiction'
   | 'genreBoth'
   | 'borrow'
-  | 'ledger'
+  | 'story'
   | 'librarian'
   | 'librarianWritings'
   | 'librarianFeatured'
@@ -140,7 +140,16 @@ export const PAINTINGS: Record<PaintingSlot, Painting | null> = {
     sourceUrl: 'https://www.nga.gov/collection/art-object-page.164948.html',
     alt: 'A stoneware mug resting on a closed book, with two biscuits and a match on a wooden ledge.',
   },
-  ledger: null,
+  story: {
+    src: '/paintings/carter-lea-castle-library.jpg',
+    width: 1475,
+    height: 1600,
+    title: 'Lea Castle, View in the Library, Looking East',
+    artist: 'John Carter',
+    year: 'c. 1816',
+    sourceUrl: 'https://www.metmuseum.org/art/collection/search/365861',
+    alt: 'A tall, vaulted library: arched windows on the left, arched bookcases full of books on the right, two large globes on stands, and a man seated at a table by the fireplace under a portrait.',
+  },
   librarian: {
     src: '/paintings/corot-forest-of-fontainebleau.jpg',
     width: 1600,

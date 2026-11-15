@@ -26,7 +26,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'weekly' as const,
       priority: 0.6,
     })),
-    { url: `${BASE_URL}/ledger`, changeFrequency: 'weekly', priority: 0.6 },
+    { url: `${BASE_URL}/story`, changeFrequency: 'weekly', priority: 0.6 },
     { url: `${BASE_URL}/borrow`, changeFrequency: 'monthly', priority: 0.6 },
     { url: `${BASE_URL}/librarian`, changeFrequency: 'monthly', priority: 0.5 },
     ...ROOMS.map((room) => ({
