@@ -4914,13 +4914,68 @@ a.book-theme-tag:hover {
   text-transform: uppercase;
 }
 
+/* A family in the key (the middle ring): a little bolder, its genres
+   indented beneath it on a thin rule. */
+.story-key-family + .story-key-family {
+  margin-top: 0.35rem;
+}
+
+/* The family's name (selects it) and its ▸ (unfolds its genres) on one row. */
+.story-key-family-row {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.story-key .story-key-family-row > button:first-child,
+.story-key .story-key-family-row > .story-key-other {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-weight: 600;
+}
+
+.story-key .story-key-fold {
+  flex: none;
+  width: auto;
+  padding: 0.28rem 0.4rem;
+  font-size: 0.8rem;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+}
+
+.story-key .story-key-fold:hover {
+  color: var(--stamp);
+}
+
+/* The fold button never fades with the rest of the key. */
+.story-key.is-faded .story-key-fold {
+  opacity: 1;
+}
+
+@media (pointer: coarse) {
+  .story-key .story-key-fold {
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+  }
+}
+
+.story-key .story-key-family > ul {
+  margin: 0 0 0 0.4rem;
+  padding-left: 0.8rem;
+  border-left: 1px solid rgba(var(--charcoal-rgb), var(--rule));
+}
+
+.story-key .story-key-family > ul button,
+.story-key .story-key-family > ul .story-key-other {
+  font-size: 0.82rem;
+}
+
 .story-key button[aria-pressed='true'] {
   font-weight: 600;
   color: var(--stamp);
 }
 
 /* With a genre selected, the key fades along with the wheel. */
-.story-key.is-faded li button[aria-pressed='false'],
+.story-key.is-faded li button[aria-pressed='false']:not(.is-lit),
 .story-key.is-faded .story-key-other {
   opacity: 0.45;
 }

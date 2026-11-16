@@ -39,6 +39,7 @@ import {
   type OverlayRow,
   type Ranked,
   type Wheel,
+  type WheelFamily,
   type WheelSlice,
   type Wing,
 } from '@/lib/story';
@@ -66,6 +67,8 @@ declare module 'chart.js' {
     bubbleLabels?: { color: string; strong: string; font: string } | false;
     refLine?: { value: number; label: string; color: string; font: string } | false;
     barValues?: { color: string; font: string } | false;
+    familyBounds?: { color: string; width: number; ends: number[] } | false;
+    centreClear?: { color: string; font: string } | false;
   }
   interface InteractionModeMap {
     barMargin: InteractionModeFunction;
@@ -174,6 +177,83 @@ const barValues: Plugin<'bar'> = {
       ctx.textAlign = right ? 'left' : 'right';
       ctx.fillText(text, right ? x + 6 : x - 6, y);
     });
+    ctx.restore();
+  },
+};
+
+/**
+ * A wider gap, in the paper colour, wherever one family's genres end and
+ * the next family's begin: a line from the middle ring's inner edge to the
+ * outer ring's outer edge, so each family reads as a group. `ends` are the
+ * outer-ring slices that close a family.
+ */
+const familyBounds: Plugin<'doughnut'> = {
+  id: 'familyBounds',
+  afterDatasetsDraw(chart, _args, opts) {
+    const o = opts as { color?: string; width?: number; ends?: number[] } | undefined;
+    if (!o?.color || !o.width || !o.ends?.length) return;
+    const { color, width, ends } = o;
+    const outer = chart.getDatasetMeta(0).data;
+    const middle = chart.getDatasetMeta(1).data[0];
+    if (!middle) return;
+    const { innerRadius: from } = middle.getProps(['innerRadius'], true) as { innerRadius: number };
+    const { ctx } = chart;
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    for (const i of ends) {
+      const el = outer[i];
+      if (!el) continue;
+      const { x, y, endAngle, outerRadius } = el.getProps(['x', 'y', 'endAngle', 'outerRadius'], true) as {
+        x: number;
+        y: number;
+        endAngle: number;
+        outerRadius: number;
+      };
+      const cos = Math.cos(endAngle);
+      const sin = Math.sin(endAngle);
+      ctx.beginPath();
+      ctx.moveTo(x + cos * from, y + sin * from);
+      ctx.lineTo(x + cos * outerRadius, y + sin * outerRadius);
+      ctx.stroke();
+    }
+    ctx.restore();
+  },
+};
+
+/** The wheel's empty centre: its middle point and radius (inside the inner ring). */
+function wheelHole(chart: ChartJS<'doughnut'>): { x: number; y: number; r: number } | undefined {
+  const inner = chart.getDatasetMeta(chart.data.datasets.length - 1).data[0];
+  if (!inner) return undefined;
+  const { x, y, innerRadius } = inner.getProps(['x', 'y', 'innerRadius'], true) as {
+    x: number;
+    y: number;
+    innerRadius: number;
+  };
+  return { x, y, r: innerRadius };
+}
+
+/**
+ * With something selected, a "×" and "clear" in the wheel's empty centre:
+ * the biggest target on the wheel, for clearing a selection that sits on a
+ * sliver too thin to tap again. Off (false) when nothing's selected.
+ */
+const centreClear: Plugin<'doughnut'> = {
+  id: 'centreClear',
+  afterDatasetsDraw(chart, _args, opts) {
+    const o = opts as { color?: string; font?: string } | undefined;
+    if (!o?.color || !o.font) return;
+    const hole = wheelHole(chart);
+    if (!hole || hole.r < 18) return;
+    const { ctx } = chart;
+    ctx.save();
+    ctx.fillStyle = o.color;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = `${Math.round(Math.min(hole.r * 0.55, 30))}px ${o.font}`;
+    ctx.fillText('×', hole.x, hole.y - hole.r * 0.12);
+    ctx.font = `${LABEL_SIZE}px ${o.font}`;
+    ctx.fillText('clear', hole.x, hole.y + hole.r * 0.32);
     ctx.restore();
   },
 };
@@ -473,24 +553,35 @@ const bubbleLabels: Plugin<'bubble'> = {
  * genre's books as dots, and "All genres" comes back. A genre selected
  * elsewhere (the wheel, the bar) stays bold here and the rest fade.
  */
-export function BubbleChart({ rows, books, selected }: { rows: Bubble[]; books: SearchBook[]; selected?: string }) {
+export function BubbleChart({
+  rows,
+  books,
+  highlight = [],
+}: {
+  rows: Bubble[];
+  books: SearchBook[];
+  /** The selection's genres (one genre, or a family's): bold, the rest fade. */
+  highlight?: string[];
+}) {
   const [drilled, setDrilled] = useState<string | null>(null);
   return drilled ? (
     <GenreBooks genre={drilled} books={books} onBack={() => setDrilled(null)} />
   ) : (
-    <GenreBubbles rows={rows} selected={selected} onOpen={setDrilled} />
+    <GenreBubbles rows={rows} highlight={highlight} onOpen={setDrilled} />
   );
 }
 
 function GenreBubbles({
   rows,
-  selected,
+  highlight,
   onOpen,
 }: {
   rows: Bubble[];
-  selected?: string;
+  highlight: string[];
   onOpen: (genre: string) => void;
 }) {
+  // Any of the selection's genres on the chart: those stay bold, the rest fade.
+  const selected = highlight.some((g) => rows.some((r) => r.genre === g));
   const { c, animation, grid, font, tooltip } = useChartStyle();
   const most = Math.max(1, ...rows.map((r) => r.books));
   // Up to ~38px across: big enough to compare, small enough that the
@@ -518,7 +609,7 @@ function GenreBubbles({
     y: Number(r.average.toFixed(2)),
     r: radius(r.books),
     genre: r.genre,
-    on: r.genre === selected,
+    on: highlight.includes(r.genre),
   }));
 
   // Drawn in this order, so the biggest go down first and the small ones sit
@@ -1436,50 +1527,100 @@ function alongShades(stops: string[], t: number, fallback: string): string {
   return a.map((v, i) => Math.round(v + (b[i] - v) * mix)).join(', ');
 }
 
+/** An "r, g, b" triplet blended toward another by `amount` (0–1). */
+function blend(rgb: string, toward: string, amount: number): string {
+  const a = rgb.split(',').map(Number);
+  const b = toward.split(',').map(Number);
+  return a.map((v, i) => Math.round(v + ((b[i] ?? v) - v) * amount)).join(', ');
+}
+
 /**
  * The inner ring: one colour per wing (oxblood for Fiction, the ledger ink
- * for Non-fiction). The outer ring: each wing's genres running from the
- * darkest shade of that wing's ink to the lightest, in slice order, so the
- * biggest genre is darkest (--wheel-fiction and --wheel-non-fiction in
- * globals.css). Other is grey. With a genre selected, everything else fades.
+ * for Non-fiction). The middle ring: each wing's families running from the
+ * darkest shade of that wing's ink to the lightest, biggest first
+ * (--wheel-fiction and --wheel-non-fiction in globals.css). The outer ring:
+ * each family's genres in that family's colour, stepping lighter down the
+ * family (toward the paper by day, the ink at night). Other, and the "+N more" folds, are grey or
+ * pale. With a family or genre selected, it and its genres stay bold and
+ * everything else fades.
  */
-function wheelColours(c: ThemeColors, wheel: Wheel, selected?: string) {
+function wheelColours(c: ThemeColors, wheel: Wheel, selectedGenre?: string, selectedFamily?: string) {
   const rgb: Record<Wing, string> = {
     fiction: c.stampRgb,
     'non-fiction': hexToRgb(c.ledger, c.charcoalRgb),
   };
-  const family: Record<Wing, string[]> = { fiction: c.wheelFiction, 'non-fiction': c.wheelNonFiction };
-  const fade = (on: boolean, alpha: number) => (selected && !on ? alpha * 0.25 : alpha);
+  const shades: Record<Wing, string[]> = { fiction: c.wheelFiction, 'non-fiction': c.wheelNonFiction };
+  const paper = hexToRgb(c.paper, '255, 255, 255');
+  // The genres step *lighter* down a family in both themes: toward the
+  // cream paper by day, toward the ivory ink at night (blending toward the
+  // dark paper would sink them into the page).
+  const [pr, pg, pb] = paper.split(',').map(Number);
+  const darkPage = 0.2126 * pr + 0.7152 * pg + 0.0722 * pb < 128;
+  const lighter = darkPage ? hexToRgb(c.ink, paper) : paper;
+  const picking = Boolean(selectedGenre || selectedFamily);
+  const fade = (on: boolean, alpha: number) => (picking && !on ? alpha * 0.25 : alpha);
+
+  // Other (genres not yet in a family): a solid mid grey, halfway between
+  // the text and the page, so it reads as "unsorted" in either theme
+  // rather than vanishing into a dark page.
+  const unsorted = blend(c.charcoalRgb, paper, 0.5);
+  const familyRgb = new Map<string, string>();
+  const families = wheel.families.map((f) => {
+    const key = `${f.wing}|${f.family}`;
+    if (!f.selectable) {
+      familyRgb.set(key, unsorted);
+      return `rgba(${unsorted}, ${fade(false, 1)})`;
+    }
+    const mine = wheel.families.filter((x) => x.wing === f.wing && x.selectable);
+    const t = mine.length > 1 ? mine.indexOf(f) / (mine.length - 1) : 0;
+    const triplet = alongShades(shades[f.wing], t, rgb[f.wing]);
+    familyRgb.set(key, triplet);
+    return `rgba(${triplet}, ${fade(f.family === selectedFamily, 1)})`;
+  });
 
   const slices = wheel.slices.map((s) => {
-    if (!s.genre) return `rgba(${c.charcoalRgb}, ${fade(false, 0.22)})`;
-    const mine = wheel.slices.filter((x) => x.wing === s.wing && x.genre);
-    const t = mine.length > 1 ? mine.indexOf(s) / (mine.length - 1) : 0;
-    return `rgba(${alongShades(family[s.wing], t, rgb[s.wing])}, ${fade(s.genre === selected, 1)})`;
+    const key = `${s.wing}|${s.family}`;
+    const base = familyRgb.get(key) ?? unsorted;
+    const mine = wheel.slices.filter((x) => x.wing === s.wing && x.family === s.family);
+    // Genres step lighter down the family; a fold is palest.
+    const lighten = s.genre ? Math.min(0.15 + 0.12 * mine.indexOf(s), 0.55) : 0.65;
+    const on = selectedFamily ? s.family === selectedFamily : Boolean(s.genre) && s.genre === selectedGenre;
+    return `rgba(${blend(base, lighter, lighten)}, ${fade(on, 1)})`;
   });
+
   const wings = wheel.wings.map((w) => `rgba(${rgb[w.wing]}, ${fade(false, 0.95)})`);
-  return { slices, wings };
+  return { slices, families, wings };
 }
 
 /**
- * The wheel: the two wings inside, their genres outside, each book counted
- * once under its most specific genre. Click a wing to open it into the
- * whole wheel (again to close); click a genre to select it (again to
- * clear). The key beside it does the same from the keyboard.
+ * The wheel: the two wings inside, their families in the middle, the
+ * families' genres outside, each book counted once in each ring (under its
+ * most specific subject genre and that genre's family). Click a wing to
+ * open it into the whole wheel (again to close); click a family or a genre
+ * to select it (again to clear). The key beside it does the same from the
+ * keyboard.
  */
 export function WheelChart({
   wheel,
   zoom,
   selected,
+  selectedFamily,
   onWing,
+  onFamily,
   onGenre,
+  onClear,
 }: {
   wheel: Wheel;
   zoom: Wing | null;
-  /** The selected genre, if any: its slices stay bold, the rest fade. */
+  /** The selected genre, if any: its slice stays bold, the rest fade. */
   selected?: string;
+  /** The selected family, if any: it and its genres stay bold, the rest fade. */
+  selectedFamily?: string;
   onWing: (wing: Wing) => void;
+  onFamily: (family: string) => void;
   onGenre: (genre: string) => void;
+  /** Given while something is selected: a tap in the empty centre clears it. */
+  onClear?: () => void;
 }) {
   const { c, animation, tooltip } = useChartStyle();
   // Phones only: the full key folds behind "All genres", with a one-line
@@ -1516,31 +1657,72 @@ export function WheelChart({
     setKeyOpen(false);
     onGenre(genre);
   };
-  const colours = wheelColours(c, wheel, selected);
-  const otherAt = wheel.slices.findIndex((s) => !s.genre);
-  const otherColour = otherAt === -1 ? undefined : colours.slices[otherAt];
+  const pickFamily = (family: string) => {
+    setKeyOpen(false);
+    onFamily(family);
+  };
+  // The key lists families, each with its genres folded away; ▸ unfolds
+  // one. The selection's family (a selected family, or a selected genre's)
+  // is unfolded on its own.
+  const [unfolded, setUnfolded] = useState<Set<string>>(() => new Set());
+  const familyKey = (wing: Wing, family: string) => `${wing}|${family}`;
+  const toggleFamily = (key: string) =>
+    setUnfolded((open) => {
+      const next = new Set(open);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  const isUnfolded = (f: WheelFamily) =>
+    unfolded.has(familyKey(f.wing, f.family)) ||
+    f.family === selectedFamily ||
+    (Boolean(selected) &&
+      wheel.slices.some((s) => s.wing === f.wing && s.family === f.family && s.genre === selected));
+  const colours = wheelColours(c, wheel, selected, selectedFamily);
+  // The phone key's "Other": the grey of unplaced genres, if there are any.
+  const otherAt = wheel.families.findIndex((f) => !f.selectable);
+  const otherColour = otherAt === -1 ? undefined : colours.families[otherAt];
   const total = wheel.wings.reduce((s, w) => s + w.books, 0);
-  const biggest = wheel.slices.filter((s) => s.genre).sort((a, b) => b.main - a.main)[0];
+  const biggest = wheel.families.filter((f) => f.selectable).sort((a, b) => b.main - a.main)[0];
   const summary = zoom
-    ? `${WING_LABEL[zoom]} opened out: ${total} books across its genres${biggest ? `, the largest ${biggest.label} with ${biggest.main}` : ''}.`
-    : `${total} books by wing and genre: ${wheel.wings.map((w) => `${WING_LABEL[w.wing]} ${w.books}`).join(', ')}${biggest ? `; the largest genre is ${biggest.label} with ${biggest.main}` : ''}.`;
+    ? `${WING_LABEL[zoom]} opened out: ${total} books across its families and genres${biggest ? `, the largest family ${biggest.family} with ${biggest.main}` : ''}.`
+    : `${total} books by wing, family and genre: ${wheel.wings.map((w) => `${WING_LABEL[w.wing]} ${w.books}`).join(', ')}${biggest ? `; the largest family is ${biggest.family} with ${biggest.main}` : ''}.`;
 
   const sliceTip = (s: WheelSlice) =>
     s.genre
       ? `${s.main} mainly here · ${s.tagged} tagged`
       : `${s.folded} smaller genres · ${s.main} ${s.main === 1 ? 'book' : 'books'}`;
+  const familyTip = (f: WheelFamily) =>
+    f.selectable
+      ? [`${f.main} mainly here`, `${f.tagged} tagged with its genres`]
+      : `${f.main} ${f.main === 1 ? 'book' : 'books'} in genres not yet in a family`;
 
+  // Outer ring first (Chart.js draws the first dataset outermost).
+  const RING = { genres: 0, families: 1, wings: 2 } as const;
+  // The outer-ring slices that close a family (the next one starts another,
+  // and the last closes the circle), for the wider gaps between families.
+  const familyEnds = wheel.slices.flatMap((s, i) => {
+    const next = wheel.slices[i + 1];
+    return !next || next.family !== s.family || next.wing !== s.wing ? [i] : [];
+  });
   const data: ChartData<'doughnut', number[], string> = {
     labels: wheel.slices.map((s) => s.label),
     datasets: [
-      // The first dataset is the outer ring.
       {
         data: wheel.slices.map((s) => s.main),
         backgroundColor: colours.slices,
         borderColor: c.paper,
         borderWidth: 2,
         hoverOffset: 4,
-        weight: 1.6,
+        weight: 1.3,
+      },
+      {
+        data: wheel.families.map((f) => f.main),
+        backgroundColor: colours.families,
+        borderColor: c.paper,
+        borderWidth: 2,
+        hoverOffset: 3,
+        weight: 1.1,
       },
       {
         data: wheel.wings.map((w) => w.books),
@@ -1548,50 +1730,75 @@ export function WheelChart({
         borderColor: c.paper,
         borderWidth: 2,
         hoverOffset: 2,
-        weight: 1,
+        weight: 0.8,
       },
     ],
   };
+
+  // Whether a pointer event fell in the wheel's empty centre.
+  const inHole = (e: { x: number | null; y: number | null }, chart: ChartJS) => {
+    const hole = wheelHole(chart as ChartJS<'doughnut'>);
+    if (!hole || e.x === null || e.y === null) return false;
+    return Math.hypot(e.x - hole.x, e.y - hole.y) < hole.r;
+  };
+
+  const clickable = (datasetIndex: number, index: number) =>
+    datasetIndex === RING.wings ||
+    (datasetIndex === RING.families && Boolean(wheel.families[index]?.selectable)) ||
+    (datasetIndex === RING.genres && Boolean(wheel.slices[index]?.genre));
 
   const options: ChartOptions<'doughnut'> = {
     responsive: true,
     maintainAspectRatio: false,
     animation,
-    cutout: '30%',
-    onClick: (_e, elements) => {
+    cutout: '24%',
+    onClick: (e, elements, chart) => {
       const el = elements[0];
-      if (!el) return;
-      if (el.datasetIndex === 1) {
-        const w = wheel.wings[el.index];
-        if (w) onWing(w.wing);
+      if (!el) {
+        // A tap in the empty centre clears the selection.
+        if (onClear && inHole(e, chart)) onClear();
         return;
       }
-      const s = wheel.slices[el.index];
-      if (s?.genre) onGenre(s.genre);
+      if (el.datasetIndex === RING.wings) {
+        const w = wheel.wings[el.index];
+        if (w) onWing(w.wing);
+      } else if (el.datasetIndex === RING.families) {
+        const f = wheel.families[el.index];
+        if (f?.selectable) onFamily(f.family);
+      } else {
+        const s = wheel.slices[el.index];
+        if (s?.genre) onGenre(s.genre);
+      }
     },
-    onHover: (e, elements) => {
+    onHover: (e, elements, chart) => {
       const target = e.native?.target as HTMLElement | undefined;
       if (!target) return;
       const el = elements[0];
-      const clickable = el && (el.datasetIndex === 1 || Boolean(wheel.slices[el.index]?.genre));
-      target.style.cursor = clickable ? 'pointer' : 'default';
+      const pointer = el ? clickable(el.datasetIndex, el.index) : Boolean(onClear) && inHole(e, chart);
+      target.style.cursor = pointer ? 'pointer' : 'default';
     },
     plugins: {
       legend: { display: false },
+      familyBounds: { color: c.paper, width: 4, ends: familyEnds },
+      centreClear: onClear ? { color: c.stamp, font: c.label } : false,
       tooltip: {
         ...tooltip,
         callbacks: {
           title: (items) => {
             const item = items[0];
             if (!item) return '';
-            return item.datasetIndex === 1
-              ? WING_LABEL[wheel.wings[item.dataIndex]?.wing ?? 'fiction']
-              : (wheel.slices[item.dataIndex]?.label ?? '');
+            if (item.datasetIndex === RING.wings) return WING_LABEL[wheel.wings[item.dataIndex]?.wing ?? 'fiction'];
+            if (item.datasetIndex === RING.families) return wheel.families[item.dataIndex]?.family ?? '';
+            return wheel.slices[item.dataIndex]?.label ?? '';
           },
           label: (item) => {
-            if (item.datasetIndex === 1) {
+            if (item.datasetIndex === RING.wings) {
               const w = wheel.wings[item.dataIndex];
               return w ? `${w.books} books with a genre` : '';
+            }
+            if (item.datasetIndex === RING.families) {
+              const f = wheel.families[item.dataIndex];
+              return f ? familyTip(f) : '';
             }
             const s = wheel.slices[item.dataIndex];
             return s ? sliceTip(s) : '';
@@ -1604,7 +1811,7 @@ export function WheelChart({
   return (
     <div className="story-wheel">
       <div className="story-wheel-chart" role="img" aria-label={summary}>
-        <Chart type="doughnut" data={data} options={options} />
+        <Chart type="doughnut" data={data} options={options} plugins={[familyBounds, centreClear]} />
       </div>
 
       {/* The key: names every slice, and is the keyboard route to the clicks. */}
@@ -1643,7 +1850,10 @@ export function WheelChart({
         >
           All genres <span aria-hidden="true">{keyOpen ? '▴' : '▾'}</span>
         </button>
-        <div id={keyId} className={`story-key${keyOpen ? ' is-open' : ''}${selected ? ' is-faded' : ''}`}>
+        <div
+          id={keyId}
+          className={`story-key${keyOpen ? ' is-open' : ''}${selected || selectedFamily ? ' is-faded' : ''}`}
+        >
           {zoom && (
             <button type="button" className="story-key-back" onClick={() => onWing(zoom)}>
               &larr; Both wings
@@ -1662,31 +1872,77 @@ export function WheelChart({
                 {WING_LABEL[w.wing]}
                 <span className="story-key-count">{w.books}</span>
               </button>
+              {/* Wing › family › genres, as the rings run outward. Each
+                  family's genres fold away behind its ▸. */}
               <ul>
-                {wheel.slices.map((s, j) =>
-                  s.wing !== w.wing ? null : (
-                    <li key={s.label}>
-                      {s.genre ? (
+                {wheel.families.map((f, k) => {
+                  if (f.wing !== w.wing) return null;
+                  const key = familyKey(f.wing, f.family);
+                  const open = isUnfolded(f);
+                  const genresId = `${keyId}-${k}`;
+                  return (
+                    <li key={f.family} className="story-key-family">
+                      <div className="story-key-family-row">
+                        {f.selectable ? (
+                          <button
+                            type="button"
+                            aria-pressed={f.family === selectedFamily}
+                            style={swatchStyle(colours.families[k])}
+                            onClick={() => pickFamily(f.family)}
+                          >
+                            <span className="story-swatch" aria-hidden="true" />
+                            {f.family}
+                            <span className="story-key-count">{f.main}</span>
+                          </button>
+                        ) : (
+                          <span className="story-key-other" style={swatchStyle(colours.families[k])}>
+                            <span className="story-swatch" aria-hidden="true" />
+                            {f.family}
+                            <span className="story-key-count">{f.main}</span>
+                          </span>
+                        )}
                         <button
                           type="button"
-                          aria-pressed={s.genre === selected}
-                          style={swatchStyle(colours.slices[j])}
-                          onClick={() => pickGenre(s.genre!)}
+                          className="story-key-fold"
+                          aria-expanded={open}
+                          aria-controls={genresId}
+                          aria-label={`${open ? 'Hide' : 'Show'} ${f.family}’s genres`}
+                          onClick={() => toggleFamily(key)}
                         >
-                          <span className="story-swatch" aria-hidden="true" />
-                          {s.label}
-                          <span className="story-key-count">{s.main}</span>
+                          <span aria-hidden="true">{open ? '▾' : '▸'}</span>
                         </button>
-                      ) : (
-                        <span className="story-key-other" style={swatchStyle(colours.slices[j])}>
-                          <span className="story-swatch" aria-hidden="true" />
-                          {s.label}
-                          <span className="story-key-count">{s.main}</span>
-                        </span>
-                      )}
+                      </div>
+                      <ul id={genresId} hidden={!open}>
+                        {wheel.slices.map((s, j) =>
+                          s.wing !== w.wing || s.family !== f.family ? null : (
+                            <li key={s.label}>
+                              {s.genre ? (
+                                <button
+                                  type="button"
+                                  // A selected family's genres stay bold with it.
+                                  className={f.family === selectedFamily ? 'is-lit' : undefined}
+                                  aria-pressed={s.genre === selected}
+                                  style={swatchStyle(colours.slices[j])}
+                                  onClick={() => pickGenre(s.genre!)}
+                                >
+                                  <span className="story-swatch" aria-hidden="true" />
+                                  {s.label}
+                                  <span className="story-key-count">{s.main}</span>
+                                </button>
+                              ) : (
+                                <span className="story-key-other" style={swatchStyle(colours.slices[j])}>
+                                  <span className="story-swatch" aria-hidden="true" />
+                                  {s.label}
+                                  <span className="story-key-count">{s.main}</span>
+                                </span>
+                              )}
+                            </li>
+                          )
+                        )}
+                      </ul>
                     </li>
-                  )
-                )}
+                  );
+                })}
               </ul>
             </div>
           ))}
@@ -1695,12 +1951,12 @@ export function WheelChart({
 
       <div className="story-wheel-numbers">
         <Numbers
-          caption="Books per genre, by wing"
-          head={['Genre', 'Wing', 'Mainly here', 'Tagged']}
+          caption="Books per genre, by wing and family"
+          head={['Genre', 'Family', 'Wing', 'Mainly here', 'Tagged']}
           rows={wheel.rows.map((r) => ({
-            key: `${r.wing}-${r.genre}`,
+            key: `${r.wing}-${r.family}-${r.genre}`,
             label: r.genre,
-            value: [WING_LABEL[r.wing], String(r.main), String(r.tagged)],
+            value: [r.family, WING_LABEL[r.wing], String(r.main), String(r.tagged)],
           }))}
         />
       </div>

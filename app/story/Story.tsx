@@ -11,6 +11,8 @@ import {
   booksInDecade,
   booksInLength,
   bubbles,
+  bubblesWith,
+  familyGenres,
   commentary,
   crowd,
   crowdAverage,
@@ -28,6 +30,7 @@ import {
   overlay,
   selectionLabel,
   slimmest,
+  storyFamilies,
   storyGenres,
   topAuthors,
   topSeries,
@@ -76,23 +79,28 @@ function parseSelection(search: string): Selection {
   const sp = new URLSearchParams(search);
   const genre = sp.get('genre');
   if (genre) return { kind: 'genre', genre };
+  const family = sp.get('family');
+  if (family) return { kind: 'family', family };
   const wing = sp.get('wing');
   if (wing === 'fiction' || wing === 'non-fiction') return { kind: 'wing', wing };
   return null;
 }
 
 /**
- * The story's selection, read from `?genre=` or `?wing=` (a genre wins if
- * both are there). `select(null)` clears it. Each change is a history entry,
- * so the back button steps through selections, as on the catalog.
+ * The story's selection, read from `?genre=`, `?family=` or `?wing=` (in
+ * that order, if more than one is there). `select(null)` clears it. Each
+ * change is a history entry, so the back button steps through selections,
+ * as on the catalog.
  */
 function useSelection(): [Selection, (next: Selection) => void] {
   const search = useSyncExternalStore(subscribe, readSearch, serverSearch);
   const select = useCallback((next: Selection) => {
     const sp = new URLSearchParams(window.location.search);
     sp.delete('genre');
+    sp.delete('family');
     sp.delete('wing');
     if (next?.kind === 'genre') sp.set('genre', next.genre);
+    if (next?.kind === 'family') sp.set('family', next.family);
     if (next?.kind === 'wing') sp.set('wing', next.wing);
     const qs = sp.toString();
     window.history.pushState(null, '', qs ? `${window.location.pathname}?${qs}` : window.location.pathname);
@@ -104,6 +112,9 @@ function useSelection(): [Selection, (next: Selection) => void] {
 /* ---------- Pieces ---------- */
 
 const number = (n: number) => n.toLocaleString('en-GB');
+/** "A", "A and B", "A, B and C". */
+const joinNames = (names: string[]) =>
+  names.length < 2 ? names.join('') : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
 const plural = (n: number, word: string, many = `${word}s`) => `${number(n)} ${n === 1 ? word : many}`;
 
 /** Linked titles, each with its author and a figure (a rating, or pages). */
@@ -134,6 +145,7 @@ function LiveLine({ text }: { text?: string }) {
 }
 
 const WING_VALUE = (wing: Wing) => `wing:${wing}`;
+const FAMILY_VALUE = (family: string) => `family:${family}`;
 
 /** The chapters, for "On this page". */
 const CHAPTERS = [
@@ -147,23 +159,34 @@ const CHAPTERS = [
 
 /**
  * Sticks to the top once the wheel has scrolled by: what's selected, a way
- * to clear it, and every genre (including ones too small to draw).
+ * to clear it, and every wing, family and genre (including ones too small
+ * to draw).
  */
 function FilterBar({
   selection,
   genres,
+  families,
   onChoose,
 }: {
   selection: Selection;
   genres: { tag: string; count: number }[];
+  families: { name: string; count: number }[];
   onChoose: (next: Selection) => void;
 }) {
-  const value = !selection ? '' : selection.kind === 'wing' ? WING_VALUE(selection.wing) : selection.genre;
+  const value = !selection
+    ? ''
+    : selection.kind === 'wing'
+      ? WING_VALUE(selection.wing)
+      : selection.kind === 'family'
+        ? FAMILY_VALUE(selection.family)
+        : selection.genre;
   const alphabetical = [...genres].sort((a, b) => a.tag.localeCompare(b.tag));
-  // A ?genre= link to a tag that isn't a genre still gets an option, so the
-  // dropdown never shows something other than what's selected.
+  // A ?genre= or ?family= link to something that isn't one still gets an
+  // option, so the dropdown never shows something other than what's selected.
   const unknown =
     selection?.kind === 'genre' && !genres.some((g) => g.tag === selection.genre) ? selection.genre : null;
+  const unknownFamily =
+    selection?.kind === 'family' && !families.some((f) => f.name === selection.family) ? selection.family : null;
 
   return (
     // On phones (CSS) this becomes one row: the genre dropdown (which shows
@@ -189,6 +212,7 @@ function FilterBar({
             if (!v) onChoose(null);
             else if (v === WING_VALUE('fiction')) onChoose({ kind: 'wing', wing: 'fiction' });
             else if (v === WING_VALUE('non-fiction')) onChoose({ kind: 'wing', wing: 'non-fiction' });
+            else if (v.startsWith('family:')) onChoose({ kind: 'family', family: v.slice('family:'.length) });
             else onChoose({ kind: 'genre', genre: v });
           }}
         >
@@ -196,6 +220,14 @@ function FilterBar({
           <optgroup label="Wings">
             <option value={WING_VALUE('fiction')}>{WING_LABEL.fiction}</option>
             <option value={WING_VALUE('non-fiction')}>{WING_LABEL['non-fiction']}</option>
+          </optgroup>
+          <optgroup label="Families">
+            {unknownFamily && <option value={FAMILY_VALUE(unknownFamily)}>{unknownFamily} (0)</option>}
+            {families.map((f) => (
+              <option key={f.name} value={FAMILY_VALUE(f.name)}>
+                {f.name} ({f.count})
+              </option>
+            ))}
           </optgroup>
           <optgroup label="Genres">
             {unknown && <option value={unknown}>{unknown} (0)</option>}
@@ -524,7 +556,13 @@ export default function Story({ books, tallied }: { books: SearchBook[]; tallied
   // to the selection they were opened under (`key`), so a different
   // selection (a click, or the back button) starts with none open, and
   // coming back to the old one doesn't reopen them.
-  const selKey = !selection ? '' : selection.kind === 'genre' ? `genre:${selection.genre}` : `wing:${selection.wing}`;
+  const selKey = !selection
+    ? ''
+    : selection.kind === 'genre'
+      ? `genre:${selection.genre}`
+      : selection.kind === 'family'
+        ? `family:${selection.family}`
+        : `wing:${selection.wing}`;
   const [picks, setPicks] = useState<Picks>(NO_PICKS);
   const open = picks.key === selKey ? picks : NO_PICKS;
   const pick = (field: keyof Omit<Picks, 'key'>, value: string | null) =>
@@ -536,9 +574,10 @@ export default function Story({ books, tallied }: { books: SearchBook[]; tallied
 
   // Everything below that depends only on the whole shelf is worked out
   // once per book list, not on every click.
-  const { genres, full, genreBubbles, shelfDecades, shelfLengths, text } = useMemo(
+  const { genres, families, full, genreBubbles, shelfDecades, shelfLengths, text } = useMemo(
     () => ({
       genres: storyGenres(books),
+      families: storyFamilies(books),
       full: wheel(books),
       genreBubbles: bubbles(books),
       shelfDecades: decades(books),
@@ -547,26 +586,39 @@ export default function Story({ books, tallied }: { books: SearchBook[]; tallied
     }),
     [books]
   );
-  const zoom: Wing | null =
-    selection?.kind === 'wing'
-      ? selection.wing
-      : selection?.kind === 'genre' && openWing && full.rows.some((r) => r.wing === openWing && r.genre === selection.genre)
-        ? openWing
-        : null;
-  const shownWheel = zoom ? wheel(books, zoom) : full;
+  // The wing the wheel is opened into: the selected wing, or the open wing
+  // while a family or genre inside it is selected.
+  const inOpenWing =
+    openWing !== null &&
+    ((selection?.kind === 'genre' && full.rows.some((r) => r.wing === openWing && r.genre === selection.genre)) ||
+      (selection?.kind === 'family' && full.families.some((f) => f.wing === openWing && f.family === selection.family)));
+  const zoom: Wing | null = selection?.kind === 'wing' ? selection.wing : inOpenWing ? openWing : null;
+  // A selected genre keeps a slice of its own even when it's small enough
+  // to be folded into its family's "+N more".
+  const selectedGenreForWheel = selection?.kind === 'genre' ? selection.genre : undefined;
+  const shownWheel = zoom || selectedGenreForWheel ? wheel(books, zoom, selectedGenreForWheel) : full;
 
   const choose = (next: Selection) => {
     if (!next) setOpenWing(null);
     if (next?.kind === 'wing') setOpenWing(next.wing);
     select(next);
   };
-  // Clicking the open wing closes it (keeping a selected genre); another
-  // wing opens.
+  // Clicking the open wing closes it (keeping a selected family or genre);
+  // another wing opens.
   const onWing = (wing: Wing) => {
     if (zoom !== wing) choose({ kind: 'wing', wing });
-    else if (selection?.kind === 'genre') setOpenWing(null);
+    else if (selection && selection.kind !== 'wing') setOpenWing(null);
     else choose(null);
   };
+  // Clicking the selected family again clears it, back to the open wing if any.
+  const onFamily = (family: string) =>
+    choose(
+      selection?.kind === 'family' && selection.family === family
+        ? zoom
+          ? { kind: 'wing', wing: zoom }
+          : null
+        : { kind: 'family', family }
+    );
   // Clicking the selected genre again clears it, back to the open wing if any.
   const onGenre = (genre: string) =>
     choose(
@@ -584,7 +636,16 @@ export default function Story({ books, tallied }: { books: SearchBook[]; tallied
   const lines = selection ? liveLines(chosen, selection) : null;
   const selectedGenre = selection?.kind === 'genre' ? selection.genre : undefined;
 
-  // 4. How the genres compare: the bubbles are always the whole shelf's.
+  // 4. How the genres compare: the whole shelf's biggest genres, plus the
+  // selection's genres (one genre, or a family's) when they aren't among
+  // them, so what's selected always shows.
+  const selectionGenres =
+    selection?.kind === 'genre'
+      ? [selection.genre]
+      : selection?.kind === 'family'
+        ? Array.from(familyGenres(selection.family))
+        : [];
+  const shownBubbles = bubblesWith(books, genreBubbles, selectionGenres);
   const people = crowd(chosen);
   // 5. Who wrote them
   const authors = topAuthors(chosen);
@@ -671,28 +732,34 @@ export default function Story({ books, tallied }: { books: SearchBook[]; tallied
         <p className="prose">{text.madeOf}</p>
         <LiveLine text={lines?.madeOf} />
         <p className="story-note">
-          Each book sits in the wheel once, under its most specific genre (the one on the fewest books), so the
-          rings add up.
+          Each book sits in the wheel once: under its most specific genre (the one on the fewest books) and that
+          genre&rsquo;s family, so the rings add up. A young-adult fantasy counts as Fantasy; Young Readers and
+          Comics only take books with no other genre.
         </p>
         <Hint>
-          Tap or click a wing to open it out, or a genre to follow it through the rest of the story.
+          Tap or click a wing to open it out, or a family or genre to follow it through the rest of the story; tap
+          the middle to clear.
         </Hint>
         <WheelChart
           wheel={shownWheel}
           zoom={zoom}
           selected={selectedGenre}
+          selectedFamily={selection?.kind === 'family' ? selection.family : undefined}
           onWing={onWing}
+          onFamily={onFamily}
           onGenre={onGenre}
+          onClear={selection ? () => choose(null) : undefined}
         />
         <p className="story-footnote">
-          Inside, the two wings; outside, their genres. Picking a genre follows every book tagged with it, not only
-          the ones filed under it.
+          Inside, the two wings; then their families; outside, the genres. Picking a family or a genre follows every
+          book tagged with it (for a family, with any of its genres), not only the ones filed under it. Genres not
+          yet placed in a family show as Other.
           {full.untagged > 0 && ` ${plural(full.untagged, 'book')} with no genre tag ${full.untagged === 1 ? 'isn’t' : 'aren’t'} in the wheel.`}
           {full.noWing > 0 && ` Nor ${full.noWing === 1 ? 'is' : 'are'} ${plural(full.noWing, 'book')} tagged neither Fiction nor Non-Fiction.`}
         </p>
       </section>
 
-      <FilterBar selection={selection} genres={genres} onChoose={choose} />
+      <FilterBar selection={selection} genres={genres} families={families} onChoose={choose} />
 
       {/* 4. How the genres compare */}
       <section className="story-block" aria-labelledby="story-compare">
@@ -701,11 +768,17 @@ export default function Story({ books, tallied }: { books: SearchBook[]; tallied
         </h2>
         <p className="prose">{text.compare}</p>
         <LiveLine text={lines?.compare} />
-        {genreBubbles.length > 0 && <BubbleChart rows={genreBubbles} books={books} selected={selectedGenre} />}
+        {shownBubbles.rows.length > 0 && (
+          <BubbleChart rows={shownBubbles.rows} books={books} highlight={selectionGenres} />
+        )}
         <p className="story-footnote">
           The {genreBubbles.length} genres with the most books, each bubble sized by how many. Neither scale starts at
           zero, so the gaps look bigger than they are. Opening a bubble doesn&rsquo;t change what the rest of the
           story shows.
+          {shownBubbles.added.length > 0 &&
+            ` ${joinNames(shownBubbles.added)} ${shownBubbles.added.length === 1 ? 'is' : 'are'} shown as well, for your selection: not among the ${genreBubbles.length} biggest.`}
+          {shownBubbles.unplaced.length > 0 &&
+            ` ${joinNames(shownBubbles.unplaced)} can’t be placed: none of ${shownBubbles.unplaced.length === 1 ? 'its' : 'their'} books has both a page count and a Goodreads average.`}
         </p>
 
         <div className="story-pair">

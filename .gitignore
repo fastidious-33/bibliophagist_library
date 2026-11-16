@@ -5,5 +5,8 @@ node_modules
 .vercel
 /.claude
 tsconfig.tsbuildinfo
+# Written by Next on every dev/build run; it flips between .next/dev/types
+# and .next/types, so it's never committed.
+next-env.d.ts
 studio/dist
 studio/.sanity

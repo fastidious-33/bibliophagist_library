@@ -1,5 +1,8 @@
 import type { SearchBook } from '@/lib/search/types';
 import { FICTION_TAG, LIBRARIANS_PICK_TAG, NON_FICTION_TAG } from '@/lib/genres/shared';
+import { FAMILY_NAMES, OTHER_FAMILY, familyGenres, familyOf } from '@/lib/genres/families';
+
+export { familyGenres };
 
 /**
  * The numbers behind /story (PLAN.md, "The Story of the Shelves"). Pure
@@ -70,12 +73,18 @@ export type Wing = 'fiction' | 'non-fiction';
 export const WINGS: Wing[] = ['fiction', 'non-fiction'];
 export const WING_LABEL: Record<Wing, string> = { fiction: 'Fiction', 'non-fiction': 'Non-fiction' };
 
-/** One wing or one genre at a time; null is the whole shelf. */
-export type Selection = { kind: 'genre'; genre: string } | { kind: 'wing'; wing: Wing } | null;
+/** One wing, family or genre at a time; null is the whole shelf. */
+export type Selection =
+  | { kind: 'genre'; genre: string }
+  | { kind: 'family'; family: string }
+  | { kind: 'wing'; wing: Wing }
+  | null;
 
 export function selectionLabel(selection: Selection): string {
   if (!selection) return 'The whole shelf';
-  return selection.kind === 'genre' ? selection.genre : WING_LABEL[selection.wing];
+  if (selection.kind === 'genre') return selection.genre;
+  if (selection.kind === 'family') return selection.family;
+  return WING_LABEL[selection.wing];
 }
 
 /**
@@ -111,16 +120,6 @@ export function storyGenres(books: SearchBook[]): { tag: string; count: number }
   );
 }
 
-/**
- * A book's most specific genre: the one on the fewest books, ties
- * alphabetical. Each book sits under exactly one, so the wheel adds up.
- */
-export function mainGenre(book: SearchBook, counts: Map<string, number>): string | undefined {
-  return storyGenresOf(book).sort(
-    (a, b) => (counts.get(a) ?? 0) - (counts.get(b) ?? 0) || a.localeCompare(b)
-  )[0];
-}
-
 /** A book's wing. The rare book tagged both counts as Fiction. */
 export function wingOf(book: SearchBook): Wing | undefined {
   if (book.tags.includes(FICTION_TAG)) return 'fiction';
@@ -128,11 +127,47 @@ export function wingOf(book: SearchBook): Wing | undefined {
   return undefined;
 }
 
-/** The books a selection covers: every book carrying the genre, or the wing. */
+/** Where a book sits in the wheel: one wing, one family, one genre. */
+export type Placement = { wing: Wing; family: string; genre: string };
+
+/**
+ * Where a book sits in the wheel, once in each ring so they add up: under
+ * its most specific subject genre (the one on the fewest books, ties
+ * alphabetical) and that genre's family (lib/genres/families.ts). Audience
+ * and format genres (Young Readers, Comics) only count when the book has no
+ * subject genre, so a young-adult fantasy sits under Fantasy. A genre not
+ * yet placed in a family goes to its wing's Other. Undefined for a book
+ * with no genre tag or no wing.
+ */
+export function placeBook(book: SearchBook, counts: Map<string, number>): Placement | undefined {
+  const wing = wingOf(book);
+  const genres = storyGenresOf(book);
+  if (!wing || genres.length === 0) return undefined;
+  const specific = [...genres].sort((a, b) => (counts.get(a) ?? 0) - (counts.get(b) ?? 0) || a.localeCompare(b));
+  const genre = specific.find((g) => !familyOf(wing, g)?.audience) ?? specific[0];
+  return { wing, genre, family: familyOf(wing, genre)?.name ?? OTHER_FAMILY };
+}
+
+/**
+ * The books a selection covers: every book carrying the genre, every book
+ * carrying any of the family's genres (so Fantasy is all fantasy, young
+ * adult included), or the wing.
+ */
 export function filterBooks<B extends SearchBook>(books: B[], selection: Selection): B[] {
   if (!selection) return books;
   if (selection.kind === 'genre') return books.filter((b) => b.tags.includes(selection.genre));
+  if (selection.kind === 'family') {
+    const genres = familyGenres(selection.family);
+    return books.filter((b) => b.tags.some((t) => genres.has(t)));
+  }
   return books.filter((b) => wingOf(b) === selection.wing);
+}
+
+/** Every family with books (any of its genres), for the dropdown, most books first. */
+export function storyFamilies(books: SearchBook[]): { name: string; count: number }[] {
+  return FAMILY_NAMES.map((name) => ({ name, count: filterBooks(books, { kind: 'family', family: name }).length }))
+    .filter((f) => f.count > 0)
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
 }
 
 /* ---------- 2. What's on the shelves: the figures ---------- */
@@ -177,28 +212,43 @@ export function figures(books: SearchBook[]): Figures {
 
 /* ---------- 3. What it's made of: the wheel ---------- */
 
-/** One genre in one wing: books filed under it there, and books tagged with it at all. */
-export type WheelRow = { genre: string; wing: Wing; main: number; tagged: number };
+/** One genre in one family of one wing: books filed under it, and books tagged with it at all. */
+export type WheelRow = { wing: Wing; family: string; genre: string; main: number; tagged: number };
 
-/** An outer slice: a genre, or (no genre) the wing's "Other". */
+/** A middle slice: a family in a wing. */
+export type WheelFamily = {
+  wing: Wing;
+  family: string;
+  /** Books filed here (each book once). */
+  main: number;
+  /** Books carrying any of its genres, anywhere (what selecting it shows); 0 for Other. */
+  tagged: number;
+  /** Other (unplaced genres) can't be selected. */
+  selectable: boolean;
+};
+
+/** An outer slice: a genre, or (no genre) a family's folded "+N more". */
 export type WheelSlice = {
   genre?: string;
   wing: Wing;
+  family: string;
   label: string;
   /** Books filed here (each book once). */
   main: number;
-  /** Books carrying the tag anywhere; 0 for Other. */
+  /** Books carrying the tag anywhere; 0 for a fold. */
   tagged: number;
-  /** For Other: how many genres it folds together. */
+  /** For a fold: how many genres it folds together. */
   folded: number;
 };
 
 export type Wheel = {
   /** Inner ring: books with a genre, per wing. One wing when zoomed. */
   wings: { wing: Wing; books: number }[];
-  /** Outer ring, in wing order so it lines up with the inner ring. */
+  /** Middle ring, in wing order so it lines up with the inner ring. */
+  families: WheelFamily[];
+  /** Outer ring, in family order so it lines up with the middle ring. */
   slices: WheelSlice[];
-  /** Every genre per wing, for the table. */
+  /** Every genre, by wing and family, for the table. */
   rows: WheelRow[];
   /** Books with no genre tag (not in the wheel). */
   untagged: number;
@@ -206,52 +256,92 @@ export type Wheel = {
   noWing: number;
 };
 
-/** Genres drawn per wing before the rest fold into Other. */
-const WHEEL_TOP: Record<Wing, number> = { fiction: 10, 'non-fiction': 6 };
-/** Genres drawn when one wing fills the wheel. */
-const WHEEL_ZOOM_TOP = 16;
+/** Genres drawn per family before the rest fold into "+N more" (all when a wing is opened out). */
+const FAMILY_TOP = 3;
 
-export function wheel(books: SearchBook[], zoom?: Wing | null): Wheel {
+/**
+ * `keep`: a genre to keep out of any "+N more" fold (the selected one), so
+ * even a one-book genre gets a slice of its own to show and highlight.
+ */
+export function wheel(books: SearchBook[], zoom?: Wing | null, keep?: string): Wheel {
   const counts = genreCounts(books);
-  const filed: Record<Wing, Map<string, number>> = { fiction: new Map(), 'non-fiction': new Map() };
+  const filed = new Map<string, WheelRow>();
   const wingBooks: Record<Wing, number> = { fiction: 0, 'non-fiction': 0 };
   let untagged = 0;
   let noWing = 0;
 
   for (const b of books) {
-    const genre = mainGenre(b, counts);
-    if (!genre) {
+    if (storyGenresOf(b).length === 0) {
       untagged++;
       continue;
     }
-    const wing = wingOf(b);
-    if (!wing) {
+    const place = placeBook(b, counts);
+    if (!place) {
       noWing++;
       continue;
     }
-    wingBooks[wing]++;
-    filed[wing].set(genre, (filed[wing].get(genre) ?? 0) + 1);
+    wingBooks[place.wing]++;
+    const key = `${place.wing}|${place.family}|${place.genre}`;
+    const row = filed.get(key);
+    if (row) row.main++;
+    else filed.set(key, { ...place, main: 1, tagged: counts.get(place.genre) ?? 0 });
   }
 
-  const rows: WheelRow[] = WINGS.flatMap((wing) =>
-    Array.from(filed[wing], ([genre, main]) => ({ genre, wing, main, tagged: counts.get(genre) ?? 0 })).sort(
-      (a, b) => b.main - a.main || a.genre.localeCompare(b.genre)
-    )
-  );
+  const byMain = <T extends { main: number }>(a: T, b: T) => b.main - a.main;
+  const rows = Array.from(filed.values());
+
+  // The middle ring: each wing's families, biggest first, Other last.
+  const familyTagged = new Map<string, number>();
+  const tagged = (name: string) => {
+    if (!familyTagged.has(name)) familyTagged.set(name, filterBooks(books, { kind: 'family', family: name }).length);
+    return familyTagged.get(name)!;
+  };
+  const familiesIn = (wing: Wing): WheelFamily[] => {
+    const totals = new Map<string, number>();
+    for (const r of rows) if (r.wing === wing) totals.set(r.family, (totals.get(r.family) ?? 0) + r.main);
+    return Array.from(totals, ([family, main]) => ({
+      wing,
+      family,
+      main,
+      selectable: family !== OTHER_FAMILY,
+      tagged: family === OTHER_FAMILY ? 0 : tagged(family),
+    })).sort(
+      (a, b) =>
+        Number(a.family === OTHER_FAMILY) - Number(b.family === OTHER_FAMILY) ||
+        b.main - a.main ||
+        a.family.localeCompare(b.family)
+    );
+  };
 
   const wings = (zoom ? [zoom] : WINGS).map((wing) => ({ wing, books: wingBooks[wing] })).filter((w) => w.books > 0);
+  const families = wings.flatMap(({ wing }) => familiesIn(wing));
 
-  const slices = wings.flatMap(({ wing }): WheelSlice[] => {
-    const mine = rows.filter((r) => r.wing === wing);
-    const top = zoom ? WHEEL_ZOOM_TOP : WHEEL_TOP[wing];
-    // Folding a single genre into "Other (1)" hides it for nothing.
-    const shown = mine.length <= top + 1 ? mine : mine.slice(0, top);
-    const rest = mine.slice(shown.length);
-    const out: WheelSlice[] = shown.map((r) => ({ genre: r.genre, wing, label: r.genre, main: r.main, tagged: r.tagged, folded: 0 }));
+  // The outer ring: each family's genres, in the same order as the middle
+  // ring, biggest first; past FAMILY_TOP the rest fold into "+N more"
+  // (folding a single genre hides it for nothing).
+  const slices = families.flatMap(({ wing, family }): WheelSlice[] => {
+    const mine = rows
+      .filter((r) => r.wing === wing && r.family === family)
+      .sort((a, b) => byMain(a, b) || a.genre.localeCompare(b.genre));
+    let shown = zoom || mine.length <= FAMILY_TOP + 1 ? mine : mine.slice(0, FAMILY_TOP);
+    // The selected genre always gets its own slice, folded or not.
+    const kept = keep ? mine.find((r) => r.genre === keep) : undefined;
+    if (kept && !shown.includes(kept)) shown = [...shown, kept];
+    const rest = mine.filter((r) => !shown.includes(r));
+    const out: WheelSlice[] = shown.map((r) => ({
+      genre: r.genre,
+      wing,
+      family,
+      label: r.genre,
+      main: r.main,
+      tagged: r.tagged,
+      folded: 0,
+    }));
     if (rest.length > 0) {
       out.push({
         wing,
-        label: `Other (${rest.length})`,
+        family,
+        label: `+${rest.length} more`,
         main: rest.reduce((s, r) => s + r.main, 0),
         tagged: 0,
         folded: rest.length,
@@ -260,7 +350,16 @@ export function wheel(books: SearchBook[], zoom?: Wing | null): Wheel {
     return out;
   });
 
-  return { wings, slices, rows, untagged, noWing };
+  // The table: wing, then family (in ring order), then genre.
+  const familyOrder = new Map(WINGS.flatMap((w) => familiesIn(w)).map((f, i) => [`${f.wing}|${f.family}`, i]));
+  rows.sort(
+    (a, b) =>
+      (familyOrder.get(`${a.wing}|${a.family}`) ?? 0) - (familyOrder.get(`${b.wing}|${b.family}`) ?? 0) ||
+      byMain(a, b) ||
+      a.genre.localeCompare(b.genre)
+  );
+
+  return { wings, families, slices, rows, untagged, noWing };
 }
 
 /* ---------- 4. How the genres compare ---------- */
@@ -278,13 +377,47 @@ export function bubbles(books: SearchBook[], n = 12): Bubble[] {
   const out: Bubble[] = [];
   for (const { tag } of storyGenres(books)) {
     if (out.length >= n) break;
-    const mine = books.filter((b) => b.tags.includes(tag));
-    const pages = medianPages(mine);
-    const scores = mine.filter(rated).map((b) => b.rating);
-    if (pages === undefined || scores.length === 0) continue;
-    out.push({ genre: tag, books: mine.length, medianPages: pages, average: mean(scores), rated: scores.length });
+    const b = bubbleFor(books, tag);
+    if (b) out.push(b);
   }
   return out;
+}
+
+/** One genre's bubble, or undefined when it can't be placed (no page counts or no ratings). */
+function bubbleFor(books: SearchBook[], tag: string): Bubble | undefined {
+  const mine = books.filter((b) => b.tags.includes(tag));
+  const pages = medianPages(mine);
+  const scores = mine.filter(rated).map((b) => b.rating);
+  if (pages === undefined || scores.length === 0) return undefined;
+  return { genre: tag, books: mine.length, medianPages: pages, average: mean(scores), rated: scores.length };
+}
+
+/**
+ * The bubbles plus the selection's genres when they aren't among them (a
+ * small genre picked from the dropdown, or a family's genres), so what's
+ * selected always shows. `added` names the extra bubbles; `unplaced` the
+ * selected genres that can't be drawn.
+ */
+export function bubblesWith(
+  books: SearchBook[],
+  base: Bubble[],
+  extras: string[]
+): { rows: Bubble[]; added: string[]; unplaced: string[] } {
+  const rows = [...base];
+  const added: string[] = [];
+  const unplaced: string[] = [];
+  const counts = genreCounts(books);
+  for (const tag of extras) {
+    if (!counts.has(tag) || rows.some((r) => r.genre === tag)) continue;
+    const b = bubbleFor(books, tag);
+    if (b) {
+      rows.push(b);
+      added.push(tag);
+    } else {
+      unplaced.push(tag);
+    }
+  }
+  return { rows, added, unplaced };
 }
 
 /** One book as a dot in a genre's drill-down: pages across, rating up. */
@@ -643,12 +776,21 @@ export function commentary(books: SearchBook[]): Commentary {
     f.era ? `, and the busiest decade of first publication is the ${f.era.decade}s` : ''
   }.`;
 
-  const top = storyGenres(books).slice(0, 3);
-  const madeOf = top.length
-    ? `The biggest genres are ${joinList(top.map((g) => `${g.tag} (${fmt(g.count)})`))}, out of ${plural(
-        storyGenres(books).length,
+  // The biggest families, counting each book once (as the wheel's middle
+  // ring does), a family's two wings together.
+  const familyBooks = new Map<string, number>();
+  for (const f of wheel(books).families) {
+    if (f.selectable) familyBooks.set(f.family, (familyBooks.get(f.family) ?? 0) + f.main);
+  }
+  const topFamilies = Array.from(familyBooks, ([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
+    .slice(0, 3);
+  const genreTotal = storyGenres(books).length;
+  const madeOf = topFamilies.length
+    ? `The biggest families are ${joinList(topFamilies.map((f) => `${f.name} (${fmt(f.count)})`))}; the shelves hold ${plural(
+        genreTotal,
         'genre'
-      )} in all.`
+      )} across ${plural(familyBooks.size, 'family', 'families')}.`
     : 'None of the books has a genre tag yet.';
 
   const bubbled = bubbles(books);
