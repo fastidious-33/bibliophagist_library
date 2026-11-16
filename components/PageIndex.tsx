@@ -60,10 +60,15 @@ export default function PageIndex({ items, phoneOnly = false }: { items: PageInd
   const held = useRef(false);
   const quietUntil = useRef(0);
 
+  // The section ids as one string, so the observer below follows the ids and
+  // isn't rebuilt when a caller hands over a new array with the same ones.
+  const sectionIds = items.flatMap((item) => (item.id ? [item.id] : [])).join('\n');
+
   // The section in the reading band (a strip ~40% down the window).
   useEffect(() => {
-    const targets = items
-      .map((item) => (item.id ? document.getElementById(item.id) : null))
+    const targets = sectionIds
+      .split('\n')
+      .map((id) => (id ? document.getElementById(id) : null))
       .filter((el): el is HTMLElement => el !== null);
     if (targets.length === 0) return;
     const observer = new IntersectionObserver(
@@ -75,7 +80,7 @@ export default function PageIndex({ items, phoneOnly = false }: { items: PageInd
     );
     targets.forEach((el) => observer.observe(el));
     return () => observer.disconnect();
-  }, [items]);
+  }, [sectionIds]);
 
   // Phones: where it sits, and when it shows and fades.
   useEffect(() => {
@@ -83,7 +88,10 @@ export default function PageIndex({ items, phoneOnly = false }: { items: PageInd
 
     // Just below the site header while it's on screen, below the Story's
     // filter bar once that's stuck to the top, else near the top edge.
+    // Phones only: --index-top is only read inside the phone media query, so
+    // wider screens skip the measuring (it forces the browser to re-lay-out).
     const place = () => {
+      if (!phone.matches) return;
       let top = 12;
       const header = document.querySelector('.site-header')?.getBoundingClientRect();
       if (header && header.bottom > 0) top = Math.max(top, header.bottom + CLEARANCE);
@@ -92,6 +100,17 @@ export default function PageIndex({ items, phoneOnly = false }: { items: PageInd
       nav.current?.style.setProperty('--index-top', `${Math.round(top)}px`);
     };
     place();
+
+    // At most one placement per screen redraw, however many scroll or
+    // resize events arrive before it.
+    let frame: number | undefined;
+    const placeSoon = () => {
+      if (frame !== undefined) return;
+      frame = window.requestAnimationFrame(() => {
+        frame = undefined;
+        place();
+      });
+    };
 
     const hideIn = (ms: number) => {
       window.clearTimeout(hideTimer.current);
@@ -105,7 +124,7 @@ export default function PageIndex({ items, phoneOnly = false }: { items: PageInd
     let travelled = 0;
     let idle: number | undefined;
     const onScroll = () => {
-      place();
+      placeSoon();
       const y = window.scrollY;
       travelled += Math.abs(y - lastY);
       lastY = y;
@@ -120,10 +139,15 @@ export default function PageIndex({ items, phoneOnly = false }: { items: PageInd
       }
     };
     window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', place);
+    window.addEventListener('resize', placeSoon);
+    // Crossing the phone breakpoint (rotating, resizing the window): place it
+    // straight away, so it isn't left at its default until the next scroll.
+    phone.addEventListener('change', place);
     return () => {
       window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', place);
+      window.removeEventListener('resize', placeSoon);
+      phone.removeEventListener('change', place);
+      if (frame !== undefined) window.cancelAnimationFrame(frame);
       window.clearTimeout(idle);
       window.clearTimeout(hideTimer.current);
     };

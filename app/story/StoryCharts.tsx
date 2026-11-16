@@ -214,7 +214,7 @@ function rowsStyle(rows: number): CSSProperties {
 /** A canvas is pixels: the wrapper speaks a one-line summary instead. */
 function ChartBox({ summary, rows, children }: { summary: string; rows: number; children: ReactNode }) {
   return (
-    <div className="ledger-chart ledger-chart--rows" style={rowsStyle(rows)} role="img" aria-label={summary}>
+    <div className="story-chart story-chart--rows" style={rowsStyle(rows)} role="img" aria-label={summary}>
       {children}
     </div>
   );
@@ -270,8 +270,8 @@ export type NumberRow = { key: string; label: ReactNode; value: string | string[
 /** The chart's figures as a table, folded behind "Show the numbers". */
 export function Numbers({ caption, head, rows }: { caption: string; head: string[]; rows: NumberRow[] }) {
   return (
-    <Fold className="ledger-numbers" summary="Show the numbers">
-      <table className="ledger-table">
+    <Fold className="story-numbers" summary="Show the numbers">
+      <table className="story-table">
         <caption className="visually-hidden">{caption}</caption>
         <thead>
           <tr>
@@ -595,7 +595,7 @@ function GenreBubbles({
   return (
     <>
       <Hint>Tap or click a bubble to see that genre&rsquo;s books.</Hint>
-      <div className="ledger-chart story-bubbles" role="img" aria-label={summary}>
+      <div className="story-chart story-bubbles" role="img" aria-label={summary}>
         <Chart type="bubble" data={data} options={options} plugins={[bubbleLabels]} />
       </div>
       {/* The keyboard route to what a bubble click does. */}
@@ -710,14 +710,14 @@ function GenreBooks({ genre, books, onBack }: { genre: string; books: SearchBook
       />
       <Hint pointerOnly>Hover over a dot to see the book; the table below links to each one.</Hint>
       {points.length > 0 ? (
-        <div className="ledger-chart story-bubbles" role="img" aria-label={summary}>
+        <div className="story-chart story-bubbles" role="img" aria-label={summary}>
           <Chart type="bubble" data={data} options={options} />
         </div>
       ) : (
-        <p className="ledger-note">None of these books has both a page count and a Goodreads average yet.</p>
+        <p className="story-note">None of these books has both a page count and a Goodreads average yet.</p>
       )}
       {left > 0 && (
-        <p className="ledger-footnote">
+        <p className="story-footnote">
           {plural(left, 'book')} without a page count or a Goodreads average {left === 1 ? 'isn’t' : 'aren’t'} shown.
         </p>
       )}
@@ -837,7 +837,7 @@ export type LedgerColumn = { head: string; value: string; unit?: string; note?: 
  */
 export function MiniLedger({ columns }: { columns: LedgerColumn[] }) {
   return (
-    <dl className="ledger-entry ledger-entry--mini" style={{ '--cols': columns.length } as CSSProperties}>
+    <dl className="story-entry story-entry--mini" style={{ '--cols': columns.length } as CSSProperties}>
       {columns.map((col) => (
         <div key={col.head}>
           <dt>{col.head}</dt>
@@ -845,7 +845,7 @@ export function MiniLedger({ columns }: { columns: LedgerColumn[] }) {
             {col.value}
             {col.unit && <small> {col.unit}</small>}
           </dd>
-          {col.note && <dd className="ledger-entry-note">{col.note}</dd>}
+          {col.note && <dd className="story-entry-note">{col.note}</dd>}
         </div>
       ))}
     </dl>
@@ -940,7 +940,7 @@ export function SeriesArc({
 
   return (
     <>
-      <div className="ledger-chart story-arc" role="img" aria-label={summary}>
+      <div className="story-chart story-arc" role="img" aria-label={summary}>
         <Chart type="line" data={data} options={options} plugins={[refLine]} />
       </div>
       {footnote}
@@ -1044,7 +1044,7 @@ export function CareerArc({
 
   return (
     <>
-      <div className="ledger-chart story-arc" role="img" aria-label={summary}>
+      <div className="story-chart story-arc" role="img" aria-label={summary}>
         <Chart type="line" data={data} options={options} plugins={[refLine]} />
       </div>
       {footnote}
@@ -1236,7 +1236,7 @@ export function LongestBars({
       <ChartBox summary={summary} rows={books.length}>
         <Chart type="bar" data={data} options={options} plugins={[barValues]} />
       </ChartBox>
-      <p className="ledger-footnote">
+      <p className="story-footnote">
         {xMin > 0
           ? `The scale starts at ${xMin} pages, not zero, so the few pages between these books show; each bar is labelled with its page count.`
           : 'Each bar is labelled with its page count.'}
@@ -1379,7 +1379,7 @@ export function OverlayColumns({
           <span className="story-legend-note">as shares of each</span>
         </p>
       )}
-      <div className="ledger-chart" role="img" aria-label={summary}>
+      <div className="story-chart" role="img" aria-label={summary}>
         <Chart type="bar" data={data} options={options} />
       </div>
       <Numbers

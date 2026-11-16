@@ -109,11 +109,11 @@ const plural = (n: number, word: string, many = `${word}s`) => `${number(n)} ${n
 /** Linked titles, each with its author and a figure (a rating, or pages). */
 function BookList({ books, unit }: { books: BookLine[]; unit: 'rating' | 'pages' }) {
   return (
-    <ol className="ledger-list">
+    <ol className="story-list">
       {books.map((b) => (
         <li key={b.slug}>
           <Link href={`/catalog/${b.slug}`}>{b.title}</Link>
-          <span className="ledger-list-meta">
+          <span className="story-list-meta">
             {b.author && `${b.author} · `}
             {unit === 'pages' ? `${number(b.value)} pages` : b.value.toFixed(2)}
           </span>
@@ -299,7 +299,7 @@ function AuthorDrill({
             points={d.career}
             reference={referenceFor(baseline, against)}
             footnote={
-              <p className="ledger-footnote">
+              <p className="story-footnote">
                 Each dot is a book, placed by the year it first came out and its Goodreads average; the dashed line
                 is {against}&rsquo;s average, and the scale doesn&rsquo;t start at zero.
                 {d.unplaced > 0 &&
@@ -309,7 +309,7 @@ function AuthorDrill({
           />
         </>
       ) : (
-        <p className="ledger-note">None of their books here has both a year and a Goodreads average yet.</p>
+        <p className="story-note">None of their books here has both a year and a Goodreads average yet.</p>
       )}
     </Drilled>
   );
@@ -363,7 +363,7 @@ function SeriesDrill({
             arc={d.arc}
             reference={referenceFor(baseline, against)}
             footnote={
-              <p className="ledger-footnote">
+              <p className="story-footnote">
                 Book 1, 2, 3… in the order they were first published; the dashed line is {against}&rsquo;s average,
                 and the scale doesn&rsquo;t start at zero.
               </p>
@@ -371,7 +371,7 @@ function SeriesDrill({
           />
         </>
       ) : (
-        <p className="ledger-note">The arc needs three rated books in the series; this one has {ratedCount}.</p>
+        <p className="story-note">The arc needs three rated books in the series; this one has {ratedCount}.</p>
       )}
     </Drilled>
   );
@@ -429,11 +429,11 @@ function DecadeDrill({
               caption={`Who wrote ${name}'s ${leaveOut}`}
               column="Author"
               summary={`The authors of ${name}'s ${leaveOut}, led by ${writers[0].label} with ${writers[0].count}.`}
-              footnote={<p className="ledger-footnote">Top {writers.length} by books from {before ? 'before 1900' : `the ${decade}`}.</p>}
+              footnote={<p className="story-footnote">Top {writers.length} by books from {before ? 'before 1900' : `the ${decade}`}.</p>}
             />
           </>
         ) : (
-          <p className="ledger-note">No author is on file for these books.</p>
+          <p className="story-note">No author is on file for these books.</p>
         )
       ) : mix.length > 0 ? (
         <>
@@ -443,7 +443,7 @@ function DecadeDrill({
             here={name}
             overall={against === 'the shelf' ? 'The whole shelf' : `All of ${against}`}
             footnote={
-              <p className="ledger-footnote">
+              <p className="story-footnote">
                 Its top genres by books. Where the front bar reaches past the faded one, the{' '}
                 {before ? 'era' : 'decade'} has more of that genre than usual.
               </p>
@@ -451,7 +451,7 @@ function DecadeDrill({
           />
         </>
       ) : (
-        <p className="ledger-note">None of these books has a genre tag yet.</p>
+        <p className="story-note">None of these books has a genre tag yet.</p>
       )}
     </Drilled>
   );
@@ -495,7 +495,7 @@ function LabelledCard({ label, detail, book }: { label: string; detail: string; 
   return (
     <div className="story-card">
       <p className="eyebrow-label">
-        {label} <span className="ledger-extreme-detail">· {detail}</span>
+        {label} <span className="story-extreme-detail">· {detail}</span>
       </p>
       <BookCard
         slug={book.slug}
@@ -635,17 +635,17 @@ export default function Story({ books, tallied }: { books: SearchBook[]; tallied
       <PageIndex items={CHAPTERS} />
 
       {/* 2. What's on the shelves */}
-      <section className="ledger-block" aria-labelledby="story-shelves">
+      <section className="story-block" aria-labelledby="story-shelves">
         <h2 id="story-shelves" className="subhead">
           What&rsquo;s on the shelves
         </h2>
         <p className="prose">{text.shelves}</p>
         {/* One entry ruled into a ledger: blue lines across, red rules
             between the columns, the figures in ink. */}
-        <p className="ledger-tallied">
+        <p className="story-tallied">
           {selection && `${selectionLabel(selection)} · `}Tallied {tallied}
         </p>
-        <dl className="ledger-entry">
+        <dl className="story-entry">
           {entry.map((col) => (
             <div key={col.head}>
               <dt>{col.head}</dt>
@@ -653,24 +653,24 @@ export default function Story({ books, tallied }: { books: SearchBook[]; tallied
                 {col.value}
                 {col.unit && <small> {col.unit}</small>}
               </dd>
-              {col.note && <dd className="ledger-entry-note">{col.note}</dd>}
+              {col.note && <dd className="story-entry-note">{col.note}</dd>}
             </div>
           ))}
         </dl>
-        <p className="ledger-footnote">
+        <p className="story-footnote">
           A typical book is the median across the {plural(f.booksWithPages, 'book')} with a page count on file; the
           reading era counts first-published years.
         </p>
       </section>
 
       {/* 3. What it's made of */}
-      <section className="ledger-block" aria-labelledby="story-made-of">
+      <section className="story-block" aria-labelledby="story-made-of">
         <h2 id="story-made-of" className="subhead">
           What it&rsquo;s made of
         </h2>
         <p className="prose">{text.madeOf}</p>
         <LiveLine text={lines?.madeOf} />
-        <p className="ledger-note">
+        <p className="story-note">
           Each book sits in the wheel once, under its most specific genre (the one on the fewest books), so the
           rings add up.
         </p>
@@ -684,7 +684,7 @@ export default function Story({ books, tallied }: { books: SearchBook[]; tallied
           onWing={onWing}
           onGenre={onGenre}
         />
-        <p className="ledger-footnote">
+        <p className="story-footnote">
           Inside, the two wings; outside, their genres. Picking a genre follows every book tagged with it, not only
           the ones filed under it.
           {full.untagged > 0 && ` ${plural(full.untagged, 'book')} with no genre tag ${full.untagged === 1 ? 'isn’t' : 'aren’t'} in the wheel.`}
@@ -695,58 +695,58 @@ export default function Story({ books, tallied }: { books: SearchBook[]; tallied
       <FilterBar selection={selection} genres={genres} onChoose={choose} />
 
       {/* 4. How the genres compare */}
-      <section className="ledger-block" aria-labelledby="story-compare">
+      <section className="story-block" aria-labelledby="story-compare">
         <h2 id="story-compare" className="subhead">
           How the genres compare
         </h2>
         <p className="prose">{text.compare}</p>
         <LiveLine text={lines?.compare} />
         {genreBubbles.length > 0 && <BubbleChart rows={genreBubbles} books={books} selected={selectedGenre} />}
-        <p className="ledger-footnote">
+        <p className="story-footnote">
           The {genreBubbles.length} genres with the most books, each bubble sized by how many. Neither scale starts at
           zero, so the gaps look bigger than they are. Opening a bubble doesn&rsquo;t change what the rest of the
           story shows.
         </p>
 
-        <div className="ledger-pair">
+        <div className="story-pair">
           <section aria-labelledby="story-favourites">
-            <h3 id="story-favourites" className="ledger-subhead">
+            <h3 id="story-favourites" className="story-subhead">
               Crowd favourites{label && ` · ${label}`}
             </h3>
             {people.favourites.length > 0 ? (
               <BookList books={people.favourites} unit="rating" />
             ) : (
-              <p className="ledger-note">Too few rated books here to pick favourites.</p>
+              <p className="story-note">Too few rated books here to pick favourites.</p>
             )}
           </section>
           <section aria-labelledby="story-sceptics">
-            <h3 id="story-sceptics" className="ledger-subhead">
+            <h3 id="story-sceptics" className="story-subhead">
               Crowd sceptics{label && ` · ${label}`}
             </h3>
             {people.sceptics.length > 0 ? (
               <BookList books={people.sceptics} unit="rating" />
             ) : (
-              <p className="ledger-note">Too few rated books here to pick sceptics.</p>
+              <p className="story-note">Too few rated books here to pick sceptics.</p>
             )}
           </section>
         </div>
         {people.perfect > 0 && (
-          <p className="ledger-footnote">
+          <p className="story-footnote">
             {plural(people.perfect, 'perfect 5.0')} left out of the favourites: a handful of votes, not a crowd.
           </p>
         )}
       </section>
 
       {/* 5. Who wrote them */}
-      <section className="ledger-block" aria-labelledby="story-who">
+      <section className="story-block" aria-labelledby="story-who">
         <h2 id="story-who" className="subhead">
           Who wrote them
         </h2>
         <p className="prose">{text.who}</p>
         <LiveLine text={lines?.who} />
-        <div className="ledger-pair">
+        <div className="story-pair">
           <section aria-labelledby="story-authors">
-            <h3 id="story-authors" className="ledger-subhead">
+            <h3 id="story-authors" className="story-subhead">
               Most-shelved authors
             </h3>
             {authorRow ? (
@@ -759,7 +759,7 @@ export default function Story({ books, tallied }: { books: SearchBook[]; tallied
               />
             ) : (
               <>
-                <p className="ledger-note">
+                <p className="story-note">
                   {number(authors.single)} of {plural(authors.authors, 'author')}{' '}
                   {authors.single === 1 ? 'has' : 'have'} one book here.
                 </p>
@@ -778,11 +778,11 @@ export default function Story({ books, tallied }: { books: SearchBook[]; tallied
               </>
             )}
             {authors.noAuthor > 0 && (
-              <p className="ledger-footnote">{plural(authors.noAuthor, 'book')} with no author on file.</p>
+              <p className="story-footnote">{plural(authors.noAuthor, 'book')} with no author on file.</p>
             )}
           </section>
           <section aria-labelledby="story-series">
-            <h3 id="story-series" className="ledger-subhead">
+            <h3 id="story-series" className="story-subhead">
               Longest series
             </h3>
             {seriesRow ? (
@@ -795,7 +795,7 @@ export default function Story({ books, tallied }: { books: SearchBook[]; tallied
               />
             ) : series.rows.length > 0 ? (
               <>
-                <p className="ledger-note">
+                <p className="story-note">
                   {plural(series.inSeries, 'book')} {series.inSeries === 1 ? 'belongs' : 'belong'} to one of{' '}
                   {number(series.series)} series.
                 </p>
@@ -809,14 +809,14 @@ export default function Story({ books, tallied }: { books: SearchBook[]; tallied
                 />
               </>
             ) : (
-              <p className="ledger-note">No series {label ? `in ${label}` : 'on the shelves'}.</p>
+              <p className="story-note">No series {label ? `in ${label}` : 'on the shelves'}.</p>
             )}
           </section>
         </div>
       </section>
 
       {/* 6. When they were written */}
-      <section className="ledger-block" aria-labelledby="story-when">
+      <section className="story-block" aria-labelledby="story-when">
         <h2 id="story-when" className="subhead">
           When they were written
         </h2>
@@ -852,7 +852,7 @@ export default function Story({ books, tallied }: { books: SearchBook[]; tallied
               </>
             )}
             {chosenDecades.noYear > 0 && (
-              <p className="ledger-footnote">
+              <p className="story-footnote">
                 {plural(chosenDecades.noYear, 'book')} with no year on file
                 {chosenDecades.noYear === 1 ? ' isn’t' : ' aren’t'} counted.
               </p>
@@ -870,7 +870,7 @@ export default function Story({ books, tallied }: { books: SearchBook[]; tallied
       </section>
 
       {/* 7. How long they run */}
-      <section className="ledger-block" aria-labelledby="story-length">
+      <section className="story-block" aria-labelledby="story-length">
         <h2 id="story-length" className="subhead">
           How long they run
         </h2>
@@ -905,7 +905,7 @@ export default function Story({ books, tallied }: { books: SearchBook[]; tallied
               </>
             )}
             {chosenLengths.noPages > 0 && (
-              <p className="ledger-footnote">
+              <p className="story-footnote">
                 {plural(chosenLengths.noPages, 'book')} with no page count on file
                 {chosenLengths.noPages === 1 ? ' isn’t' : ' aren’t'} counted.
               </p>

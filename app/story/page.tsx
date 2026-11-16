@@ -46,7 +46,7 @@ export default async function StoryPage() {
         <h1>The Story of the Shelves</h1>
       </div>
 
-      <div className="genre-hero ledger-hero">
+      <div className="genre-hero story-hero">
         <Painting slot="story" priority sizes="(max-width: 760px) 100vw, 420px" />
         <div>
           <p className="prose prose-lg">{INTRO}</p>

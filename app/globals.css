@@ -4368,44 +4368,45 @@ a.book-theme-tag:hover {
 }
 
 /* ---------- The Story of the Shelves (/story): shared pieces ----------
-   The ledger-* names date from when the page was /ledger; the ruled entry
-   still is one. The story's own pieces follow in the next block. */
+   Headings, notes, footnotes, the ruled entry and the "Show the numbers"
+   tables. (These were the ledger-* classes when the page was /ledger.) The
+   story's own pieces follow in the next block. */
 
 /* Painting beside the intro, with room before the first chapter. */
-.ledger-hero {
+.story-hero {
   margin-bottom: 2.75rem;
 }
 
-.ledger-block {
+.story-block {
   margin-bottom: 2.75rem;
 }
 
-.ledger-note {
+.story-note {
   font-size: 0.92rem;
   color: var(--ledger);
   max-width: 52ch;
   margin: -0.2rem 0 0.9rem;
 }
 
-.ledger-chart {
+.story-chart {
   position: relative;
   height: 320px;
 }
 
 /* Horizontal charts: one row per label, so the box grows with --rows. */
-.ledger-chart--rows {
+.story-chart--rows {
   height: calc(var(--rows, 8) * 1.75rem + 2.5rem);
 }
 
 @media (max-width: 640px) {
-  .ledger-chart { height: 260px; }
-  .ledger-chart--rows { height: calc(var(--rows, 8) * 1.6rem + 2.5rem); }
+  .story-chart { height: 260px; }
+  .story-chart--rows { height: calc(var(--rows, 8) * 1.6rem + 2.5rem); }
 }
 
 /* What's on the shelves: one entry ruled into a ledger. Account-book paper has blue
    lines across and red rules down the columns; --ledger and --stamp are
    those two inks, so the ruling follows the theme. */
-.ledger-tallied {
+.story-tallied {
   margin: 0 0 0.4rem;
   text-align: right;
   font-family: var(--font-label);
@@ -4414,7 +4415,7 @@ a.book-theme-tag:hover {
   color: var(--ledger);
 }
 
-.ledger-entry {
+.story-entry {
   display: grid;
   /* Equal columns, as on ruled paper. */
   grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -4425,7 +4426,7 @@ a.book-theme-tag:hover {
   border-bottom: 1px solid var(--ledger);
 }
 
-.ledger-entry > div {
+.story-entry > div {
   display: flex;
   flex-direction: column;
   gap: 0.45rem;
@@ -4434,16 +4435,16 @@ a.book-theme-tag:hover {
   border-left: 1px solid rgba(var(--stamp-rgb), 0.55);
 }
 
-.ledger-entry > div:first-child {
+.story-entry > div:first-child {
   padding-left: 0;
   border-left: 0;
 }
 
-.ledger-entry > div:last-child {
+.story-entry > div:last-child {
   padding-right: 0;
 }
 
-.ledger-entry dt {
+.story-entry dt {
   font-family: var(--font-label);
   font-size: clamp(0.56rem, 1.9vw, 0.72rem);
   letter-spacing: 0.12em;
@@ -4452,7 +4453,7 @@ a.book-theme-tag:hover {
   color: var(--stamp);
 }
 
-.ledger-entry dd {
+.story-entry dd {
   margin: 0;
   font-family: var(--font-body);
   font-weight: 600;
@@ -4463,23 +4464,23 @@ a.book-theme-tag:hover {
 }
 
 /* Two blocks side by side on wide screens, stacked on phones. */
-.ledger-pair {
+.story-pair {
   display: grid;
   grid-template-columns: 1fr;
   gap: 2rem 3rem;
 }
 
 @media (min-width: 900px) {
-  .ledger-pair {
+  .story-pair {
     grid-template-columns: 1fr 1fr;
   }
 }
 
-.ledger-block .ledger-pair {
+.story-block .story-pair {
   margin-top: 2rem;
 }
 
-.ledger-subhead {
+.story-subhead {
   font-family: var(--font-label);
   font-size: 0.8rem;
   font-weight: 400;
@@ -4490,29 +4491,29 @@ a.book-theme-tag:hover {
 }
 
 /* Crowd favourites and sceptics: a numbered list of linked titles. */
-.ledger-list {
+.story-list {
   margin: 0;
   padding-left: 1.4rem;
 }
 
-.ledger-list li {
+.story-list li {
   margin-bottom: 0.6rem;
   line-height: 1.4;
 }
 
-.ledger-list a {
+.story-list a {
   color: var(--ink);
   text-decoration: underline;
   text-decoration-color: rgba(var(--charcoal-rgb), var(--rule));
   text-underline-offset: 0.2em;
 }
 
-.ledger-list a:hover {
+.story-list a:hover {
   color: var(--stamp);
   text-decoration-color: currentColor;
 }
 
-.ledger-list-meta {
+.story-list-meta {
   display: block;
   font-size: 0.85rem;
   font-variant-numeric: tabular-nums;
@@ -4520,11 +4521,11 @@ a.book-theme-tag:hover {
 }
 
 /* "Show the numbers": each chart's figures, folded away. */
-.ledger-numbers {
+.story-numbers {
   margin-top: 0.75rem;
 }
 
-.ledger-numbers summary {
+.story-numbers summary {
   cursor: pointer;
   width: fit-content;
   font-family: var(--font-label);
@@ -4532,52 +4533,52 @@ a.book-theme-tag:hover {
   color: var(--stamp);
 }
 
-.ledger-numbers summary:hover {
+.story-numbers summary:hover {
   text-decoration: underline;
 }
 
-.ledger-table {
+.story-table {
   margin-top: 0.6rem;
   border-collapse: collapse;
   font-size: 0.88rem;
   font-variant-numeric: tabular-nums;
 }
 
-.ledger-table th,
-.ledger-table td {
+.story-table th,
+.story-table td {
   padding: 0.3rem 1.25rem 0.3rem 0;
   border-bottom: 1px solid rgba(var(--charcoal-rgb), var(--rule));
   text-align: left;
   font-weight: 400;
 }
 
-.ledger-table thead th {
+.story-table thead th {
   font-family: var(--font-label);
   font-size: 0.75rem;
   color: var(--ledger);
 }
 
-.ledger-table td {
+.story-table td {
   text-align: right;
 }
 
-.ledger-table a {
+.story-table a {
   color: var(--ink);
 }
 
-.ledger-table a:hover {
+.story-table a:hover {
   color: var(--stamp);
 }
 
 /* The detail after a card's label ("· first published 1605"). */
-.ledger-extreme-detail {
+.story-extreme-detail {
   text-transform: none;
   letter-spacing: 0.02em;
   color: var(--ledger);
 }
 
 /* One-line notes on what a chart leaves out. */
-.ledger-footnote {
+.story-footnote {
   margin: 0.75rem 0 0;
   max-width: 62ch;
   font-size: 0.82rem;
@@ -4588,14 +4589,14 @@ a.book-theme-tag:hover {
 /* ---------- The Story of the Shelves (/story): its own pieces ---------- */
 
 /* The ruled entry's units ("books", "pages") and the era's small print. */
-.ledger-entry dd small {
+.story-entry dd small {
   font-size: 0.42em;
   font-weight: 400;
   letter-spacing: 0.02em;
   color: rgba(var(--charcoal-rgb), var(--dim));
 }
 
-.ledger-entry dd.ledger-entry-note {
+.story-entry dd.story-entry-note {
   margin-top: -0.15rem;
   font-family: var(--font-label);
   font-size: clamp(0.6rem, 1.8vw, 0.75rem);
@@ -4817,24 +4818,24 @@ a.book-theme-tag:hover {
 }
 
 /* The mini ruled entry: as many columns as it has figures, smaller type. */
-.ledger-entry--mini {
+.story-entry--mini {
   grid-template-columns: repeat(var(--cols, 4), minmax(0, 1fr));
   padding: 0.6rem 0 0.7rem;
 }
 
-.ledger-entry--mini > div {
+.story-entry--mini > div {
   padding: 0 clamp(0.35rem, 1.5vw, 0.9rem);
 }
 
-.ledger-entry--mini dt {
+.story-entry--mini dt {
   font-size: clamp(0.55rem, 1.6vw, 0.66rem);
 }
 
-.ledger-entry.ledger-entry--mini dd {
+.story-entry.story-entry--mini dd {
   font-size: clamp(0.9rem, 2.6vw, 1.25rem);
 }
 
-.ledger-entry.ledger-entry--mini dd.ledger-entry-note {
+.story-entry.story-entry--mini dd.story-entry-note {
   font-size: clamp(0.58rem, 1.6vw, 0.7rem);
 }
 
