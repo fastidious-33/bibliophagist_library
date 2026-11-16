@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import Painting from '@/components/Painting';
+import Breadcrumbs, { BROWSE } from '@/components/Breadcrumbs';
+import PageIndex from '@/components/PageIndex';
 import { REQUEST_FORM_URL, CONTACT } from '@/lib/site';
 
 export const metadata: Metadata = {
@@ -44,11 +46,12 @@ const RIGHTS_IMAGE: { src: string; width: number; height: number; alt: string; c
 export default function BorrowPage() {
   return (
     <section className="section section--flush">
+      <Breadcrumbs trail={[BROWSE, { label: 'How to borrow' }]} />
       <div className="section-heading">
         <h1>How to borrow</h1>
       </div>
 
-      <div className="genre-hero">
+      <div id="how-it-works" className="genre-hero">
         <Painting slot="borrow" priority sizes="(max-width: 760px) 100vw, 420px" />
         <div>
           <p className="prose prose-lg">
@@ -86,6 +89,14 @@ export default function BorrowPage() {
           </ol>
         </div>
       </div>
+
+      <PageIndex
+        items={[
+          { id: 'how-it-works', label: 'How it works' },
+          { id: 'borrower-rules-heading', label: 'Rules for a borrower' },
+          { id: 'reader-rights-heading', label: 'Ten rights, one warning' },
+        ]}
+      />
 
       <section className="subsection" aria-labelledby="borrower-rules-heading">
         <h2 id="borrower-rules-heading" className="subhead">

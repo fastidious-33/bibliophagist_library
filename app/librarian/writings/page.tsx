@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import RoomPage, { EntryGroups } from '@/components/RoomPage';
+import RoomPage, { EntryGroups, groupIndex } from '@/components/RoomPage';
 import { filledGroups, getRoom } from '@/lib/sanity/content';
 
 export const metadata: Metadata = {
@@ -14,7 +14,7 @@ export default async function WritingsPage() {
   const room = await getRoom('writings');
   const groups = filledGroups(room);
   return (
-    <RoomPage title="Writings" slot="librarianWritings" intro={room?.intro ?? []}>
+    <RoomPage title="Writings" slot="librarianWritings" intro={room?.intro ?? []} index={groupIndex(groups)}>
       {groups.length > 0 ? <EntryGroups groups={groups} /> : <p className="room-empty">Writings to come.</p>}
     </RoomPage>
   );

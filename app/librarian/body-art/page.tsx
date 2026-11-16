@@ -26,7 +26,16 @@ function InkPhoto({ ink }: { ink: Ink }) {
 
 export default function BodyArtPage() {
   return (
-    <RoomPage title="Body art" slot="librarianBodyArt" intro={BODY_ART_INTRO}>
+    <RoomPage
+      title="Body art"
+      slot="librarianBodyArt"
+      intro={BODY_ART_INTRO}
+      index={[
+        { id: 'first-tattoo-heading', label: 'My first tattoo' },
+        { id: 'second-tattoo-heading', label: 'The second one' },
+        { id: 'dream-inks-heading', label: 'Dream inks' },
+      ]}
+    >
       <section className="subsection" aria-labelledby="first-tattoo-heading">
         <h2 id="first-tattoo-heading" className="subhead">
           My first tattoo

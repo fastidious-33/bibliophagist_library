@@ -4,6 +4,8 @@ import type { Metadata } from 'next';
 import { getBooks, getBookBySlug } from '@/lib/sanity';
 import Image from 'next/image';
 import RandomBookLink from '@/components/RandomBookLink';
+import Breadcrumbs, { BROWSE, CATALOG } from '@/components/Breadcrumbs';
+import PageIndex from '@/components/PageIndex';
 import ClothPlate from '@/components/ClothPlate';
 import { PickRibbon } from '@/components/BookCard';
 import { LIBRARIANS_PICK_TAG, WING_LABEL, bookStamps, genreSlug, isGenreTag } from '@/lib/genres/shared';
@@ -56,7 +58,18 @@ export default async function BookPage(props: { params: Promise<{ slug: string }
 
   return (
     <section className="section section--flush">
-      <div className="book-detail">
+      <Breadcrumbs trail={[BROWSE, CATALOG, { label: book.title }]} />
+      {/* Phones only: a short page on wider screens. */}
+      <PageIndex
+        phoneOnly
+        items={[
+          { id: 'book', label: 'The book' },
+          { id: 'librarian-slip-heading', label: 'From the librarian’s desk' },
+          ...(genres.length > 0 ? [{ id: 'filed-under', label: 'Filed under' }] : []),
+          { id: 'borrow-it', label: 'Borrow it' },
+        ]}
+      />
+      <div className="book-detail" id="book">
         <div className="book-detail-cover-wrap">
           {book.coverUrl ? (
             <Image
@@ -119,7 +132,9 @@ export default async function BookPage(props: { params: Promise<{ slug: string }
 
           {genres.length > 0 && (
             <div className="mb-md">
-              <h2 className="eyebrow-label">Filed under</h2>
+              <h2 id="filed-under" className="eyebrow-label">
+                Filed under
+              </h2>
               <div className="book-theme-tags">
                 {genres.map((t) => (
                   <Link key={t} href={`/catalog/genres/${genreSlug(t)}`} className="book-theme-tag">
@@ -130,7 +145,7 @@ export default async function BookPage(props: { params: Promise<{ slug: string }
             </div>
           )}
 
-          <div className="btn-row">
+          <div className="btn-row" id="borrow-it">
             {REQUEST_FORM_URL ? (
               <a href={REQUEST_FORM_URL} target="_blank" rel="noopener noreferrer" className="btn btn-primary">
                 Request this book

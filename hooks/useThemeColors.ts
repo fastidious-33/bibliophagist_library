@@ -21,12 +21,26 @@ export interface ThemeColors {
   charcoalRgb: string;
   stampRgb: string;
   label: string;
+  /** The Story wheel's shades per wing, dark to light. */
+  wheelFiction: string[];
+  wheelNonFiction: string[];
 }
+
+/** A comma-separated colour token ("#a, #b, #c") as a list. */
+const list = (value: string, fallback: string[]) => {
+  const items = value
+    .split(',')
+    .map((x) => x.trim())
+    .filter(Boolean);
+  return items.length ? items : fallback;
+};
 
 function read(): ThemeColors {
   const s = getComputedStyle(document.documentElement);
   const v = (name: string) => s.getPropertyValue(name).trim();
   return {
+    wheelFiction: list(v('--wheel-fiction'), FALLBACK.wheelFiction),
+    wheelNonFiction: list(v('--wheel-non-fiction'), FALLBACK.wheelNonFiction),
     paper: v('--paper'),
     kraft: v('--kraft'),
     ink: v('--ink'),
@@ -51,6 +65,8 @@ const FALLBACK: ThemeColors = {
   charcoalRgb: '59, 44, 34',
   stampRgb: '140, 59, 34',
   label: 'Georgia, serif',
+  wheelFiction: ['#6e2a17', '#8a3a21', '#a8532d', '#c26f43', '#d48a5f'],
+  wheelNonFiction: ['#1f2a48', '#34436b', '#4d5f8e', '#6a7eae', '#8799c6'],
 };
 
 const SERVER = '__server__';

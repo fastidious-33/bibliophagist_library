@@ -3,6 +3,8 @@ import { Suspense } from 'react';
 import Link from 'next/link';
 import CatalogBrowser from './CatalogBrowser';
 import Painting from '@/components/Painting';
+import Breadcrumbs, { BROWSE } from '@/components/Breadcrumbs';
+import PageIndex from '@/components/PageIndex';
 import RandomBookLink from '@/components/RandomBookLink';
 import { searchBooks, FILTER_KEYS } from '@/lib/search';
 import { getGenres, type Genre } from '@/lib/genres';
@@ -60,6 +62,7 @@ export default async function CatalogPage({
 
   return (
     <section className="section section--flush">
+      <Breadcrumbs trail={[BROWSE, { label: 'Catalog' }]} />
       <div className="section-heading">
         <div className="heading-with-action">
           <h1>The catalog</h1>
@@ -74,6 +77,15 @@ export default async function CatalogPage({
           particular, or pull a book at random and see where it takes you.
         </p>
       </div>
+
+      {/* Phones only: a short page on wider screens. */}
+      <PageIndex
+        phoneOnly
+        items={[
+          ...(shelf.length > 0 ? [{ id: 'genre-shelf-heading', label: 'Browse by genre' }] : []),
+          { id: 'catalog-results', label: 'All books' },
+        ]}
+      />
 
       {shelf.length > 0 && (
         <nav className="subsection" aria-labelledby="genre-shelf-heading">

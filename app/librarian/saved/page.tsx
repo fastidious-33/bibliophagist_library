@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import RoomPage, { EntryGroups, EntryList } from '@/components/RoomPage';
+import RoomPage, { EntryGroups, EntryList, groupIndex } from '@/components/RoomPage';
 import OpenFromHash from '@/components/OpenFromHash';
 import ToggleAll from '@/components/ToggleAll';
 import { filledGroups, getRoom } from '@/lib/sanity/content';
@@ -16,9 +16,15 @@ export default async function SavedPage() {
   const [saved, bookmarks] = await Promise.all([getRoom('saved'), getRoom('bookmarks')]);
   const newsletters = filledGroups(saved);
   const topics = bookmarks?.groups ?? [];
+  // The newsletter lists, then the bookmarks as one entry (they keep their
+  // own topic list below).
+  const index = [
+    ...groupIndex(newsletters),
+    { id: 'bookmarks', label: bookmarks?.title ?? 'Bookmarked articles' },
+  ];
 
   return (
-    <RoomPage title="Saved reading" slot="librarianSaved" intro={saved?.intro ?? []}>
+    <RoomPage title="Saved reading" slot="librarianSaved" intro={saved?.intro ?? []} index={index}>
       {/* Every list starts closed and opens from its heading; each section
           has an "Open all" / "Close all" of its own. */}
       {newsletters.length > 0 ? (

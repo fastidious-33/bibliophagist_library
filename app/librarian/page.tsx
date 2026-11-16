@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Image from 'next/image';
 import Painting from '@/components/Painting';
 import PaintedCard from '@/components/PaintedCard';
+import PageIndex from '@/components/PageIndex';
 import { CONTACT } from '@/lib/site';
 import { LIBRARIAN_BIO, LIBRARIAN_NAME, LIBRARIAN_PHOTO, ROOMS } from '@/lib/librarian';
 
@@ -19,7 +20,17 @@ export default function LibrarianPage() {
 
       <Painting slot="librarian" className="librarian-banner" priority sizes="(max-width: 1100px) 100vw, 1100px" />
 
-      <div className="librarian-intro">
+      {/* Phones only: "About me" on this page, then each room's own page
+          (from the same list as the room cards below). */}
+      <PageIndex
+        phoneOnly
+        items={[
+          { id: 'about-me', label: 'About me' },
+          ...ROOMS.map((room) => ({ href: room.href, label: room.title })),
+        ]}
+      />
+
+      <div className="librarian-intro" id="about-me">
         <figure className="librarian-portrait">
           <Image
             src={LIBRARIAN_PHOTO.src}

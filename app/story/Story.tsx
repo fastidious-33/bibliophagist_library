@@ -3,6 +3,7 @@
 import { useCallback, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react';
 import Link from 'next/link';
 import BookCard from '@/components/BookCard';
+import PageIndex from '@/components/PageIndex';
 import type { SearchBook } from '@/lib/search/types';
 import {
   WING_LABEL,
@@ -14,7 +15,6 @@ import {
   crowd,
   crowdAverage,
   decades,
-  decadeSpan,
   figures,
   genreMix,
   longestBooks,
@@ -135,6 +135,16 @@ function LiveLine({ text }: { text?: string }) {
 
 const WING_VALUE = (wing: Wing) => `wing:${wing}`;
 
+/** The chapters, for "On this page". */
+const CHAPTERS = [
+  { id: 'story-shelves', label: 'What’s on the shelves' },
+  { id: 'story-made-of', label: 'What it’s made of' },
+  { id: 'story-compare', label: 'How the genres compare' },
+  { id: 'story-who', label: 'Who wrote them' },
+  { id: 'story-when', label: 'When they were written' },
+  { id: 'story-length', label: 'How long they run' },
+];
+
 /**
  * Sticks to the top once the wheel has scrolled by: what's selected, a way
  * to clear it, and every genre (including ones too small to draw).
@@ -156,9 +166,12 @@ function FilterBar({
     selection?.kind === 'genre' && !genres.some((g) => g.tag === selection.genre) ? selection.genre : null;
 
   return (
+    // On phones (CSS) this becomes one row: the genre dropdown (which shows
+    // what's selected), then × to clear. The "Showing" line and the "Pick
+    // a genre" label are then hidden from sight only.
     <div className="story-bar" role="region" aria-label="Story filter">
       <p className="story-chip">
-        <span>
+        <span className="story-chip-text">
           Showing: <strong>{selection ? selectionLabel(selection) : 'the whole shelf'}</strong>
         </span>
         {selection && (
@@ -167,8 +180,8 @@ function FilterBar({
           </button>
         )}
       </p>
-      <label className="story-pick">
-        <span>Pick a genre</span>
+      <label className="story-pick story-genre-pick">
+        <span className="story-pick-label">Pick a genre</span>
         <select
           value={value}
           onChange={(e) => {
@@ -605,11 +618,7 @@ export default function Story({ books, tallied }: { books: SearchBook[]; tallied
       value: f.medianPages !== undefined ? number(f.medianPages) : '–',
       unit: f.medianPages !== undefined ? 'pages' : undefined,
     },
-    {
-      head: 'My reading era',
-      value: f.era ? `${f.era.decade}s` : '–',
-      note: f.era ? `${plural(f.era.books, 'book')} first published ${decadeSpan(f.era.decade)}` : undefined,
-    },
+    { head: 'My reading era', value: f.era ? `${f.era.decade}s` : '–' },
     { head: 'Fiction', value: `${Math.round(f.fictionShare * 100)}%` },
   ];
 
@@ -620,6 +629,10 @@ export default function Story({ books, tallied }: { books: SearchBook[]; tallied
       <p className="visually-hidden" role="status" aria-live="polite">
         {selection ? `Showing ${selectionLabel(selection)}: ${plural(f.books, 'book')}.` : ''}
       </p>
+
+      {/* "On this page": in the margin on wide screens, a row here on medium
+          ones, a fading card in the bottom-left corner on phones. */}
+      <PageIndex items={CHAPTERS} />
 
       {/* 2. What's on the shelves */}
       <section className="ledger-block" aria-labelledby="story-shelves">

@@ -40,6 +40,14 @@
      intentionally does not flip with the theme. Mahogany. */
   --clock-bezel: #2b1d14;
 
+  /* The Story's wheel: five shades of each wing's ink, dark to light
+     (oxblood for Fiction's genres, the ledger blue for Non-fiction's), with
+     evenly spaced steps and the palest still visible on this paper. The
+     chart runs each wing's genres from the darkest to the lightest, biggest
+     genre first. Read by hooks/useThemeColors.ts. */
+  --wheel-fiction: #6e2a17, #8a3a21, #a8532d, #c26f43, #d48a5f;
+  --wheel-non-fiction: #1f2a48, #34436b, #4d5f8e, #6a7eae, #8799c6;
+
 
   /* Dimming: one mechanism at a time (alpha), never alpha + light weight.
      Dark theme raises these because text thins out on dark paper. */
@@ -82,6 +90,10 @@
   --stamp-rgb: 216, 151, 90;
   --slate-rgb: 180, 185, 165;
 
+  /* The wheel's shades after dark: the amber and the moss, dark to light,
+     checked the same way against the dark paper. */
+  --wheel-fiction: #8f5426, #b06e36, #d8975a, #e5b283, #f0cfaa;
+  --wheel-non-fiction: #56763f, #769756, #9cbc7f, #b9d3a1, #d5e7c4;
 
   --dim-soft: 0.9;
   --dim: 0.8;
@@ -669,6 +681,12 @@ mark {
    treatment so the photo textures sit in the page instead of on it. */
 .section.doors-room {
   padding: 4rem 0 4.5rem;
+  /* The lamplight behind each door (.door-piece::before) reaches 30% past
+     its sides; on a phone that's past the screen, which let the whole home
+     page be dragged sideways. Trim it at the section's edges, where it has
+     faded to nothing anyway. `clip`, not `hidden`: no scroll box, so the
+     doors' animations are untouched. */
+  overflow-x: clip;
 }
 
 .doors-heading {
@@ -3083,6 +3101,265 @@ mark {
   margin: 0;
 }
 
+/* The trail above a page's heading: Browse › Catalog › Genres › Humor.
+   Small label type, like a shelf mark; the last step is this page. */
+.breadcrumbs {
+  margin: -1rem 0 0.9rem;
+}
+
+.breadcrumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.15rem 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--font-label);
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+}
+
+.breadcrumbs li {
+  display: inline-flex;
+  align-items: baseline;
+  min-width: 0;
+}
+
+.breadcrumbs li + li::before {
+  content: '›';
+  margin: 0 0.5rem;
+  color: rgba(var(--charcoal-rgb), var(--rule));
+}
+
+.breadcrumbs a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: rgba(var(--charcoal-rgb), var(--rule));
+  text-underline-offset: 0.2em;
+}
+
+.breadcrumbs a:hover {
+  color: var(--stamp);
+  text-decoration-color: currentColor;
+}
+
+/* The current page: in ink, and a long book title is cut short. */
+.breadcrumbs [aria-current='page'] {
+  display: inline-block;
+  max-width: 28ch;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--ink);
+}
+
+@media (pointer: coarse) {
+  .breadcrumbs a {
+    display: inline-block;
+    padding: 0.35rem 0;
+  }
+}
+
+/* ---------- Page index ("On this page", components/PageIndex.tsx) ----------
+   Phones: the same list mirrored into the top-right corner, below the
+   header, with no box behind it; it shows on load and on a real scroll,
+   then fades (the lamp has the bottom-right corner).
+   Medium screens: one ruled row of links. Wide screens (1440px+, where the
+   margin beside the 1080px page has room): a list in the left margin that
+   stays in view, the current section marked. */
+.page-index {
+  margin: 0 0 2rem;
+}
+
+.page-index ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--font-label);
+  font-size: 0.88rem;
+}
+
+.page-index a {
+  color: var(--charcoal);
+  text-decoration: none;
+}
+
+.page-index a:hover,
+.page-index a.is-active {
+  color: var(--stamp);
+}
+
+.page-index-label {
+  margin: 0;
+  font-family: var(--font-label);
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+}
+
+@media (max-width: 719.98px) {
+  /* The desktop list, mirrored into the top-right corner: names
+     right-aligned against a thin rule, the current one marked by a red
+     edge on it. --index-top (set by the component) keeps it just below the
+     site header, or the Story's stuck filter bar. Only the names take taps,
+     and only while they're showing. */
+  .page-index {
+    position: fixed;
+    top: var(--index-top, 0.75rem);
+    right: 0.75rem;
+    z-index: 40;
+    max-width: min(15rem, 62vw);
+    margin: 0;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-4px);
+    transition:
+      opacity 0.25s ease,
+      transform 0.25s ease;
+  }
+
+  /* Shown on load and on a real scroll, and whenever it's tabbed into. */
+  .page-index.is-shown,
+  .page-index:focus-within {
+    opacity: 1;
+    transform: none;
+  }
+
+  .page-index.is-shown a,
+  .page-index:focus-within a {
+    pointer-events: auto;
+  }
+
+  /* No box behind it: just the label, the rule and the names. */
+  .page-index-inner {
+    max-height: 50vh;
+    overflow-y: auto;
+    text-align: right;
+  }
+
+  .page-index-label {
+    margin: 0 0 0.35rem;
+    padding-right: 0.75rem;
+  }
+
+  .page-index ul {
+    border-right: 1px solid rgba(var(--charcoal-rgb), var(--rule));
+  }
+
+  /* A paper-coloured halo round the letters keeps the names readable over
+     text or pictures, in light mode too, without a box. */
+  .page-index-label,
+  .page-index li a {
+    text-shadow:
+      0 0 2px var(--paper),
+      0 0 4px var(--paper),
+      0 0 8px var(--paper),
+      0 0 12px var(--paper);
+  }
+
+  .page-index li a {
+    display: block;
+    margin-right: -1px;
+    padding: 0.3rem 0.75rem 0.3rem 0;
+    border-right: 2px solid transparent;
+    font-size: 0.82rem;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--ink);
+  }
+
+  .page-index a.is-active {
+    border-right-color: var(--stamp);
+    color: var(--stamp);
+  }
+}
+
+/* Short pages: the phone index only. */
+@media (min-width: 720px) {
+  .page-index--phone-only {
+    display: none;
+  }
+}
+
+@media (max-width: 719.98px) and (prefers-reduced-motion: reduce) {
+  .page-index {
+    transition: none;
+    transform: none;
+  }
+}
+
+@media (min-width: 720px) {
+  .page-index-inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.4rem 1.25rem;
+    padding: 0.7rem 0;
+    border-top: 1px solid rgba(var(--charcoal-rgb), var(--rule));
+    border-bottom: 1px solid rgba(var(--charcoal-rgb), var(--rule));
+  }
+
+  .page-index ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.25rem;
+  }
+
+  .page-index a.is-active {
+    text-decoration: underline;
+    text-underline-offset: 0.25em;
+  }
+}
+
+@media (min-width: 1440px) {
+  /* The page's section is the frame the margin list runs down. */
+  .section:has(.page-index) {
+    position: relative;
+  }
+
+  .page-index {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(-10rem - 2rem);
+    width: 10rem;
+    margin: 0;
+  }
+
+  .page-index-inner {
+    position: sticky;
+    top: 1.5rem;
+    display: block;
+    padding: 0;
+    border: 0;
+  }
+
+  .page-index-label {
+    margin-bottom: 0.6rem;
+  }
+
+  .page-index ul {
+    display: block;
+    border-left: 1px solid rgba(var(--charcoal-rgb), var(--rule));
+  }
+
+  .page-index li a {
+    display: block;
+    margin-left: -1px;
+    padding: 0.3rem 0 0.3rem 0.75rem;
+    border-left: 2px solid transparent;
+    line-height: 1.35;
+  }
+
+  .page-index a.is-active {
+    border-left-color: var(--stamp);
+    text-decoration: none;
+  }
+}
+
 .section-heading h2 {
   font-size: var(--step-2);
   margin: 0;
@@ -4354,31 +4631,41 @@ a.book-theme-tag:hover {
   justify-self: center;
 }
 
-/* From 720px the key sits beside the wheel, always open. Below that it
-   stacks under the wheel and folds behind the "Key" button. */
-@media (min-width: 720px) {
-  .story-wheel {
-    grid-template-columns: minmax(0, 380px) minmax(0, 1fr);
-    align-items: start;
-  }
-
-  .story-wheel-numbers {
-    grid-column: 1 / -1;
-  }
-
-  .story-key-toggle {
-    display: none;
-  }
+/* Phones: a one-line key under the wheel (the two wings and Other), and
+   the full genre key behind "All genres". */
+.story-mini-key {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 1rem;
+  margin: 0 0 0.6rem;
+  padding: 0;
+  list-style: none;
+  font-family: var(--font-label);
+  font-size: 0.85rem;
 }
 
-@media (max-width: 719.98px) {
-  .story-key:not(.is-open) {
-    display: none;
-  }
+.story-mini-key button,
+.story-mini-key span.story-mini-other {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.3rem 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--ink);
+  cursor: pointer;
+}
 
-  .story-key.is-open {
-    margin-top: 0.75rem;
-  }
+.story-mini-key span.story-mini-other {
+  cursor: default;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+}
+
+.story-mini-key button[aria-pressed='true'] {
+  font-weight: 600;
+  color: var(--stamp);
 }
 
 .story-key-toggle {
@@ -4395,6 +4682,35 @@ a.book-theme-tag:hover {
   text-transform: uppercase;
   color: var(--ink);
   cursor: pointer;
+}
+
+/* From 720px the full key sits beside the wheel, always open: no small
+   key, no button. Below that it stacks under the wheel and folds behind
+   "All genres". (These come after the base styles above, so they win.) */
+@media (min-width: 720px) {
+  .story-wheel {
+    grid-template-columns: minmax(0, 380px) minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .story-wheel-numbers {
+    grid-column: 1 / -1;
+  }
+
+  .story-mini-key,
+  .story-key-toggle {
+    display: none;
+  }
+}
+
+@media (max-width: 719.98px) {
+  .story-key:not(.is-open) {
+    display: none;
+  }
+
+  .story-key.is-open {
+    margin-top: 0.75rem;
+  }
 }
 
 /* "What a click does here": a highlighter stroke under a short line. */
@@ -4467,6 +4783,11 @@ a.book-theme-tag:hover {
 @media (hover: none) and (pointer: coarse) {
   .story-drill-hint {
     display: block;
+  }
+
+  /* On touch screens the drill-down's double-tap line carries this tip. */
+  .story-hint--pointer {
+    display: none;
   }
 }
 
@@ -4698,6 +5019,49 @@ a.book-theme-tag:hover {
   letter-spacing: 0;
   text-transform: none;
   color: var(--ink);
+}
+
+/* Phones: the bar on one row. The genre dropdown shows what's selected and
+   × clears it. "Showing…" and "Pick a genre" stay for screen readers only. */
+@media (max-width: 719.98px) {
+  .story-bar {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+  }
+
+  .story-genre-pick {
+    order: 1;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .story-chip {
+    order: 2;
+    flex: none;
+  }
+
+  .story-pick select {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+  }
+
+  .story-chip-text,
+  .story-pick-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}
+
+/* A chapter jumped to lands below the sticky bar, not under it. */
+[id^='story-'] {
+  scroll-margin-top: 4rem;
 }
 
 /* The bubble chart needs more height than the bar charts for its labels. */

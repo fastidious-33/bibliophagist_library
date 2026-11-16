@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import PaintedCard from '@/components/PaintedCard';
+import PageIndex from '@/components/PageIndex';
 import { BROWSE_LINKS } from '@/lib/browse';
 
 export const metadata: Metadata = {
@@ -14,6 +15,10 @@ export default function BrowsePage() {
         <h1>Browse</h1>
       </div>
       <p className="prose prose-lg">Every way into the library, starting with how to take a book home.</p>
+
+      {/* Phones only: the pages under Browse, straight from the same list as
+          the cards below. */}
+      <PageIndex phoneOnly items={BROWSE_LINKS.map((link) => ({ href: link.href, label: link.title }))} />
 
       <ul className="rooms">
         {BROWSE_LINKS.map((link) => (

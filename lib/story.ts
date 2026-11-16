@@ -175,9 +175,6 @@ export function figures(books: SearchBook[]): Figures {
   };
 }
 
-/** "2000–09" for the decade starting 2000. */
-export const decadeSpan = (decade: number) => `${decade}–${String((decade + 9) % 100).padStart(2, '0')}`;
-
 /* ---------- 3. What it's made of: the wheel ---------- */
 
 /** One genre in one wing: books filed under it there, and books tagged with it at all. */

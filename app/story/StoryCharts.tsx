@@ -195,10 +195,12 @@ function useChartStyle() {
     backgroundColor: c.kraft,
     titleColor: c.ink,
     bodyColor: c.charcoal,
+    footerColor: c.charcoal,
     borderColor: grid,
     borderWidth: 1,
     titleFont: font,
     bodyFont: font,
+    footerFont: font,
     displayColors: false,
   };
   return { c, animation, grid, font, tooltip };
@@ -295,9 +297,13 @@ export function Numbers({ caption, head, rows }: { caption: string; head: string
   );
 }
 
-/** A small highlighted line saying what a click or tap does here. */
-export function Hint({ children }: { children: ReactNode }) {
-  return <p className="story-hint">{children}</p>;
+/**
+ * A small highlighted line saying what a click or tap does here.
+ * `pointerOnly`: hidden on touch screens, where the drill-down's own
+ * "double-tap" line carries the tip instead (Breadcrumb's `tip`).
+ */
+export function Hint({ children, pointerOnly = false }: { children: ReactNode; pointerOnly?: boolean }) {
+  return <p className={`story-hint${pointerOnly ? ' story-hint--pointer' : ''}`}>{children}</p>;
 }
 
 // The open drill-downs, oldest first. Esc closes only the newest, so a
@@ -316,7 +322,20 @@ const openDrills: object[] = [];
  * outside-click closing, so drill-downs can sit open side by side, and no
  * desktop double-click (it would fight with selecting text).
  */
-export function Breadcrumb({ back, title, note, onBack }: { back: string; title: string; note?: string; onBack: () => void }) {
+export function Breadcrumb({
+  back,
+  title,
+  note,
+  tip,
+  onBack,
+}: {
+  back: string;
+  title: string;
+  note?: string;
+  /** A touch-screen tip for this drill-down, folded into the double-tap line. */
+  tip?: string;
+  onBack: () => void;
+}) {
   const ref = useRef<HTMLButtonElement>(null);
   // The latest onBack, without re-adding the listeners every render.
   const onBackRef = useRef(onBack);
@@ -374,7 +393,9 @@ export function Breadcrumb({ back, title, note, onBack }: { back: string; title:
           {title} {note && <span>· {note}</span>}
         </p>
       </div>
-      <p className="story-drill-hint">Or double-tap here to go back.</p>
+      <p className="story-drill-hint">
+        {tip ? `${tip} · double-tap here to go back.` : 'Or double-tap here to go back.'}
+      </p>
     </>
   );
 }
@@ -386,9 +407,14 @@ const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
 type BubblePoint = { x: number; y: number; r: number; genre: string; on: boolean };
 
 /**
- * Writes each genre's name beside its bubble (to the right, or the left if
- * it would run off the chart). Chart.js has no labels of its own, and a
- * dozen same-coloured bubbles need names more than a legend.
+ * Writes each genre's name beside its bubble. Chart.js has no labels of its
+ * own, and a dozen same-coloured bubbles need names more than a legend.
+ *
+ * Names never overlap: each tries right, left, above and below its bubble
+ * in turn and takes the first spot that's inside the chart and clear of
+ * every name already placed; with no spot free, it's left off (the tooltip
+ * and the table still name it). The selected genre goes first, so it's
+ * never the one dropped; then the biggest bubbles.
  */
 const bubbleLabels: Plugin<'bubble'> = {
   id: 'bubbleLabels',
@@ -402,19 +428,41 @@ const bubbleLabels: Plugin<'bubble'> = {
     const meta = chart.getDatasetMeta(0);
     const points = chart.data.datasets[0]?.data as unknown as BubblePoint[] | undefined;
     if (!points) return;
+
+    type Box = { l: number; t: number; r: number; b: number };
+    const placed: Box[] = [];
+    const clashes = (a: Box) => placed.some((b) => a.l < b.r && a.r > b.l && a.t < b.b && a.b > b.t);
+    const inside = (a: Box) =>
+      a.l >= chartArea.left && a.r <= chartArea.right && a.t >= chartArea.top && a.b <= chartArea.bottom;
+    const h = LABEL_SIZE + 2;
+    const gap = 4;
+
+    const order = points
+      .map((p, i) => ({ p, i }))
+      .sort((a, b) => Number(b.p.on) - Number(a.p.on) || b.p.r - a.p.r);
+
     ctx.save();
     ctx.textBaseline = 'middle';
-    meta.data.forEach((el, i) => {
-      const p = points[i];
-      if (!p) return;
+    ctx.textAlign = 'left';
+    for (const { p, i } of order) {
+      const el = meta.data[i];
+      if (!el) continue;
       const { x, y } = el.getProps(['x', 'y'], true) as { x: number; y: number };
       ctx.font = `${p.on ? '600 ' : ''}${LABEL_SIZE}px ${font}`;
+      const w = ctx.measureText(p.genre).width;
+      // Right, left, above, below: each as the box the name would fill.
+      const spots: Box[] = [
+        { l: x + p.r + gap, t: y - h / 2, r: x + p.r + gap + w, b: y + h / 2 },
+        { l: x - p.r - gap - w, t: y - h / 2, r: x - p.r - gap, b: y + h / 2 },
+        { l: x - w / 2, t: y - p.r - gap - h, r: x + w / 2, b: y - p.r - gap },
+        { l: x - w / 2, t: y + p.r + gap, r: x + w / 2, b: y + p.r + gap + h },
+      ];
+      const spot = spots.find((s) => inside(s) && !clashes(s));
+      if (!spot) continue;
+      placed.push(spot);
       ctx.fillStyle = p.on ? strong : color;
-      const width = ctx.measureText(p.genre).width;
-      const right = x + p.r + 4 + width <= chartArea.right;
-      ctx.textAlign = right ? 'left' : 'right';
-      ctx.fillText(p.genre, right ? x + p.r + 4 : x - p.r - 4, y);
-    });
+      ctx.fillText(p.genre, spot.l, (spot.t + spot.b) / 2);
+    }
     ctx.restore();
   },
 };
@@ -445,7 +493,9 @@ function GenreBubbles({
 }) {
   const { c, animation, grid, font, tooltip } = useChartStyle();
   const most = Math.max(1, ...rows.map((r) => r.books));
-  const radius = (books: number) => 5 + Math.sqrt(books / most) * 18;
+  // Up to ~38px across: big enough to compare, small enough that the
+  // middle of the chart doesn't become one clump.
+  const radius = (books: number) => 4 + Math.sqrt(books / most) * 15;
 
   // Room around the bubbles so the big ones aren't clipped at the edges.
   const xs = rows.map((r) => r.medianPages);
@@ -471,13 +521,20 @@ function GenreBubbles({
     on: r.genre === selected,
   }));
 
+  // Drawn in this order, so the biggest go down first and the small ones sit
+  // on top, never hidden under a big one.
+  points.sort((a, b) => b.r - a.r);
+  const byPoint = points.map((p) => rows.find((r) => r.genre === p.genre)!);
+
   const data = {
     datasets: [
       {
         data: points,
         backgroundColor: points.map((p) => fill(p.on)),
-        borderColor: points.map((p) => (p.on ? c.ink : `rgba(${c.stampRgb}, ${selected ? 0.3 : 0.9})`)),
-        borderWidth: points.map((p) => (p.on ? 2 : 1)),
+        // A paper-coloured ring, so where bubbles overlap each edge shows
+        // (the selected one keeps an ink ring).
+        borderColor: points.map((p) => (p.on ? c.ink : c.paper)),
+        borderWidth: 2,
         hoverBorderWidth: 2,
         // Bubbles are already big; a smaller ring than the dots get.
         hitRadius: 10,
@@ -490,7 +547,7 @@ function GenreBubbles({
     maintainAspectRatio: false,
     animation,
     onClick: (_e, elements) => {
-      const row = rows[elements[0]?.index ?? -1];
+      const row = byPoint[elements[0]?.index ?? -1];
       if (row) onOpen(row.genre);
     },
     onHover: (e, elements) => {
@@ -503,9 +560,9 @@ function GenreBubbles({
       tooltip: {
         ...tooltip,
         callbacks: {
-          title: (items) => rows[items[0]?.dataIndex ?? -1]?.genre ?? '',
+          title: (items) => byPoint[items[0]?.dataIndex ?? -1]?.genre ?? '',
           label: (item) => {
-            const r = rows[item.dataIndex];
+            const r = byPoint[item.dataIndex];
             return r
               ? [
                   `${plural(r.books, 'book')}`,
@@ -572,12 +629,18 @@ function GenreBooks({ genre, books, onBack }: { genre: string; books: SearchBook
   const byRating = [...points].sort((a, b) => b.rating - a.rating || a.title.localeCompare(b.title));
   const summary = `${genre}: ${plural(points.length, 'book')} by pages and Goodreads average.`;
 
+  // How many books the tooltip found at the tapped spot (set by its filter,
+  // which sees them all, and read by its title and footer).
+  const found = { n: 0 };
+
   const data = {
     datasets: [
       {
         data: points.map((p) => ({ x: p.pages, y: p.rating, r: 5 })),
-        backgroundColor: `rgba(${c.stampRgb}, 0.5)`,
-        borderColor: c.stamp,
+        // See-through, so books stacked on one spot build up darker and a
+        // clump shows as one.
+        backgroundColor: `rgba(${c.stampRgb}, 0.35)`,
+        borderColor: `rgba(${c.stampRgb}, 0.8)`,
         borderWidth: 1,
         hoverBorderWidth: 2,
         hitRadius: DOT_HIT,
@@ -591,17 +654,30 @@ function GenreBooks({ genre, books, onBack }: { genre: string; books: SearchBook
     responsive: true,
     maintainAspectRatio: false,
     animation,
+    // Every dot under the finger, not just one, so a tap on a clump lists
+    // the books in it.
+    interaction: { mode: 'point', intersect: true },
     plugins: {
       legend: { display: false },
       bubbleLabels: false,
       tooltip: {
         ...tooltip,
+        // At most five named; the footer counts the rest.
+        filter: (_item, index, all) => {
+          found.n = all.length;
+          return index < 5;
+        },
         callbacks: {
-          title: (items) => points[items[0]?.dataIndex ?? -1]?.title ?? '',
+          title: (items) =>
+            found.n > 1 ? `${found.n} books here` : (points[items[0]?.dataIndex ?? -1]?.title ?? ''),
           label: (item) => {
             const p = points[item.dataIndex];
-            return p ? [p.author, `${p.pages} pages · ${p.rating.toFixed(2)}`].filter(Boolean) : '';
+            if (!p) return '';
+            return found.n > 1
+              ? `${p.title} · ${p.pages} pages · ${p.rating.toFixed(2)}`
+              : [p.author, `${p.pages} pages · ${p.rating.toFixed(2)}`].filter(Boolean);
           },
+          footer: () => (found.n > 5 ? `+${found.n - 5} more` : ''),
         },
       },
     },
@@ -625,8 +701,14 @@ function GenreBooks({ genre, books, onBack }: { genre: string; books: SearchBook
 
   return (
     <div className="story-panel" role="region" aria-label={genre}>
-      <Breadcrumb back="All genres" title={genre} note={plural(points.length, 'book')} onBack={onBack} />
-      <Hint>Hover or tap a dot to see the book; the table below links to each one.</Hint>
+      <Breadcrumb
+        back="All genres"
+        title={genre}
+        note={plural(points.length, 'book')}
+        tip="Tap a dot for the book"
+        onBack={onBack}
+      />
+      <Hint pointerOnly>Hover over a dot to see the book; the table below links to each one.</Hint>
       {points.length > 0 ? (
         <div className="ledger-chart story-bubbles" role="img" aria-label={summary}>
           <Chart type="bubble" data={data} options={options} />
@@ -1339,23 +1421,41 @@ function swatchStyle(colour: string): CSSProperties {
 }
 
 /**
- * The two wings as one hue each (oxblood for Fiction, the ledger ink for
- * Non-fiction). Within a wing the bigger slices are darker; Other is grey.
- * With a genre selected, everything else fades.
+ * A colour at fraction t (0–1) along a list of hex stops, blended between
+ * the two nearest ("rgb" triplet for rgba()).
+ */
+function alongShades(stops: string[], t: number, fallback: string): string {
+  if (stops.length === 0) return fallback;
+  if (stops.length === 1) return hexToRgb(stops[0], fallback);
+  const at = Math.min(Math.max(t, 0), 1) * (stops.length - 1);
+  const lo = Math.floor(at);
+  const hi = Math.min(lo + 1, stops.length - 1);
+  const mix = at - lo;
+  const a = hexToRgb(stops[lo], fallback).split(',').map(Number);
+  const b = hexToRgb(stops[hi], fallback).split(',').map(Number);
+  return a.map((v, i) => Math.round(v + (b[i] - v) * mix)).join(', ');
+}
+
+/**
+ * The inner ring: one colour per wing (oxblood for Fiction, the ledger ink
+ * for Non-fiction). The outer ring: each wing's genres running from the
+ * darkest shade of that wing's ink to the lightest, in slice order, so the
+ * biggest genre is darkest (--wheel-fiction and --wheel-non-fiction in
+ * globals.css). Other is grey. With a genre selected, everything else fades.
  */
 function wheelColours(c: ThemeColors, wheel: Wheel, selected?: string) {
   const rgb: Record<Wing, string> = {
     fiction: c.stampRgb,
     'non-fiction': hexToRgb(c.ledger, c.charcoalRgb),
   };
+  const family: Record<Wing, string[]> = { fiction: c.wheelFiction, 'non-fiction': c.wheelNonFiction };
   const fade = (on: boolean, alpha: number) => (selected && !on ? alpha * 0.25 : alpha);
 
   const slices = wheel.slices.map((s) => {
     if (!s.genre) return `rgba(${c.charcoalRgb}, ${fade(false, 0.22)})`;
     const mine = wheel.slices.filter((x) => x.wing === s.wing && x.genre);
-    const rank = mine.indexOf(s);
-    const alpha = 0.9 - (rank / Math.max(1, mine.length - 1)) * 0.5;
-    return `rgba(${rgb[s.wing]}, ${fade(s.genre === selected, alpha)})`;
+    const t = mine.length > 1 ? mine.indexOf(s) / (mine.length - 1) : 0;
+    return `rgba(${alongShades(family[s.wing], t, rgb[s.wing])}, ${fade(s.genre === selected, 1)})`;
   });
   const wings = wheel.wings.map((w) => `rgba(${rgb[w.wing]}, ${fade(false, 0.95)})`);
   return { slices, wings };
@@ -1382,11 +1482,43 @@ export function WheelChart({
   onGenre: (genre: string) => void;
 }) {
   const { c, animation, tooltip } = useChartStyle();
-  // Phones only: the key folds behind a button (CSS hides the button, and
-  // ignores the fold, wherever the key sits beside the wheel).
+  // Phones only: the full key folds behind "All genres", with a one-line
+  // key of the wings and Other always shown (CSS hides both, and ignores the
+  // fold, wherever the full key sits beside the wheel).
   const [keyOpen, setKeyOpen] = useState(false);
   const keyId = useId();
+  const keyWrap = useRef<HTMLDivElement>(null);
+  // An open key is a fold, like "Show the numbers": a click or tap outside
+  // it closes it (a click, not a press, so scrolling doesn't), and so does
+  // Esc. Picking from it closes it too (pickWing / pickGenre below).
+  useEffect(() => {
+    if (!keyOpen) return;
+    const onClick = (e: MouseEvent) => {
+      if (keyWrap.current && !keyWrap.current.contains(e.target as Node)) setKeyOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setKeyOpen(false);
+    };
+    // Wait a tick, so the click that opened it doesn't close it.
+    const timer = window.setTimeout(() => document.addEventListener('click', onClick), 0);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      window.clearTimeout(timer);
+      document.removeEventListener('click', onClick);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [keyOpen]);
+  const pickWing = (wing: Wing) => {
+    setKeyOpen(false);
+    onWing(wing);
+  };
+  const pickGenre = (genre: string) => {
+    setKeyOpen(false);
+    onGenre(genre);
+  };
   const colours = wheelColours(c, wheel, selected);
+  const otherAt = wheel.slices.findIndex((s) => !s.genre);
+  const otherColour = otherAt === -1 ? undefined : colours.slices[otherAt];
   const total = wheel.wings.reduce((s, w) => s + w.books, 0);
   const biggest = wheel.slices.filter((s) => s.genre).sort((a, b) => b.main - a.main)[0];
   const summary = zoom
@@ -1476,7 +1608,32 @@ export function WheelChart({
       </div>
 
       {/* The key: names every slice, and is the keyboard route to the clicks. */}
-      <div className="story-key-wrap">
+      <div className="story-key-wrap" ref={keyWrap}>
+        {/* Phones only: the wings and Other on one line, always shown. */}
+        <ul className="story-mini-key">
+          {wheel.wings.map((w, i) => (
+            <li key={w.wing}>
+              <button
+                type="button"
+                aria-pressed={zoom === w.wing}
+                style={swatchStyle(colours.wings[i])}
+                onClick={() => pickWing(w.wing)}
+              >
+                <span className="story-swatch" aria-hidden="true" />
+                {WING_LABEL[w.wing]}
+                <span className="story-key-count">{w.books}</span>
+              </button>
+            </li>
+          ))}
+          {otherColour && (
+            <li>
+              <span className="story-mini-other" style={swatchStyle(otherColour)}>
+                <span className="story-swatch" aria-hidden="true" />
+                Other
+              </span>
+            </li>
+          )}
+        </ul>
         <button
           type="button"
           className="story-key-toggle"
@@ -1484,7 +1641,7 @@ export function WheelChart({
           aria-controls={keyId}
           onClick={() => setKeyOpen((open) => !open)}
         >
-          Key <span aria-hidden="true">{keyOpen ? '▴' : '▾'}</span>
+          All genres <span aria-hidden="true">{keyOpen ? '▴' : '▾'}</span>
         </button>
         <div id={keyId} className={`story-key${keyOpen ? ' is-open' : ''}${selected ? ' is-faded' : ''}`}>
           {zoom && (
@@ -1499,7 +1656,7 @@ export function WheelChart({
                 className="story-key-head"
                 aria-pressed={zoom === w.wing}
                 style={swatchStyle(colours.wings[i])}
-                onClick={() => onWing(w.wing)}
+                onClick={() => pickWing(w.wing)}
               >
                 <span className="story-swatch" aria-hidden="true" />
                 {WING_LABEL[w.wing]}
@@ -1514,7 +1671,7 @@ export function WheelChart({
                           type="button"
                           aria-pressed={s.genre === selected}
                           style={swatchStyle(colours.slices[j])}
-                          onClick={() => onGenre(s.genre!)}
+                          onClick={() => pickGenre(s.genre!)}
                         >
                           <span className="story-swatch" aria-hidden="true" />
                           {s.label}

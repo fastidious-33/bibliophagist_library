@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getAllBooks } from '@/lib/search';
 import Painting from '@/components/Painting';
+import Breadcrumbs, { BROWSE } from '@/components/Breadcrumbs';
 import { glance } from '@/lib/story';
 import Story from './Story';
 
@@ -40,6 +41,7 @@ export default async function StoryPage() {
 
   return (
     <section className="section section--flush">
+      <Breadcrumbs trail={[BROWSE, { label: 'The Story of the Shelves' }]} />
       <div className="section-heading">
         <h1>The Story of the Shelves</h1>
       </div>

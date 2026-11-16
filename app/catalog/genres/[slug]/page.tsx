@@ -4,6 +4,8 @@ import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import BookCard from '@/components/BookCard';
 import Painting from '@/components/Painting';
+import Breadcrumbs, { BROWSE, CATALOG, GENRES } from '@/components/Breadcrumbs';
+import PageIndex from '@/components/PageIndex';
 import {
   LIBRARIANS_PICK_TAG,
   WING_LABEL,
@@ -55,6 +57,7 @@ export default async function GenrePage(props: { params: Promise<{ slug: string 
 
   return (
     <section className="section section--flush">
+      <Breadcrumbs trail={[BROWSE, CATALOG, GENRES, { label: genre.tag }]} />
       <div className="genre-hero">
         <Painting
           slot={defaultPaintingSlot(genre.stamps)}
@@ -92,7 +95,9 @@ export default async function GenrePage(props: { params: Promise<{ slug: string 
 
           {genre.related.length > 0 && (
             <nav className="genre-related" aria-label="Related genres">
-              <h2 className="eyebrow-label">Often shelved with</h2>
+              <h2 id="shelved-with" className="eyebrow-label">
+                Often shelved with
+              </h2>
               <div className="book-theme-tags">
                 {genre.related.map((tag) => (
                   <Link key={tag} href={`/catalog/genres/${genreSlug(tag)}`} className="book-theme-tag">
@@ -105,9 +110,21 @@ export default async function GenrePage(props: { params: Promise<{ slug: string 
         </div>
       </div>
 
+      {/* Phones only: a short page on wider screens. */}
+      <PageIndex
+        phoneOnly
+        items={[
+          ...(genre.related.length > 0 ? [{ id: 'shelved-with', label: 'Often shelved with' }] : []),
+          ...(picks.length > 0 ? [{ id: 'genre-picks', label: 'Librarian’s picks' }] : []),
+          { id: 'on-the-shelf', label: 'On the shelf' },
+        ]}
+      />
+
       {picks.length > 0 && (
         <div className="subsection">
-          <h2 className="subhead">Librarian&rsquo;s picks</h2>
+          <h2 id="genre-picks" className="subhead">
+            Librarian&rsquo;s picks
+          </h2>
           <div className="catalog-strip">
             {picks.map((book) => (
               <BookCard
@@ -125,7 +142,9 @@ export default async function GenrePage(props: { params: Promise<{ slug: string 
       )}
 
       <div className="subsection">
-        <h2 className="subhead">On the shelf</h2>
+        <h2 id="on-the-shelf" className="subhead">
+          On the shelf
+        </h2>
         {books.length === 0 ? (
           <div className="catalog-empty">
             <p>No books carry this tag right now &mdash; they&rsquo;ll show up here once they do.</p>

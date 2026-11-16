@@ -1,26 +1,38 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import Painting from '@/components/Painting';
+import Breadcrumbs, { LIBRARIAN } from '@/components/Breadcrumbs';
+import PageIndex, { type PageIndexItem } from '@/components/PageIndex';
 import type { PaintingSlot } from '@/lib/paintings';
 import type { Entry, EntryGroup } from '@/lib/sanity/content';
 
+/** A room's groups as "On this page" entries (the ones with an anchor). */
+export function groupIndex(groups: EntryGroup[]): PageIndexItem[] {
+  return groups.filter((g) => g.id).map((g) => ({ id: g.id!, label: g.heading }));
+}
+
 /**
- * The shared frame for a room in the Librarian section: title, painting
- * beside the intro, the room's content, and the way back.
+ * The shared frame for a room in the Librarian section: the trail back to
+ * the Librarian, title, painting beside the intro, "On this page" (when the
+ * room passes an `index` with enough entries), the room's content, and the
+ * way back.
  */
 export default function RoomPage({
   title,
   slot,
   intro,
+  index = [],
   children,
 }: {
   title: string;
   slot: PaintingSlot;
   intro: string[];
+  index?: PageIndexItem[];
   children: ReactNode;
 }) {
   return (
     <section className="section section--flush">
+      <Breadcrumbs trail={[LIBRARIAN, { label: title }]} />
       <div className="section-heading">
         <h1>{title}</h1>
       </div>
@@ -35,6 +47,8 @@ export default function RoomPage({
           ))}
         </div>
       </div>
+
+      <PageIndex items={index} />
 
       {children}
 
@@ -82,13 +96,15 @@ export function EntryList({ entries }: { entries: Entry[] }) {
 /**
  * Headed groups of entries, each its own subsection. `collapsible`: each
  * starts closed and opens from its heading, which shows the link count.
+ * Each takes its anchor (`id`, the Studio subheading's) so "On this page"
+ * and links from elsewhere can jump to it.
  */
 export function EntryGroups({ groups, collapsible = false }: { groups: EntryGroup[]; collapsible?: boolean }) {
   return (
     <>
       {groups.map((g) =>
         collapsible ? (
-          <details key={g.heading} className="subsection entry-fold">
+          <details key={g.heading} id={g.id} className="subsection entry-fold">
             <summary>
               <h2 className="subhead">{g.heading}</h2>
               <span className="fold-count">{g.entries.length}</span>
@@ -96,7 +112,7 @@ export function EntryGroups({ groups, collapsible = false }: { groups: EntryGrou
             <EntryList entries={g.entries} />
           </details>
         ) : (
-          <section key={g.heading} className="subsection">
+          <section key={g.heading} id={g.id} className="subsection">
             <h2 className="subhead">{g.heading}</h2>
             <EntryList entries={g.entries} />
           </section>

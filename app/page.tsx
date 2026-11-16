@@ -5,6 +5,7 @@ import Painting from '@/components/Painting';
 import BookshelfWall from '@/components/BookshelfWall';
 import CastleDoor from '@/components/CastleDoor';
 import DoorInside from '@/components/DoorInside';
+import PageIndex from '@/components/PageIndex';
 
 const DOOR_SIZES = '(max-width: 760px) 300px, 340px';
 
@@ -26,6 +27,18 @@ export default async function HomePage() {
 
   return (
     <>
+      {/* Phones only: the home page has no index on wider screens. */}
+      <PageIndex
+        phoneOnly
+        items={[
+          { id: 'doors-heading', label: 'Which way in?' },
+          ...(deskBooks.length > 0
+            ? [{ id: 'desk-heading', label: hasPicks ? 'On the librarian’s desk' : 'Recently shelved' }]
+            : []),
+          { id: 'clock-heading', label: 'The quotes clock' },
+        ]}
+      />
+
       <section className="vision">
         <Painting slot="homeHero" className="vision-painting" priority emptyFrame />
 
@@ -75,7 +88,7 @@ export default async function HomePage() {
       {deskBooks.length > 0 && (
         <section className="section">
           <div className="section-heading">
-            <h2>{hasPicks ? 'On the librarian’s desk' : 'Recently shelved'}</h2>
+            <h2 id="desk-heading">{hasPicks ? 'On the librarian’s desk' : 'Recently shelved'}</h2>
             <Link href="/catalog" className="read-link">
               See the full catalog &rarr;
             </Link>
@@ -97,7 +110,9 @@ export default async function HomePage() {
       )}
 
       <section className="section quotes-clock">
-        <h2 className="subhead">Why see the time in such a mundane way?</h2>
+        <h2 id="clock-heading" className="subhead">
+          Why see the time in such a mundane way?
+        </h2>
         <p className="quotes-clock-label">The time, in literary quotes &mdash; a different line for every minute.</p>
         <iframe
           src="https://www.ticktockquotes.com/"
