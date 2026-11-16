@@ -12,7 +12,6 @@ import {
   type BookHit,
   type BooksSearchResponse,
   type FacetCount,
-  type FacetField,
 } from '@/lib/search/types';
 
 // Not in use until Typesense is deployed (roadmap M4) — lib/search/index.ts
@@ -22,8 +21,8 @@ const QUERY_BY = 'title,author,tags';
 
 // The year facet is per-distinct-year, and a catalog spanning 1656–2025 can
 // easily exceed 50 distinct years — truncation would silently drop sparse
-// older years, making a band look empty when it isn't and under-counting
-// old decades (the old /ledger read these; /story now uses getAllBooks).
+// older years, making a year band look empty in the catalog's filter when
+// it isn't.
 const MAX_FACET_VALUES = 250;
 
 /** Multi-select facet fields. publishingYear is handled via bands instead. */
@@ -193,10 +192,5 @@ export async function searchBooksWithTypesense(
     }
   });
 
-  const facets = {} as Record<FacetField, FacetCount[]>;
-  for (const field of FACET_FIELDS) {
-    facets[field] = facetValues(main, field);
-  }
-
-  return { books, found, page, totalPages, options, facets };
+  return { books, found, page, totalPages, options };
 }

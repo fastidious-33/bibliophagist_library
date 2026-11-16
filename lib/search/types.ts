@@ -55,13 +55,6 @@ export interface BooksSearchResponse {
     /** Band ids with at least one book under the other active filters. */
     bands: string[];
   };
-  /**
-   * Counts over the current result set, filtered by everything active. The
-   * catalog doesn't use these — its filter options come from `options`
-   * above, which is disjunctive. Nothing reads them since /ledger became
-   * /story, which works from getAllBooks instead.
-   */
-  facets: Record<FacetField, FacetCount[]>;
 }
 
 export const EMPTY_RESPONSE = (page: number): BooksSearchResponse => ({
@@ -70,7 +63,6 @@ export const EMPTY_RESPONSE = (page: number): BooksSearchResponse => ({
   page,
   totalPages: 1,
   options: { tags: [], series: [], bands: [] },
-  facets: { tags: [], author: [], publishingYear: [] },
 });
 
 /** URL keys the catalog filters on (multi-valued). */

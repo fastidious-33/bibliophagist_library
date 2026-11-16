@@ -4,7 +4,6 @@ import { PLACEHOLDER_BOOKS } from '@/lib/sanity/placeholder-books';
 import { BAND_BY_ID, YEAR_BANDS, bandForYear, cleanSeries } from './catalog-facets';
 import {
   PAGE_SIZE,
-  FACET_FIELDS,
   type BookHit,
   type BooksSearchResponse,
   type FacetCount,
@@ -338,9 +337,5 @@ export async function searchBooksInSanity(
     ),
   };
 
-  const resultBooks = results.map((s) => s.book);
-  const facets = {} as Record<FacetField, FacetCount[]>;
-  for (const field of FACET_FIELDS) facets[field] = facetValues(resultBooks, field);
-
-  return { books, found, page, totalPages, options, facets };
+  return { books, found, page, totalPages, options };
 }

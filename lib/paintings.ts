@@ -87,7 +87,7 @@ export const PAINTINGS: Record<PaintingSlot, Painting | null> = {
   },
   // A Gothic library behind the Gothic arch. (Until 2026-11-12 this was the
   // Thorne miniature room, now kept outside the site in
-  // bibliophagist_library/prototypes/assets/thorne-french-library.jpg.)
+  // bibliophagist_library/assets/spare/thorne-french-library.jpg.)
   castleInside: {
     src: '/paintings/bennett-winchester-library.jpg',
     width: 1353,

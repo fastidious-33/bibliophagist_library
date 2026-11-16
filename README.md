@@ -211,8 +211,10 @@ npx sanity deploy # publishes to https://bibliophagist-library.sanity.studio
 ```
 
 Books can also be bulk-imported as ndjson with
-`npx sanity dataset import <file>.ndjson production` (ids `B001`, `B002`, …,
-with `bookId` — the call number on cards — set to the same value).
+`npx sanity dataset import <file>.ndjson --dataset production` (ids `B001`,
+`B002`, …, with `bookId` — the call number on cards — set to the same value).
+The ndjson comes from the import script kept outside this repo; its guide
+(how to load more books) is `bibliophagist_library/tools/README.md`.
 
 The `production` dataset must be **public**: the Typesense sync reads it via
 the GROQ HTTP API without a token.
@@ -285,8 +287,8 @@ Things that look wrong but are deliberate:
   its title. That's on purpose: it's where browsing happens. Don't remove
   it as a duplicate.
 - **Unused images live outside the site** — spare paintings and textures
-  are kept in `bibliophagist_library/prototypes/assets/`, not `public/`, so
-  they aren't deployed.
+  are kept in `bibliophagist_library/assets/spare/` (full-size painting
+  originals in `assets/paintings/`), not `public/`, so they aren't deployed.
 - **Home page textures** — `public/textures/` holds CC0 photo textures
   (Poly Haven walnut, castle stone and medieval oak; a CC0 shelf photo from
   Wikimedia Commons, graded and composed into `bookshelf-wall.jpg`, with the

@@ -123,7 +123,7 @@ export default function PageIndex({ items, phoneOnly = false }: { items: PageInd
     let lastY = window.scrollY;
     let travelled = 0;
     let idle: number | undefined;
-    const onScroll = () => {
+    const onScroll = (e: Event) => {
       placeSoon();
       const y = window.scrollY;
       travelled += Math.abs(y - lastY);
@@ -132,7 +132,7 @@ export default function PageIndex({ items, phoneOnly = false }: { items: PageInd
       idle = window.setTimeout(() => {
         travelled = 0;
       }, SCROLL_IDLE);
-      if (!phone.matches || performance.now() < quietUntil.current) return;
+      if (!phone.matches || e.timeStamp < quietUntil.current) return;
       if (travelled > window.innerHeight * REAL_SCROLL) {
         setShown(true);
         hideIn(LINGER);
@@ -166,10 +166,13 @@ export default function PageIndex({ items, phoneOnly = false }: { items: PageInd
     hideTimer.current = window.setTimeout(() => setShown(false), LINGER);
   };
 
-  const jump = (id: string) => {
+  // `at` is the click's own timestamp (same clock as the scroll events'),
+  // so the jump's scrolling can be told apart without reading the clock
+  // during render.
+  const jump = (id: string, at: number) => {
     held.current = false;
     setShown(false);
-    quietUntil.current = performance.now() + AFTER_JUMP;
+    quietUntil.current = at + AFTER_JUMP;
     const el = document.getElementById(id);
     // A folded section opens as you jump to it.
     const fold = el instanceof HTMLDetailsElement ? el : el?.closest('details');
@@ -199,7 +202,7 @@ export default function PageIndex({ items, phoneOnly = false }: { items: PageInd
                   href={`#${item.id}`}
                   className={active === item.id ? 'is-active' : undefined}
                   aria-current={active === item.id ? 'location' : undefined}
-                  onClick={() => item.id && jump(item.id)}
+                  onClick={(e) => item.id && jump(item.id, e.timeStamp)}
                 >
                   {item.label}
                 </a>
