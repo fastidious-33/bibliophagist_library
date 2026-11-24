@@ -4217,6 +4217,30 @@ mark {
   color: var(--stamp);
 }
 
+/* ---------- Privacy (/privacy) ----------
+   Plain reading: short sections, each a heading and a few lines. */
+.privacy {
+  max-width: 62ch;
+}
+
+.privacy .subhead {
+  margin-top: 2rem;
+}
+
+.privacy ul {
+  padding-left: 1.2rem;
+}
+
+.privacy li + li {
+  margin-top: 0.45rem;
+}
+
+.privacy-updated {
+  margin-top: 2.5rem;
+  font-size: 0.88rem;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+}
+
 /* ---------- 404 / error screens ---------- */
 
 .not-found {

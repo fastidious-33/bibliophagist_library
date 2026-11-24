@@ -28,6 +28,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })),
     { url: `${BASE_URL}/story`, changeFrequency: 'weekly', priority: 0.6 },
     { url: `${BASE_URL}/borrow`, changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${BASE_URL}/privacy`, changeFrequency: 'yearly', priority: 0.2 },
     { url: `${BASE_URL}/librarian`, changeFrequency: 'monthly', priority: 0.5 },
     ...ROOMS.map((room) => ({
       url: `${BASE_URL}${room.href}`,

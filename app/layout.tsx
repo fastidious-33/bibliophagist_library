@@ -125,6 +125,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               <a href={CONTACT.instagram} target="_blank" rel="noopener noreferrer">
                 Instagram
               </a>
+              <span aria-hidden="true"> &middot; </span>
+              <Link href="/privacy">Privacy</Link>
             </p>
           </footer>
         </div>
