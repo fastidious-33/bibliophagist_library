@@ -4,7 +4,9 @@ import Link from 'next/link';
 import Painting from '@/components/Painting';
 import Breadcrumbs, { BROWSE } from '@/components/Breadcrumbs';
 import PageIndex from '@/components/PageIndex';
-import { REQUEST_FORM_URL, CONTACT } from '@/lib/site';
+import { DEPOSIT_AMOUNT, SUBSCRIPTION_AMOUNT } from '@/lib/account';
+import { DEFAULT_BORROW_LIMIT } from '@/lib/requests';
+import { CONTACT, JOIN_FORM_URL } from '@/lib/site';
 
 export const metadata: Metadata = {
   title: 'How to borrow',
@@ -55,38 +57,72 @@ export default function BorrowPage() {
         <Painting slot="borrow" priority sizes="(max-width: 760px) 100vw, 420px" />
         <div>
           <p className="prose prose-lg">
-            This is a personal library, lent out on trust. Borrowing takes three steps, and a few
-            rules keep the books coming back.
+            This is a personal library, lent out on trust. Joining takes a form and one payment;
+            after that, borrowing is a button on each book&rsquo;s page. A few rules keep the books
+            coming back.
           </p>
-          {/* A real sequence, so the numbers carry information. */}
+          {/* A real sequence (M3-BORROWING.md §4–§6), so the numbers carry information. */}
           <ol className="join-steps">
             <li className="join-step">
               <span className="step-number" aria-hidden="true">1</span>
               <p>
-                Find a book in the <Link href="/catalog">catalog</Link> and note its call number.
+                <strong>Join.</strong>{' '}
+                {JOIN_FORM_URL ? (
+                  <a href={JOIN_FORM_URL} target="_blank" rel="noopener noreferrer">
+                    One form
+                  </a>
+                ) : (
+                  'One form'
+                )}
+                : your details, and a yes to the rules below.
               </p>
             </li>
             <li className="join-step">
               <span className="step-number" aria-hidden="true">2</span>
               <p>
-                {REQUEST_FORM_URL ? (
-                  'Request it with the form below.'
-                ) : (
-                  <>
-                    Ask me for it on{' '}
-                    <a href={CONTACT.instagram} target="_blank" rel="noopener noreferrer">
-                      Instagram
-                    </a>{' '}
-                    or by <a href={`mailto:${CONTACT.email}`}>email</a>.
-                  </>
-                )}
+                <strong>Wait for my yes.</strong> I look over every sign-up myself, and email you once
+                I have.
               </p>
             </li>
             <li className="join-step">
               <span className="step-number" aria-hidden="true">3</span>
-              <p>Read it, then bring it back.</p>
+              <p>
+                <strong>Pay once, by UPI.</strong> A ₹{DEPOSIT_AMOUNT} deposit, refunded when you leave,
+                and ₹{SUBSCRIPTION_AMOUNT} for a lifetime membership, which buys new books. The approval
+                email has the details.
+              </p>
+            </li>
+            <li className="join-step">
+              <span className="step-number" aria-hidden="true">4</span>
+              <p>
+                <strong>
+                  <Link href="/signin">Sign in</Link>
+                </strong>{' '}
+                with the email you joined with. Your account shows where things stand.
+              </p>
+            </li>
+            <li className="join-step">
+              <span className="step-number" aria-hidden="true">5</span>
+              <p>
+                <strong>Request a book</strong> from its page in the <Link href="/catalog">catalog</Link>,
+                up to {DEFAULT_BORROW_LIMIT} at a time. Collect it in person, or have it couriered at your cost.
+              </p>
+            </li>
+            <li className="join-step">
+              <span className="step-number" aria-hidden="true">6</span>
+              <p>
+                <strong>Read it, then bring it back.</strong> A loan lasts a month; ask if you need
+                longer. A reminder email comes before it&rsquo;s due.
+              </p>
             </li>
           </ol>
+          <p className="prose">
+            Questions? Ask me on{' '}
+            <a href={CONTACT.instagram} target="_blank" rel="noopener noreferrer">
+              Instagram
+            </a>{' '}
+            or by <a href={`mailto:${CONTACT.email}`}>email</a>.
+          </p>
         </div>
       </div>
 
@@ -141,15 +177,14 @@ export default function BorrowPage() {
       </section>
 
       <div className="btn-row mt-lg">
-        {REQUEST_FORM_URL ? (
-          <a href={REQUEST_FORM_URL} target="_blank" rel="noopener noreferrer" className="btn btn-primary">
-            Request a book
+        {JOIN_FORM_URL && (
+          <a href={JOIN_FORM_URL} target="_blank" rel="noopener noreferrer" className="btn btn-primary">
+            Join the library
           </a>
-        ) : (
-          <Link href="/catalog" className="btn btn-primary">
-            Browse the catalog &rarr;
-          </Link>
         )}
+        <Link href="/catalog" className={`btn ${JOIN_FORM_URL ? 'btn-secondary' : 'btn-primary'}`}>
+          Browse the catalog &rarr;
+        </Link>
       </div>
     </section>
   );

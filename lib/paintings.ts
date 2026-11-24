@@ -48,7 +48,13 @@ export type PaintingSlot =
   | 'librarianFeatured'
   | 'librarianSaved'
   | 'librarianBodyArt'
-  | 'librarianMusic';
+  | 'librarianMusic'
+  /** A strip across the top of the borrower's card on /account. */
+  | 'account'
+  /** A strip across the top of the sign-in card on /signin. */
+  | 'signin'
+  /** The desk's one painting: the Inbox when nothing is waiting. */
+  | 'deskEmpty';
 
 // All CC0 / public domain: NGA and Met open access, Art Institute of
 // Chicago CC0, Nationalmuseum Stockholm public domain. Resized to ≤1600px.
@@ -209,5 +215,43 @@ export const PAINTINGS: Record<PaintingSlot, Painting | null> = {
     year: '1886',
     sourceUrl: 'https://www.nga.gov/collection/art-object-page.79531.html',
     alt: 'A violin and bow hanging on a green door with iron hinges, with a sheet of music behind it and a small card pinned below.',
+  },
+  // Public domain (Wikimedia Commons; private collection). The 1902
+  // version, not the 1897 one. Described only as the Raja Ravi Varma
+  // Heritage Foundation describes it: a Nair lady relaxing with a book while
+  // her maid fans her (not the Indulekha reading, which only Wikipedia makes).
+  account: {
+    src: '/paintings/ravi-varma-reclining-nair-lady.jpg',
+    width: 1600,
+    height: 1129,
+    title: 'Reclining Nair Lady',
+    artist: 'Raja Ravi Varma',
+    year: '1902',
+    sourceUrl: 'https://commons.wikimedia.org/wiki/File:Raja_Ravi_Varma,_Reclining_Woman.jpg',
+    alt: 'A woman in a white mundu and dark green blouse reclines on a blue cushion, an open book beside her, while her maid behind her waves a palm-leaf fan.',
+  },
+  // The Met, public domain (59.533.1620(16)), from Poetical Sketches of
+  // Scarborough. Cut to the picture itself: the print's paper border and the
+  // engraved title and publisher lines are trimmed off.
+  signin: {
+    src: '/paintings/rowlandson-the-library-scene.jpg',
+    width: 1600,
+    height: 948,
+    title: 'The Library',
+    artist: 'Thomas Rowlandson, after James Green',
+    year: '1813',
+    sourceUrl: 'https://www.metmuseum.org/art/collection/search/788238',
+    alt: 'A busy lending library: readers browse and talk between counters and tall bookcases, a man carries a pile of books, and a small dog wanders across the floor.',
+  },
+  // Musée d'Orsay (RF 1952 17); the file from Wikimedia Commons, public domain.
+  deskEmpty: {
+    src: '/paintings/van-gogh-noon-rest-from-work.jpg',
+    width: 1600,
+    height: 1259,
+    title: 'Noon: Rest from Work (after Millet)',
+    artist: 'Vincent van Gogh',
+    year: '1890',
+    sourceUrl: 'https://www.musee-orsay.fr/en/artworks/la-meridienne-750',
+    alt: 'Two farm workers asleep in the shade of a golden haystack at midday, their shoes and sickles set aside, with a cart and two oxen resting in the field behind.',
   },
 };

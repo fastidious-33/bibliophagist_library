@@ -4,12 +4,13 @@ import type { Metadata } from 'next';
 import { getBooks, getBookBySlug } from '@/lib/sanity';
 import Image from 'next/image';
 import RandomBookLink from '@/components/RandomBookLink';
+import BorrowPanel from '@/components/BorrowPanel';
+import { isAuthConfigured } from '@/lib/auth/server';
 import Breadcrumbs, { BROWSE, CATALOG } from '@/components/Breadcrumbs';
 import PageIndex from '@/components/PageIndex';
 import ClothPlate from '@/components/ClothPlate';
 import { PickRibbon } from '@/components/BookCard';
 import { LIBRARIANS_PICK_TAG, WING_LABEL, bookStamps, genreSlug, isGenreTag } from '@/lib/genres/shared';
-import { REQUEST_FORM_URL } from '@/lib/site';
 import { cleanSeries } from '@/lib/search/catalog-facets';
 
 export const revalidate = 60;
@@ -145,29 +146,22 @@ export default async function BookPage(props: { params: Promise<{ slug: string }
             </div>
           )}
 
-          <div className="btn-row" id="borrow-it">
-            {REQUEST_FORM_URL ? (
-              <a href={REQUEST_FORM_URL} target="_blank" rel="noopener noreferrer" className="btn btn-primary">
-                Request this book
-              </a>
-            ) : (
-              <Link href="/borrow" className="btn btn-primary">
-                How to borrow this book
+          <div id="borrow-it">
+            {/* M3: availability, "Request this book" and the waitlist, fetched
+                in the browser for signed-in people, so this page stays cached
+                for everyone. Not shown on a deployment without sign-in. */}
+            {isAuthConfigured && <BorrowPanel bookId={book._id} />}
+            <div className="btn-row borrow-links">
+              <Link href="/borrow" className="btn btn-secondary">
+                How borrowing works
               </Link>
-            )}
-            {book.link && (
-              <a href={book.link} target="_blank" rel="noopener noreferrer" className="btn btn-secondary">
-                Find this book &rarr;
-              </a>
-            )}
+              {book.link && (
+                <a href={book.link} target="_blank" rel="noopener noreferrer" className="btn btn-secondary">
+                  Find this book &rarr;
+                </a>
+              )}
+            </div>
           </div>
-          {REQUEST_FORM_URL && book.bookId && (
-            <p className="book-detail-request-hint">
-              Mention call number <span className="call-number">{book.bookId}</span> in the form.
-            </p>
-          )}
-
-          {/* M3: availability ("On the shelf" / "On loan, due X") goes here. */}
         </div>
       </div>
 

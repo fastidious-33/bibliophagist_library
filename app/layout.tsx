@@ -11,6 +11,8 @@ import { SITE_URL, CONTACT } from '@/lib/site';
 import RandomBookLink from '@/components/RandomBookLink';
 import { BROWSE_LINKS } from '@/lib/browse';
 import { ROOMS } from '@/lib/librarian';
+import AccountLink from '@/components/AccountLink';
+import { isAuthConfigured } from '@/lib/auth/server';
 
 // Runs before first paint (blocking, in <head>) so the correct theme is
 // applied immediately \u2014 no flash of light mode before dark mode kicks in.
@@ -78,6 +80,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               <RandomBookLink iconOnly inHeader mirror />
               <ThemeToggle />
             </div>
+            {/* Top-right corner: "Sign in" or your name (M3). Only once the
+                site has sign-in set up, so the live site shows nothing
+                before launch. */}
+            {isAuthConfigured && <AccountLink />}
           </header>
           <main id="main-content" tabIndex={-1}>
             {children}

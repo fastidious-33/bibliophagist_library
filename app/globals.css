@@ -215,6 +215,7 @@ mark {
 [data-theme='dark'] .section-heading h2,
 [data-theme='dark'] .book-detail-title,
 [data-theme='dark'] .not-found-title,
+[data-theme='dark'] .member-title,
 [data-theme='dark'] .brand {
   -webkit-text-stroke: 0.012em currentColor;
 }
@@ -354,10 +355,11 @@ mark {
   height: 30px;
 }
 
-/* Phones: a little less space above. */
+/* Phones: room above the wordmark for "Sign in" / the member's name
+   (.account-link), so it sits on its own line instead of over the title. */
 @media (max-width: 640px) {
   .site-header {
-    padding-top: 1.5rem;
+    padding-top: 2.6rem;
   }
 }
 
@@ -402,6 +404,49 @@ mark {
 .primary-nav-link.is-active {
   color: var(--stamp);
   border-bottom-color: var(--stamp);
+}
+
+/* "Sign in" or the member's first name (M3), tucked into the header's
+   top-right corner above the wordmark's row, so the two doors stay the only
+   nav. Hidden (not removed) until the browser knows who's signed in, so it
+   never flashes the wrong word. */
+.site-header {
+  position: relative;
+}
+
+.account-link {
+  position: absolute;
+  top: 0.55rem;
+  right: 0;
+  max-width: 40%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-label);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--charcoal);
+  padding: 0.25rem 0 0.15rem;
+  border-bottom: 1px solid transparent;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.account-link:hover,
+.account-link.is-active {
+  color: var(--stamp);
+  border-bottom-color: var(--stamp);
+}
+
+.account-link.is-pending {
+  visibility: hidden;
+}
+
+@media (max-width: 640px) {
+  .account-link {
+    top: 0.2rem;
+  }
 }
 
 
@@ -4232,7 +4277,2602 @@ mark {
   justify-content: center;
 }
 
+/* ---------- Members: /signin and /account (M3) ----------
+   One card on the counter: the due-date slip's ruled stamp-card, held
+   straight so the form fields aren't tilted. */
+
+.member-card {
+  width: min(100%, 480px);
+  transform: none;
+}
+
+/* /signin: one card on the counter, with a strip of a lending library
+   across its top (like the borrower's card on /account). */
+.signin-room {
+  display: flex;
+  justify-content: center;
+}
+
+.signin-room .member-card {
+  width: min(100%, 520px);
+}
+
+.signin-card-painting {
+  margin-bottom: 1.1rem;
+}
+
+.signin-card-painting .painting-frame {
+  padding: 0.35rem;
+}
+
+/* 16:7, set low: the windows and shelves, every reader, and the dog. */
+.signin-card-painting .painting-frame img {
+  aspect-ratio: 16 / 7;
+  object-fit: cover;
+  object-position: 50% 85%;
+}
+
+.signin-card-painting .museum-label {
+  margin-top: 0.4rem;
+  font-size: var(--step--2);
+}
+
+@media (max-width: 520px) {
+  .signin-card-painting .painting-frame img {
+    aspect-ratio: 2 / 1;
+  }
+}
+
+.member-title {
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: clamp(1.5rem, 3.4vw, 2rem);
+  line-height: 1.2;
+  letter-spacing: 0.005em;
+  font-feature-settings: 'ss01';
+  color: var(--ink);
+  margin: 0.45rem 0 0.8rem;
+  overflow-wrap: anywhere;
+}
+
+.member-copy {
+  line-height: 1.7;
+  margin: 0 0 1.1rem;
+}
+
+.member-note {
+  font-style: italic;
+}
+
+.member-hint {
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+  margin: 1.1rem 0 0;
+}
+
+.member-form {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+}
+
+/* 1rem, so phones don't zoom in on focus. */
+.member-form input[type='email'] {
+  width: 100%;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--charcoal);
+  background: var(--paper);
+  color: var(--ink);
+  border-radius: 2px;
+  margin-bottom: 0.6rem;
+}
+
+.member-form input[type='email']:focus-visible {
+  outline: 2px solid var(--stamp);
+  outline-offset: 1px;
+}
+
+.member-card .btn:disabled {
+  opacity: 0.6;
+  cursor: progress;
+  transform: none;
+}
+
+.member-or {
+  font-family: var(--font-label);
+  font-size: var(--step--2);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+  margin: 0.9rem 0 0.6rem;
+}
+
+.member-error {
+  color: var(--stamp);
+  line-height: 1.5;
+  margin: 0.9rem 0 0;
+}
+
+/* A button that reads as a link ("send another"). */
+.text-button {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: var(--stamp);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* /account's records inside each tab: payments, requests, history,
+   waitlist. Each is a short register: the item on the left, its state on
+   the right, wrapping under it on narrow screens. */
+.account-section {
+  margin-top: 1.6rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(var(--charcoal-rgb), var(--rule));
+}
+
+.account-heading {
+  font-family: var(--font-label);
+  font-size: var(--step--2);
+  font-weight: 400;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+  margin: 0 0 0.5rem;
+}
+
+.account-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.account-list li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.15rem 1rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px dotted rgba(var(--charcoal-rgb), var(--rule));
+}
+
+.account-list li:last-child {
+  border-bottom: 0;
+}
+
+.account-item {
+  color: var(--ink);
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.account-meta {
+  font-family: var(--font-label);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+}
+
+.account-meta--late {
+  color: var(--stamp);
+}
+
+.account-empty,
+.account-note {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.account-empty {
+  color: rgba(var(--charcoal-rgb), var(--dim));
+}
+
+.account-note {
+  margin-top: 0.6rem;
+}
+
+.account-upi {
+  overflow-wrap: anywhere;
+}
+
+/* A waiting or declined change request sits in a dashed box (a slip
+   clipped to the card), under the details. */
+.change-box {
+  margin-top: 1rem;
+  padding: 0.8rem 1rem 0.9rem;
+  border: 1px dashed rgba(var(--charcoal-rgb), 0.55);
+  background: var(--paper);
+}
+
+.change-box .account-heading {
+  display: block;
+}
+
+.change-box .member-copy {
+  margin: 0.4rem 0 0;
+}
+
+.change-actions {
+  display: flex;
+  gap: 1.2rem;
+  margin: 0.7rem 0 0;
+}
+
+.text-button:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.details-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.details-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.details-form label span {
+  font-family: var(--font-label);
+  font-size: 0.82rem;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+}
+
+.details-form .account-heading {
+  margin: 0;
+}
+
+/* 1rem, so phones don't zoom in on focus. */
+.details-form input,
+.details-form textarea {
+  width: 100%;
+  resize: vertical;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--charcoal);
+  background: var(--paper);
+  color: var(--ink);
+  border-radius: 2px;
+}
+
+.details-form input:focus-visible,
+.details-form textarea:focus-visible {
+  outline: 2px solid var(--stamp);
+  outline-offset: 1px;
+}
+
+.details-form .member-hint,
+.details-form .member-error {
+  margin: 0;
+}
+
+/* "Delete my account" sits quietly beside Sign out (.member-actions); its
+   confirmation opens underneath, across the card. */
+.account-delete-open {
+  font-size: 0.92rem;
+}
+
+.account-delete {
+  flex-basis: 100%;
+  padding: 1rem 1.1rem 1.1rem;
+  border: 1.5px solid var(--stamp);
+}
+
+.account-delete .member-copy {
+  margin-bottom: 0.9rem;
+}
+
+/* ---------- /account (account and desk rework, B2) ----------
+   Three pieces, top to bottom: the library card itself (name, stage, card
+   number), a What's next note tucked under it, and a card-catalogue
+   drawer: the tabs are its guide cards, raised above the drawer, and the
+   open one is joined to it. Books out sit inside as date-due slips. */
+
+.account-page {
+  display: flex;
+  justify-content: center;
+}
+
+.account {
+  width: min(100%, 860px);
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+}
+
+/* The card: the ruled stamp-card, tilted the other way from the home
+   page's slip, with the card number in the corner like a library card. */
+.account-card {
+  transform: rotate(-0.5deg);
+}
+
+/* The painting as a strip across the card's top: the reading lady and her
+   book, cropped from the whole canvas. Its label stays underneath. */
+.account-card-painting {
+  margin-bottom: 1.1rem;
+}
+
+.account-card-painting .painting-frame {
+  padding: 0.35rem;
+}
+
+/* 16:7, set low on the canvas, keeps her face, the maid and the whole
+   open book in the strip. */
+.account-card-painting .painting-frame img {
+  aspect-ratio: 16 / 7;
+  object-fit: cover;
+  object-position: 50% 62%;
+}
+
+.account-card-painting .museum-label {
+  margin-top: 0.4rem;
+  font-size: var(--step--2);
+}
+
+@media (max-width: 520px) {
+  .account-card-painting .painting-frame img {
+    aspect-ratio: 2 / 1;
+  }
+}
+
+.account-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+}
+
+.account-card-no {
+  font-family: var(--font-stamp);
+  font-weight: 700;
+  font-size: var(--step-1);
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+  color: var(--ledger);
+  white-space: nowrap;
+}
+
+.account-card .member-title {
+  margin: 0.4rem 0 0.7rem;
+}
+
+.account-card-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem 1rem;
+}
+
+.account-card-facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  margin: 0;
+  font-family: var(--font-label);
+  font-size: 0.92rem;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+}
+
+.account-card .member-hint {
+  margin-top: 1rem;
+}
+
+/* What's next: a kraft note with an ink margin rule, one line and at most
+   one button. */
+.account-next {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem 1.5rem;
+  padding: 0.95rem 1.2rem 1rem;
+  background: var(--kraft);
+  border-left: 3px solid var(--stamp);
+}
+
+.account-next-text {
+  flex: 1 1 22rem;
+  min-width: 0;
+}
+
+.account-next .account-heading {
+  margin-bottom: 0.25rem;
+}
+
+.account-next-line {
+  margin: 0;
+  font-size: var(--step-1);
+  line-height: 1.4;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.account-next-more {
+  display: inline-block;
+  margin-top: 0.3rem;
+  font-size: 0.92rem;
+}
+
+/* The drawer and its guide-card tabs. The tabs overlap the drawer's top
+   border by its width, so the open one (paper, no bottom border) reads as
+   part of the drawer and the others as cards behind it. */
+.account-tabs {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: 0.3rem;
+  margin-bottom: -1.5px;
+  padding: 0 0.6rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.account-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.account-tab {
+  flex: none;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem 0.45rem;
+  margin-top: 0.3rem;
+  border: 1.5px solid rgba(var(--charcoal-rgb), 0.45);
+  border-bottom: 0;
+  border-radius: 10px 10px 0 0;
+  background: var(--kraft);
+  font-family: var(--font-label);
+  font-size: 0.95rem;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.account-tab:hover {
+  color: var(--ink);
+}
+
+.account-tab[aria-current='page'] {
+  margin-top: 0;
+  padding-bottom: 0.75rem;
+  border-color: var(--charcoal);
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.account-tab:focus-visible {
+  outline: 2px solid var(--stamp);
+  outline-offset: -4px;
+}
+
+.account-tab-count {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.8rem;
+  color: var(--stamp);
+}
+
+.account-panel {
+  position: relative;
+  border: 1.5px solid var(--charcoal);
+  background: var(--paper);
+  padding: 1.4rem 1.5rem 1.6rem;
+}
+
+.account-panel > .account-section:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+@media (max-width: 520px) {
+  .account-tabs {
+    padding: 0 0.3rem;
+  }
+
+  .account-tab {
+    padding: 0.45rem 0.7rem 0.4rem;
+    font-size: 0.9rem;
+  }
+
+  .account-panel {
+    padding: 1.1rem 1rem 1.3rem;
+  }
+}
+
+/* Books out: date-due slips, the cover clipped on the left and the date
+   stamped in ledger blue, red once it's late. */
+.due-slips {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+  gap: 1.5rem;
+}
+
+.due-slip {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  gap: 1.1rem;
+  align-items: start;
+  padding: 1.1rem 1.2rem 1.2rem;
+  transform: rotate(0.6deg);
+}
+
+.due-slip:nth-child(even) {
+  transform: rotate(-0.5deg);
+}
+
+.due-slip-cover {
+  position: relative;
+  aspect-ratio: 2 / 3;
+  background: var(--kraft);
+  box-shadow: 3px 3px 0 rgba(var(--charcoal-rgb), 0.15);
+  overflow: hidden;
+}
+
+.due-slip-cover img {
+  object-fit: cover;
+}
+
+.due-slip-body {
+  min-width: 0;
+}
+
+.due-slip-title {
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+  line-height: 1.3;
+  margin: 0.15rem 0 0.6rem;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.due-slip-title a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.due-slip-title a:hover {
+  text-decoration: underline;
+}
+
+.stamp-card .due-slip-date {
+  font-size: 1.25rem;
+  margin: 0.3rem 0 0.6rem;
+  color: var(--ledger);
+  border-color: var(--ledger);
+}
+
+.stamp-card .due-slip-date.is-late {
+  color: var(--stamp);
+  border-color: var(--stamp);
+}
+
+.due-slip .account-meta {
+  margin: 0 0 0.3rem;
+}
+
+/* "Ask for more time": a quiet link, opening three pill choices and a note. */
+.more-time-open {
+  font-size: 0.92rem;
+}
+
+.more-time-state {
+  margin: 0.2rem 0 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+}
+
+.more-time-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 0.3rem;
+}
+
+.more-time-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.more-time-options label {
+  position: relative;
+}
+
+.more-time-options input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.more-time-options span {
+  display: inline-block;
+  padding: 0.25rem 0.7rem;
+  border: 1.5px solid rgba(var(--charcoal-rgb), 0.5);
+  border-radius: 999px;
+  font-family: var(--font-label);
+  font-size: 0.88rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.more-time-options input:checked + span {
+  border-color: var(--stamp);
+  color: var(--stamp);
+  background: rgba(var(--stamp-rgb), 0.08);
+}
+
+.more-time-options input:focus-visible + span {
+  outline: 2px solid var(--stamp);
+  outline-offset: 2px;
+}
+
+.more-time-note {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.more-time-note span {
+  font-family: var(--font-label);
+  font-size: 0.82rem;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+}
+
+/* 1rem, so phones don't zoom in on focus. */
+.more-time-note textarea {
+  width: 100%;
+  resize: vertical;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--charcoal);
+  background: var(--paper);
+  color: var(--ink);
+  border-radius: 2px;
+}
+
+.more-time-note textarea:focus-visible {
+  outline: 2px solid var(--stamp);
+  outline-offset: 1px;
+}
+
+.more-time-form .member-error {
+  margin: 0;
+}
+
+/* Requests, history, waitlist. */
+.account-ended .account-item {
+  color: rgba(var(--charcoal-rgb), var(--dim));
+}
+
+.account-reason {
+  flex-basis: 100%;
+  font-style: italic;
+  font-size: 0.92rem;
+}
+
+.account-fine-print {
+  margin: 0.7rem 0 0;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+}
+
+.account-stats {
+  margin: 0 0 0.3rem;
+  font-family: var(--font-label);
+  font-size: 0.92rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.account-year {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  margin: 1.1rem 0 0.1rem;
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+.account-year-count {
+  font-family: var(--font-label);
+  font-weight: 400;
+  font-size: 0.82rem;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+}
+
+.account-more-link {
+  display: inline-block;
+  margin-top: 0.7rem;
+  font-size: 0.92rem;
+}
+
+.account-upi-box {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem 1rem;
+  margin-top: 0.8rem;
+}
+
+.account-upi-box .account-note {
+  margin: 0;
+  flex: 1 1 16rem;
+}
+
+/* Details: label and value in two columns, stacked on phones. */
+.details-rows {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 0.5rem 1.4rem;
+  margin: 0;
+}
+
+.details-rows > div {
+  display: contents;
+}
+
+.details-rows dt {
+  font-family: var(--font-label);
+  font-size: 0.82rem;
+  padding-top: 0.15rem;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+}
+
+.details-rows dd {
+  margin: 0;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.details-aside {
+  margin-left: 0.4rem;
+  font-family: var(--font-label);
+  font-size: 0.8rem;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+  white-space: nowrap;
+}
+
+.details-change del {
+  color: rgba(var(--charcoal-rgb), var(--dim));
+}
+
+.details-change ins {
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.details-none {
+  font-style: italic;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+}
+
+.details-waiting {
+  font-family: var(--font-label);
+  font-size: 0.82rem;
+  color: var(--stamp);
+}
+
+.details-request {
+  margin: 1.1rem 0 0;
+}
+
+.details-card .member-hint {
+  margin-top: 1rem;
+}
+
+.account-leave {
+  margin-top: 2rem;
+}
+
+@media (max-width: 520px) {
+  .details-rows {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  .details-rows dt {
+    padding-top: 0.55rem;
+  }
+}
+
+/* ---------- The librarian's desk (/desk, M3 A2) ----------
+   A work surface, not a showpiece: plain cards on the paper, the site's
+   type and buttons, and a row of tallies saying what's waiting. */
+
+/* The desk's frame (B3): a sidebar of the desk's pages beside the page on a
+   laptop; on a phone, the pages become tabs along the top. The open page
+   is marked with the stamp colour, like a ruled margin. */
+.desk-frame {
+  display: grid;
+  grid-template-columns: 11.5rem minmax(0, 1fr);
+  gap: 2.5rem;
+  align-items: start;
+}
+
+.desk-side {
+  position: sticky;
+  top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  padding-top: 2.75rem;
+}
+
+.desk-side-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-feature-settings: 'ss01';
+  font-size: var(--step-2);
+  line-height: 1.1;
+  color: var(--ink);
+}
+
+.desk-tabs {
+  display: flex;
+  flex-direction: column;
+  border-left: 1.5px solid rgba(var(--charcoal-rgb), var(--rule));
+}
+
+.desk-tab {
+  margin-left: -1.5px;
+  padding: 0.45rem 0.9rem;
+  border-left: 3px solid transparent;
+  font-family: var(--font-label);
+  font-size: 0.95rem;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.desk-tab:hover {
+  color: var(--ink);
+}
+
+.desk-tab[aria-current='page'] {
+  border-left-color: var(--stamp);
+  background: var(--kraft);
+  color: var(--ink);
+}
+
+.desk-tab:focus-visible {
+  outline: 2px solid var(--stamp);
+  outline-offset: -2px;
+}
+
+.desk-side-foot {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+
+/* The desk's search box, at the top of the sidebar. 1rem, so phones don't
+   zoom in on focus. */
+.desk-side-search input {
+  width: 100%;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid rgba(var(--charcoal-rgb), 0.5);
+  border-radius: 2px;
+  background: var(--paper);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  color: var(--ink);
+}
+
+.desk-side-search input:focus-visible {
+  outline: 2px solid var(--stamp);
+  outline-offset: 1px;
+}
+
+/* Search results: books with where they are now. */
+.search-book {
+  align-items: center;
+}
+
+.search-book-title {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.search-book-where {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.9rem;
+  font-family: var(--font-label);
+  font-size: 0.88rem;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+}
+
+.search-book-shelf {
+  color: var(--ledger);
+}
+
+.search-book .search-book-lend {
+  padding: 0.3rem 0.7rem;
+  font-size: 0.85rem;
+}
+
+/* A member's file (B4): details as rows first, then Payments beside Books,
+   with the books in small titled groups. */
+.member-details {
+  margin-top: 1.5rem;
+}
+
+.member-facts {
+  max-width: 44rem;
+}
+
+.member-edit-cancel {
+  margin-top: 0.6rem;
+  font-size: 0.92rem;
+}
+
+.member-book-group + .member-book-group {
+  margin-top: 1.1rem;
+}
+
+.member-book-group-title {
+  margin: 0 0 0.2rem;
+  font-family: var(--font-label);
+  font-size: 0.72rem;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+}
+
+.desk-more-row {
+  font-size: 0.9rem;
+}
+
+/* A member's book limit, on their file. */
+.desk-limit {
+  margin-top: 1.2rem;
+}
+
+.desk-limit label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.desk-limit label > span {
+  font-family: var(--font-label);
+  font-size: 0.82rem;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+}
+
+.desk-limit input {
+  width: 6rem;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--charcoal);
+  border-radius: 2px;
+  background: var(--paper);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  color: var(--ink);
+}
+
+.desk-side-who {
+  font-family: var(--font-label);
+  font-size: 0.8rem;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 860px) {
+  .desk-frame {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  .desk-side {
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem 1rem;
+    padding-top: 1.25rem;
+  }
+
+  .desk-side-title,
+  .desk-side-who {
+    display: none;
+  }
+
+  .desk-side-search {
+    flex-basis: 100%;
+  }
+
+  .desk-tabs {
+    flex: 1 1 auto;
+    flex-direction: row;
+    overflow-x: auto;
+    scrollbar-width: none;
+    border-left: 0;
+    border-bottom: 1.5px solid rgba(var(--charcoal-rgb), var(--rule));
+  }
+
+  .desk-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .desk-tab {
+    margin: 0 0 -1.5px;
+    padding: 0.5rem 0.8rem;
+    border-left: 0;
+    border-bottom: 3px solid transparent;
+  }
+
+  .desk-tab[aria-current='page'] {
+    border-bottom-color: var(--stamp);
+    background: none;
+  }
+
+  .desk-side-foot {
+    flex-direction: row;
+  }
+}
+
+.desk-queue {
+  margin-top: 2.5rem;
+}
+
+/* ---------- The inbox (/desk, B3c) ----------
+   Only what waits on the librarian. A ledger-ruled list beside the open
+   item, which is an index card: ruled paper, a red rule under its header,
+   the call number in the corner. Each action ends in a rubber stamp, then
+   the next card slides in. On a phone: the list, then the item full
+   screen with its buttons in a bar along the bottom. */
+
+/* With items waiting: a plain kraft card, no painting. */
+.inbox-header-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin-bottom: 1.6rem;
+  padding: 1.1rem 1.3rem 1.2rem;
+  background: var(--kraft);
+  border-left: 3px solid var(--stamp);
+}
+
+/* Nothing waiting: Van Gogh's noon rest, centred, the words underneath. */
+.inbox-rest {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  max-width: 640px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.inbox-rest-painting {
+  width: 100%;
+  margin-bottom: 1.2rem;
+}
+
+.inbox-rest-painting .museum-label {
+  justify-content: center;
+  font-size: var(--step--2);
+}
+
+.inbox-rest-line {
+  margin: 0.3rem 0 0;
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-feature-settings: 'ss01';
+  font-size: var(--step-2);
+  line-height: 1.25;
+  color: var(--stamp);
+}
+
+.inbox-header-title {
+  margin: 0.15rem 0 0;
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-feature-settings: 'ss01';
+  font-size: var(--step-3);
+  line-height: 1.1;
+  color: var(--ink);
+}
+
+.inbox-header-count {
+  margin: 0 0 0.6rem;
+  font-family: var(--font-label);
+  font-variant-numeric: tabular-nums;
+  color: var(--stamp);
+}
+
+.inbox-about-text {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+}
+
+.inbox-about-fold {
+  display: none;
+}
+
+.inbox-about-fold summary {
+  list-style: none;
+  font-size: 0.9rem;
+}
+
+.inbox-about-fold summary::-webkit-details-marker {
+  display: none;
+}
+
+.inbox-about-fold .inbox-about-text {
+  margin-top: 0.5rem;
+}
+
+/* Filter chips: All · Requests 14 · … */
+.inbox-chips-row {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.2rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.inbox-chips-row::-webkit-scrollbar {
+  display: none;
+}
+
+.inbox-filter {
+  flex: none;
+  padding: 0.3rem 0.8rem;
+  border: 1.5px solid rgba(var(--charcoal-rgb), 0.4);
+  border-radius: 999px;
+  font-family: var(--font-label);
+  font-size: 0.88rem;
+  color: var(--charcoal);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.inbox-filter:hover {
+  border-color: var(--charcoal);
+}
+
+.inbox-filter.is-urgent {
+  border-color: var(--stamp);
+  color: var(--stamp);
+}
+
+.inbox-filter[aria-current='page'] {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
+}
+
+.inbox-filter-count {
+  margin-left: 0.15rem;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.75;
+}
+
+/* The list and the open item. */
+.inbox {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+  gap: 1.6rem;
+  align-items: start;
+}
+
+.inbox-detail-pane {
+  position: sticky;
+  top: 1rem;
+}
+
+.inbox-back {
+  display: none;
+}
+
+.inbox-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid rgba(var(--charcoal-rgb), var(--rule));
+}
+
+.inbox-row {
+  display: grid;
+  grid-template-columns: 1.7rem minmax(0, 1fr);
+  align-items: center;
+  border-bottom: 1px solid rgba(var(--charcoal-rgb), var(--rule));
+}
+
+.inbox-row.is-selected {
+  background: var(--kraft);
+}
+
+.inbox-tick {
+  width: 1rem;
+  height: 1rem;
+  margin: 0 0 0 0.3rem;
+  accent-color: var(--stamp);
+}
+
+.inbox-row-link {
+  display: grid;
+  grid-template-columns: 6.4rem minmax(0, 1fr) auto;
+  grid-template-areas:
+    'kind who when'
+    'kind what when';
+  column-gap: 0.8rem;
+  padding: 0.55rem 0.6rem 0.55rem 0.2rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.inbox-row-link:focus-visible {
+  outline: 2px solid var(--stamp);
+  outline-offset: -2px;
+}
+
+.inbox-row-kind {
+  grid-area: kind;
+  align-self: center;
+  font-family: var(--font-label);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+}
+
+.inbox-row-who,
+.inbox-row-what {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inbox-row-who {
+  grid-area: who;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--ink);
+}
+
+.inbox-row-link:hover .inbox-row-who {
+  text-decoration: underline;
+}
+
+.inbox-row-what {
+  grid-area: what;
+  font-size: 0.88rem;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+}
+
+.inbox-row-when {
+  grid-area: when;
+  align-self: center;
+  font-family: var(--font-label);
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+}
+
+.inbox-row.is-urgent .inbox-row-kind,
+.inbox-row.is-urgent .inbox-row-when {
+  color: var(--stamp);
+}
+
+.inbox-keys {
+  margin: 0.8rem 0 0;
+  font-size: 0.78rem;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+}
+
+.inbox-keys kbd {
+  padding: 0 0.3rem;
+  border: 1px solid rgba(var(--charcoal-rgb), 0.4);
+  border-radius: 3px;
+  font-family: var(--font-label);
+  font-size: 0.75rem;
+}
+
+/* Ticked rows: one bar to act on them together. */
+.inbox-bulk {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.6rem;
+  margin-bottom: 0.7rem;
+  padding: 0.6rem 0.75rem;
+  background: var(--kraft);
+  border-left: 3px solid var(--stamp);
+}
+
+.inbox-bulk-count {
+  margin-right: auto;
+  font-family: var(--font-label);
+  font-size: 0.88rem;
+}
+
+.inbox-bulk .member-error {
+  flex-basis: 100%;
+  margin: 0;
+}
+
+/* The index card. */
+.inbox-card {
+  padding: 1.1rem 1.4rem 1.3rem;
+  background-color: var(--paper);
+  background-image: linear-gradient(rgba(var(--charcoal-rgb), 0.07) 1px, transparent 1px);
+  background-size: 100% 1.9rem;
+  background-position: 0 3.2rem;
+  border: 1.5px solid var(--charcoal);
+  box-shadow: 6px 6px 0 rgba(var(--charcoal-rgb), 0.08);
+  animation: inbox-card-in 0.25s ease both;
+}
+
+@keyframes inbox-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+.inbox-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  margin-bottom: 0.7rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1.5px solid rgba(var(--stamp-rgb), 0.55);
+}
+
+.inbox-card-kind {
+  font-family: var(--font-label);
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+}
+
+.inbox-card-corner {
+  font-size: 0.95rem;
+}
+
+.inbox-card-title {
+  margin: 0 0 0.3rem;
+  font-family: var(--font-heading);
+  font-size: var(--step-2);
+  line-height: 1.2;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.inbox-card-sub {
+  margin: 0 0 0.7rem;
+  font-size: 0.95rem;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+}
+
+.inbox-contact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 1rem;
+  margin: 0 0 1rem;
+  font-family: var(--font-label);
+  font-size: 0.88rem;
+}
+
+.inbox-facts {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 0.35rem 1.2rem;
+  margin: 0 0 1rem;
+}
+
+.inbox-facts > div {
+  display: contents;
+}
+
+.inbox-facts dt {
+  padding-top: 0.12rem;
+  font-family: var(--font-label);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+}
+
+.inbox-facts dd {
+  margin: 0;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.inbox-note {
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+}
+
+.inbox-quote {
+  margin: 0 0 1rem;
+  font-style: italic;
+}
+
+.inbox-card .desk-change-table {
+  margin-bottom: 1rem;
+}
+
+.inbox-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding-top: 0.9rem;
+  border-top: 1px dashed rgba(var(--charcoal-rgb), var(--rule));
+}
+
+.inbox-card-actions:empty {
+  display: none;
+}
+
+.inbox-button {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.inbox-button .member-error {
+  margin: 0;
+  font-size: 0.88rem;
+}
+
+.inbox-presets {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.inbox-more {
+  flex-basis: 100%;
+}
+
+.inbox-more summary {
+  list-style: none;
+  font-size: 0.9rem;
+}
+
+.inbox-more summary::-webkit-details-marker {
+  display: none;
+}
+
+/* Decline: reason chips and a note, in place. */
+.inbox-decline {
+  flex-basis: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.inbox-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.inbox-chip {
+  padding: 0.3rem 0.75rem;
+  border: 1.5px solid rgba(var(--charcoal-rgb), 0.45);
+  border-radius: 999px;
+  background: none;
+  font-family: var(--font-label);
+  font-size: 0.85rem;
+  color: var(--charcoal);
+  cursor: pointer;
+  text-align: left;
+}
+
+.inbox-chip.is-on {
+  border-color: var(--stamp);
+  color: var(--stamp);
+  background: rgba(var(--stamp-rgb), 0.08);
+}
+
+.inbox-chip:focus-visible {
+  outline: 2px solid var(--stamp);
+  outline-offset: 2px;
+}
+
+.inbox-decline-note {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.inbox-decline-note span {
+  font-family: var(--font-label);
+  font-size: 0.82rem;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+}
+
+/* 1rem, so phones don't zoom in on focus. */
+.inbox-decline-note textarea {
+  width: 100%;
+  resize: vertical;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--charcoal);
+  border-radius: 2px;
+  background: var(--paper);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  color: var(--ink);
+}
+
+.inbox-decline-note textarea:focus-visible {
+  outline: 2px solid var(--stamp);
+  outline-offset: 1px;
+}
+
+.inbox-decline .member-error {
+  margin: 0;
+}
+
+/* A person's requests, one book each. */
+.inbox-books {
+  list-style: none;
+  margin: 0 0 0.6rem;
+  padding: 0;
+}
+
+.inbox-book {
+  padding: 0.7rem 0;
+  border-bottom: 1px dotted rgba(var(--charcoal-rgb), var(--rule));
+}
+
+.inbox-book:first-child {
+  padding-top: 0;
+}
+
+.inbox-book:last-child {
+  border-bottom: 0;
+}
+
+.inbox-book-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.8rem;
+  margin-bottom: 0.45rem;
+}
+
+.inbox-book-title {
+  font-weight: 700;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.inbox-tag {
+  flex: none;
+  padding: 0.1rem 0.4rem;
+  border: 1px solid currentColor;
+  font-family: var(--font-label);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ledger);
+}
+
+.inbox-tag.is-out {
+  color: var(--stamp);
+}
+
+.inbox-book .inbox-facts {
+  margin-bottom: 0.55rem;
+}
+
+.inbox-book-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+/* The rubber stamp that lands on a finished item. */
+.inbox-stamp-cover {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--paper) 78%, transparent);
+}
+
+.inbox-stamp {
+  padding: 0.3rem 1rem 0.2rem;
+  border: 4px solid var(--stamp);
+  font-family: var(--font-stamp);
+  font-weight: 700;
+  font-size: clamp(2rem, 6vw, 3rem);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--stamp);
+  transform: rotate(-8deg);
+  animation: inbox-stamp-in 0.35s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+@keyframes inbox-stamp-in {
+  from {
+    opacity: 0;
+    transform: rotate(-8deg) scale(1.8);
+  }
+}
+
+/* Phones: the list, or the open item full screen with its buttons in a
+   bar along the bottom (clear of the lamp in the corner). */
+@media (max-width: 860px) {
+  .inbox-about-wide {
+    display: none;
+  }
+
+  .inbox-about-fold {
+    display: block;
+  }
+
+  .inbox-header-card {
+    margin-bottom: 1rem;
+    padding: 0.8rem 1rem 0.9rem;
+  }
+
+  .desk:has(.inbox.is-open) .inbox-header-card,
+  .desk:has(.inbox.is-open) .inbox-chips-row {
+    display: none;
+  }
+
+  .inbox {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .inbox.is-open .inbox-list-pane,
+  .inbox:not(.is-open) .inbox-detail-pane {
+    display: none;
+  }
+
+  .inbox-detail-pane {
+    position: relative;
+    top: auto;
+  }
+
+  .inbox-back {
+    display: inline-block;
+    margin-bottom: 0.8rem;
+    font-family: var(--font-label);
+  }
+
+  .inbox-keys {
+    display: none;
+  }
+
+  .inbox-card {
+    padding: 1rem 1rem 1.2rem;
+    margin-bottom: 8rem;
+  }
+
+  .inbox-card-actions {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    max-height: 60vh;
+    overflow-y: auto;
+    padding: 0.7rem 5rem calc(0.7rem + env(safe-area-inset-bottom, 0px)) 1rem;
+    background: var(--paper);
+    border-top: 1.5px solid var(--charcoal);
+  }
+
+  .inbox-row-link {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'kind when'
+      'who when'
+      'what when';
+  }
+}
+
+/* Where you are on the desk: The desk › Members › Asha. */
+.desk-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.6rem;
+  margin: -1rem 0 0.9rem;
+  font-family: var(--font-label);
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+}
+
+.desk-nav > * + *::before {
+  content: '›';
+  margin-right: 0.6rem;
+  color: rgba(var(--charcoal-rgb), var(--rule));
+}
+
+.desk-nav a {
+  color: var(--stamp);
+}
+
+.desk-search {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-bottom: 1.25rem;
+}
+
+.desk-search label:first-child {
+  flex: 1 1 16rem;
+}
+
+/* 1rem everywhere on the desk's forms, so phones don't zoom in on focus. */
+.desk-search input,
+.desk-search select,
+.desk-fields input,
+.desk-fields select,
+.desk-fields textarea {
+  width: 100%;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--charcoal);
+  background: var(--paper);
+  color: var(--ink);
+  border-radius: 2px;
+}
+
+.desk-fields textarea {
+  resize: vertical;
+}
+
+.desk-search input:focus-visible,
+.desk-search select:focus-visible,
+.desk-fields input:focus-visible,
+.desk-fields select:focus-visible,
+.desk-fields textarea:focus-visible {
+  outline: 2px solid var(--stamp);
+  outline-offset: 1px;
+}
+
+.desk-add {
+  margin-bottom: 1.5rem;
+}
+
+.desk-add > summary,
+.desk-row-actions summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.desk-add > summary::-webkit-details-marker,
+.desk-row-actions summary::-webkit-details-marker {
+  display: none;
+}
+
+.desk-add > .desk-empty {
+  margin-top: 0.9rem;
+}
+
+.desk-form {
+  margin-top: 1rem;
+  padding: 1rem 1.15rem 1.15rem;
+  border: 1px solid rgba(var(--charcoal-rgb), 0.45);
+  background: var(--paper);
+}
+
+.desk-form--inline {
+  margin-top: 0.6rem;
+  padding: 0.75rem 0.85rem 0.85rem;
+}
+
+.desk-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr));
+  gap: 0.8rem 1rem;
+}
+
+.desk-fields label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.desk-fields label > span {
+  font-family: var(--font-label);
+  font-size: 0.8rem;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+}
+
+.desk-field-wide {
+  grid-column: 1 / -1;
+}
+
+.desk-form-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.desk-form-foot:first-child {
+  margin-top: 0;
+}
+
+/* A one-button form in a row of desk buttons ("+7 days", "Mark returned"):
+   its button lines up with the links and buttons beside it, even though a
+   hidden id field comes first in the form. */
+.desk-actions .desk-form-foot {
+  margin-top: 0;
+}
+
+.desk-done {
+  font-family: var(--font-label);
+  font-size: 0.85rem;
+  color: var(--ledger);
+}
+
+.desk-table-wrap {
+  overflow-x: auto;
+}
+
+.desk-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.desk-table th {
+  text-align: left;
+  font-family: var(--font-label);
+  font-size: 0.75rem;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+  padding: 0.4rem 0.75rem 0.4rem 0;
+  border-bottom: 1px solid rgba(var(--charcoal-rgb), 0.45);
+}
+
+.desk-table td {
+  padding: 0.55rem 0.75rem 0.55rem 0;
+  border-bottom: 1px dotted rgba(var(--charcoal-rgb), var(--rule));
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+
+.desk-num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Out now's dense tables (B4): one ruled row per book, its buttons small
+   and at the end. A late row is marked in the margin. On a phone each row
+   stacks into a block, each cell labelled from data-label. */
+.desk-table tr.is-late td:first-child {
+  box-shadow: inset 3px 0 0 var(--stamp);
+  padding-left: 0.6rem;
+}
+
+.desk-table-book {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.desk-table-note {
+  display: block;
+  font-size: 0.85rem;
+  font-style: italic;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+}
+
+.desk-table-actions-cell {
+  width: 1%;
+}
+
+.desk-table-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.35rem;
+}
+
+.desk-table .btn {
+  padding: 0.3rem 0.6rem;
+  font-size: 0.85rem;
+}
+
+.desk-table-more summary {
+  list-style: none;
+  padding-top: 0.3rem;
+  font-size: 0.85rem;
+}
+
+.desk-table-more summary::-webkit-details-marker {
+  display: none;
+}
+
+.desk-table-actions {
+  min-width: 15rem;
+}
+
+.desk-table-more[open] {
+  flex-basis: 100%;
+}
+
+.desk-filter {
+  margin: 0;
+}
+
+@media (max-width: 720px) {
+  .desk-stack thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .desk-stack,
+  .desk-stack tbody,
+  .desk-stack tr,
+  .desk-stack td {
+    display: block;
+  }
+
+  .desk-stack tr {
+    padding: 0.6rem 0;
+    border-bottom: 1px solid rgba(var(--charcoal-rgb), var(--rule));
+  }
+
+  .desk-stack td {
+    padding: 0.15rem 0;
+    border-bottom: 0;
+  }
+
+  .desk-stack td[data-label]::before {
+    content: attr(data-label);
+    display: inline-block;
+    min-width: 5.5rem;
+    font-family: var(--font-label);
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(var(--charcoal-rgb), var(--dim));
+  }
+
+  .desk-stack td[data-label='Book']::before {
+    display: none;
+  }
+
+  .desk-stack tr.is-late td:first-child {
+    box-shadow: none;
+    padding-left: 0;
+  }
+
+  .desk-stack tr.is-late {
+    box-shadow: inset 3px 0 0 var(--stamp);
+    padding-left: 0.7rem;
+  }
+
+  .desk-stack .desk-table-actions-cell {
+    width: auto;
+    padding-top: 0.5rem;
+  }
+
+  .desk-stack .desk-table-actions {
+    min-width: 0;
+  }
+}
+
+/* The Waitlist page: one block per book, its line numbered in order. */
+.waitlist-books {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.6rem;
+}
+
+.waitlist-book {
+  padding: 1rem 1.2rem 1.1rem;
+  border: 1px solid rgba(var(--charcoal-rgb), var(--rule));
+  background: var(--paper);
+}
+
+.waitlist-book-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem 1rem;
+}
+
+.waitlist-book-title {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  color: var(--ink);
+}
+
+.waitlist-hint {
+  margin: 0.5rem 0 0;
+  font-size: 0.92rem;
+  color: var(--stamp);
+}
+
+.waitlist-line,
+.inbox-line {
+  list-style: none;
+  margin: 0.7rem 0 0;
+  padding: 0;
+}
+
+.waitlist-line > li,
+.inbox-line > li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.8rem;
+  padding: 0.45rem 0;
+  border-bottom: 1px dotted rgba(var(--charcoal-rgb), var(--rule));
+}
+
+.waitlist-line > li:last-child,
+.inbox-line > li:last-child {
+  border-bottom: 0;
+}
+
+.waitlist-line > li.is-next {
+  background: var(--kraft);
+}
+
+.inbox-line-place {
+  flex: none;
+  width: 1.6rem;
+  font-family: var(--font-stamp);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  color: var(--ledger);
+}
+
+.waitlist-who,
+.inbox-line-who {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+
+.waitlist-who .inbox-tag,
+.inbox-line-who .inbox-tag {
+  margin-left: 0.4rem;
+}
+
+.waitlist-since {
+  display: block;
+}
+
+.waitlist-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.waitlist-controls .btn,
+.inbox-line .btn {
+  padding: 0.3rem 0.6rem;
+  font-size: 0.85rem;
+}
+
+.waitlist-foot {
+  margin: 0.7rem 0 0;
+  font-size: 0.9rem;
+}
+
+.inbox-more-link {
+  align-self: center;
+  font-size: 0.9rem;
+}
+
+.desk-facts {
+  font-family: var(--font-label);
+  font-size: 0.85rem;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+  margin: -0.75rem 0 1rem;
+}
+
+/* Your private note on a member, pinned under their name. */
+.desk-note {
+  border-left: 3px solid var(--stamp);
+  padding: 0.4rem 0 0.4rem 0.85rem;
+  font-style: italic;
+  white-space: pre-line;
+  margin: 0 0 1rem;
+}
+
+/* A member's payments and books, side by side when there's room. */
+.desk-file {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr));
+  gap: 0 2.5rem;
+}
+
+.desk-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.desk-list > li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.2rem 1rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px dotted rgba(var(--charcoal-rgb), var(--rule));
+}
+
+.desk-list > li:last-child {
+  border-bottom: 0;
+}
+
+.desk-meta {
+  font-family: var(--font-label);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+}
+
+.desk-late {
+  color: var(--stamp);
+}
+
+.desk-wide {
+  flex-basis: 100%;
+}
+
+.desk-tag {
+  margin-left: 0.5rem;
+  font-family: var(--font-label);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--stamp);
+}
+
+.desk-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.5rem 1.25rem;
+}
+
+.desk-row-actions .desk-form-foot {
+  margin-top: 0;
+}
+
+.desk-row-actions summary.text-button {
+  font-size: 0.9rem;
+}
+
+.desk-row-actions .text-button {
+  font-size: 0.9rem;
+}
+
+.desk-danger {
+  border-top: 1px solid rgba(var(--stamp-rgb), 0.5);
+  padding-top: 1.5rem;
+}
+
+/* "Email all members" and "Copy all emails" on /desk/members. */
+.desk-email {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+/* ---- Change requests (group 4): now against asked for ---- */
+
+.desk-change-table {
+  margin-top: 0.8rem;
+}
+
+.desk-change-table tbody th {
+  border-bottom: 1px dotted rgba(var(--charcoal-rgb), var(--rule));
+  vertical-align: top;
+}
+
+.desk-card .desk-note {
+  margin: 0.8rem 0 0;
+}
+
+/* ---- Lending (group 3) ---- */
+
+.desk-queue-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem 1rem;
+  margin-bottom: 0.6rem;
+}
+
+.desk-queue-head .subhead {
+  margin: 0;
+}
+
+.desk-card--late {
+  border-color: var(--stamp);
+}
+
+.desk-link {
+  font-family: var(--font-label);
+  font-size: 0.85rem;
+  color: var(--stamp);
+}
+
+.desk-chosen {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.4rem 1rem;
+  padding: 0.8rem 1rem;
+  border: 1px solid rgba(var(--charcoal-rgb), 0.45);
+  background: var(--paper);
+}
+
+.desk-chosen p {
+  margin: 0;
+}
+
+.desk-warning {
+  border-left: 3px solid var(--stamp);
+  padding: 0.5rem 0 0.5rem 0.85rem;
+  margin: 0 0 1rem;
+}
+
+/* A tick box on the desk's forms: box and words on one line, the words in
+   body type (they're a statement, not a field label). */
+.desk-fields .desk-check {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  align-self: end;
+}
+
+.desk-fields .desk-check input {
+  width: auto;
+}
+
+.desk-fields .desk-check > span {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  color: var(--ink);
+}
+
+.desk-radios {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.5rem;
+}
+
+.desk-radios legend {
+  font-family: var(--font-label);
+  font-size: 0.8rem;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+  margin-bottom: 0.3rem;
+  padding: 0;
+}
+
+.desk-fields .desk-radios label {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.desk-fields .desk-radios input {
+  width: auto;
+}
+
+.desk-empty,
+.desk-muted {
+  color: rgba(var(--charcoal-rgb), var(--dim));
+}
+
+.desk-empty {
+  margin: 0;
+}
+
+.desk-cards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
+  gap: 1rem;
+}
+
+.desk-card {
+  border: 1px solid rgba(var(--charcoal-rgb), 0.45);
+  background: var(--paper);
+  padding: 1rem 1.15rem 1.15rem;
+}
+
+.desk-card-head h3 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1.15rem;
+  line-height: 1.3;
+  color: var(--ink);
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.desk-card-date {
+  font-family: var(--font-label);
+  font-size: 0.8rem;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+}
+
+.desk-details {
+  margin: 0.8rem 0 0;
+  font-size: 0.95rem;
+}
+
+.desk-details > div {
+  display: grid;
+  grid-template-columns: 7.5rem 1fr;
+  gap: 0.75rem;
+  padding: 0.3rem 0;
+  border-bottom: 1px dotted rgba(var(--charcoal-rgb), var(--rule));
+}
+
+.desk-details > div:last-child {
+  border-bottom: 0;
+}
+
+.desk-details dt {
+  font-family: var(--font-label);
+  font-size: 0.8rem;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+  padding-top: 0.1rem;
+}
+
+.desk-details dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.desk-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.desk-decline > summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.desk-decline > summary::-webkit-details-marker {
+  display: none;
+}
+
+.desk-decline-form {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.6rem;
+  margin-top: 0.75rem;
+}
+
+.desk-decline-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  width: 100%;
+}
+
+.desk-decline-form label span {
+  font-family: var(--font-label);
+  font-size: 0.8rem;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+}
+
+/* 1rem, so phones don't zoom in on focus. */
+.desk-decline-form textarea {
+  width: 100%;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--charcoal);
+  background: var(--paper);
+  color: var(--ink);
+  border-radius: 2px;
+  resize: vertical;
+}
+
+.desk-decline-form textarea:focus-visible {
+  outline: 2px solid var(--stamp);
+  outline-offset: 1px;
+}
+
+@media (max-width: 480px) {
+  .desk-details > div {
+    grid-template-columns: 1fr;
+    gap: 0.1rem;
+  }
+}
+
 /* ---------- Book detail (/catalog/[slug]) ---------- */
+
+/* Availability (M3 A3), for signed-in people: a small mark above the
+   borrow buttons: ledger blue when it's on the shelf, the stamp's oxblood
+   when it's out. */
+.availability {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.2rem 0.75rem;
+  margin: 0 0 0.9rem;
+}
+
+.availability-mark {
+  font-family: var(--font-label);
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.55rem;
+  border: 1.5px solid currentColor;
+}
+
+.availability.is-available .availability-mark {
+  color: var(--ledger);
+}
+
+.availability.is-out .availability-mark {
+  color: var(--stamp);
+}
+
+.availability-detail {
+  font-size: 0.95rem;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+}
+
+/* "Borrow it": the badge and the request button or form, then the
+   always-there links (how borrowing works, find this book). */
+.borrow-panel {
+  margin-bottom: 1rem;
+}
+
+.borrow-why {
+  line-height: 1.6;
+  margin: 0 0 1rem;
+}
+
+.borrow-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  max-width: 34rem;
+  padding: 1rem 1.15rem 1.15rem;
+  border: 1px solid rgba(var(--charcoal-rgb), 0.45);
+  background: var(--paper);
+}
+
+.borrow-form > label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.borrow-form > label > span:first-child,
+.borrow-handover legend {
+  font-family: var(--font-label);
+  font-size: 0.82rem;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+}
+
+.borrow-hint {
+  font-size: 0.85rem;
+  color: rgba(var(--charcoal-rgb), var(--dim));
+}
+
+/* 1rem, so phones don't zoom in on focus. */
+.borrow-form textarea {
+  width: 100%;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--charcoal);
+  background: var(--paper);
+  color: var(--ink);
+  border-radius: 2px;
+  resize: vertical;
+}
+
+.borrow-form textarea:focus-visible {
+  outline: 2px solid var(--stamp);
+  outline-offset: 1px;
+}
+
+.borrow-handover {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.5rem;
+}
+
+.borrow-handover legend {
+  padding: 0;
+  margin-bottom: 0.35rem;
+}
+
+.borrow-handover label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.borrow-panel > .btn {
+  margin-bottom: 1rem;
+}
+
+/* A waiting request's "Cancel" on /account, on its own line under the state. */
+.account-cancel {
+  flex-basis: 100%;
+  text-align: left;
+  font-size: 0.9rem;
+}
 
 .book-detail {
   display: flex;
@@ -4293,12 +6933,6 @@ mark {
   font-style: italic;
   color: var(--stamp);
   margin: -0.75rem 0 1.25rem;
-}
-
-.book-detail-request-hint {
-  font-size: var(--step--1);
-  color: rgba(var(--charcoal-rgb), var(--dim));
-  margin: 0.6rem 0 0;
 }
 
 /* ---------- The librarian's slip ----------

@@ -13,6 +13,8 @@
     "sync:typesense": "node --env-file=.env.local scripts/sync-typesense.mjs"
   },
   "dependencies": {
+    "@neon/auth": "^0.8.2",
+    "@neondatabase/serverless": "^1.2.1",
     "@sanity/client": "^6.24.1",
     "@sanity/webhook": "^4.0.4",
     "@vercel/analytics": "^2.0.1",
@@ -24,6 +26,7 @@
     "typesense": "^3.0.6"
   },
   "devDependencies": {
+    "@neon/config": "^1.14.4",
     "@types/node": "^20.16.11",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.5",

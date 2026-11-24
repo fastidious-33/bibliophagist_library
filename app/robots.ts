@@ -7,6 +7,8 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: '*',
       allow: '/',
+      // Members' pages (M3): personal, and nothing to find there.
+      disallow: ['/account', '/signin', '/desk'],
     },
     sitemap: `${BASE_URL}/sitemap.xml`,
   };
