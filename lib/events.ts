@@ -1,4 +1,5 @@
 import { after } from 'next/server';
+import { composeEmail } from '@/lib/emails';
 import { isSanityConfigured } from '@/lib/sanity/client';
 import { getAllBooks } from '@/lib/search/sanity';
 import { SITE_URL } from '@/lib/site';
@@ -6,7 +7,7 @@ import { SITE_URL } from '@/lib/site';
 /**
  * Events the site sends to Activepieces Flow 1 (M3-BORROWING.md §12), which
  * emails the right person. Activepieces only delivers: what happened, to
- * whom, and with what, is decided here.
+ * whom, and the email's words, are decided here (lib/emails.ts).
  *
  * Each event is a POST to ACTIVEPIECES_WEBHOOK_URL with the
  * `x-library-secret` header (AUTOMATION_SECRET). It's sent after the page
@@ -17,24 +18,31 @@ import { SITE_URL } from '@/lib/site';
  * Never in an event: phone numbers or addresses.
  */
 
+/**
+ * The events Flow 1 receives. Each arrives with its finished email
+ * (`to`, `subject`, `text`, worded in lib/emails.ts), so the flow is just
+ * the webhook and one Gmail step. The librarian's own notes (new requests,
+ * "more time" asks, change requests) come in the morning digest instead of
+ * one email each; only `member.deleted` (a deposit to refund) is instant.
+ */
 export type LibraryEvent =
   | 'member.approved'
   | 'member.declined'
-  | 'payment.marked'
   | 'member.activated'
-  | 'request.created'
   | 'request.accepted'
   | 'request.declined'
   | 'waitlist.set_aside'
   | 'loan.lent'
   | 'loan.extended'
   | 'loan.returned'
-  | 'more_time.asked'
   | 'more_time.approved'
   | 'more_time.declined'
   | 'member.deleted'
-  | 'member.change_requested'
-  | 'member.change_decided';
+  | 'member.change_decided'
+  /** The daily run (lib/reminders.ts): one member's reminders, worded already. */
+  | 'reminder'
+  /** The daily run: what's waiting at the desk, to the librarian, worded already. */
+  | 'desk.digest';
 
 export interface EventBook {
   /** The call number. */
@@ -94,23 +102,35 @@ export async function eventBook(id: string, title: string): Promise<EventBook> {
   return (await eventBooks([{ id, title }]))[0];
 }
 
+/** True when events can be sent (the webhook URL and the secret are set). */
+export function eventsEnabled(): boolean {
+  return Boolean(process.env.ACTIVEPIECES_WEBHOOK_URL?.trim() && process.env.AUTOMATION_SECRET);
+}
+
 /**
  * Send an event to Flow 1, after the response. The links every email may
- * want are added here: account, desk, catalog and sign-in.
+ * want are added here (account, desk, catalog, sign-in), then its
+ * `subject` and `text` from lib/emails.ts, unless the caller worded them
+ * already (the daily run does).
  */
 export function sendEvent(event: LibraryEvent, payload: EventPayload): void {
   const url = process.env.ACTIVEPIECES_WEBHOOK_URL?.trim();
   const secret = process.env.AUTOMATION_SECRET;
   if (!url || !secret || !payload.to) return;
 
-  const body = JSON.stringify({
+  const fields = {
     event,
     ...payload,
     account_url: `${SITE_URL}/account`,
     desk_url: `${SITE_URL}/desk`,
     catalog_url: `${SITE_URL}/catalog`,
     signin_url: `${SITE_URL}/signin`,
-  });
+  };
+  const email =
+    typeof payload.subject === 'string' && typeof payload.text === 'string'
+      ? { subject: payload.subject, text: payload.text }
+      : composeEmail(event, fields);
+  const body = JSON.stringify({ ...fields, ...email });
 
   const send = async () => {
     try {

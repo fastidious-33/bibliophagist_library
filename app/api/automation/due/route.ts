@@ -1,25 +1,29 @@
 import { automationGuard } from '@/lib/automation';
-import { takeReminders } from '@/lib/reminders';
+import { runDaily } from '@/lib/reminders';
 
 /**
- * GET /api/automation/due: today's reminder list for Activepieces Flow 2,
- * the daily run at 09:00 India time (M3-BORROWING.md §12, §16.5).
+ * GET /api/automation/due: the daily run (M3-BORROWING.md §12), woken each
+ * morning by Vercel Cron (vercel.json, 03:30 UTC = 09:00 in India).
  *
- * Only Activepieces can call it (the `x-library-secret` header). It also
- * runs the daily upkeep (pauses, the declined archive). Each reminder is
- * marked sent as it's handed out, so a second call the same day answers
- * with an empty list. No phone numbers or addresses.
+ * It runs the upkeep (pauses, the declined archive), then sends each
+ * member's reminders as one email and the librarian's digest, all through
+ * Activepieces Flow 1. Reminders are marked sent as they're picked, so a
+ * second call the same day sends nothing new.
  *
- *   200  { ok: true, items: [{ kind, to, name, book, due, due_on, days_overdue? }] }
+ * Called by Vercel Cron (`Authorization: Bearer <CRON_SECRET>`) or by hand
+ * with the automation secret (`x-library-secret`), e.g. to test.
+ *
+ *   200  { ok: true, reminders, emails, digest, skipped? }
  *   401  wrong or missing secret
  *   503  the site isn't set up yet
  */
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
-  const refused = automationGuard(request);
+  const refused = automationGuard(request, { allowCron: true });
   if (refused) return refused;
 
-  const items = await takeReminders();
-  return Response.json({ ok: true, items }, { headers: { 'Cache-Control': 'no-store' } });
+  const run = await runDaily();
+  console.log('Daily run:', JSON.stringify(run));
+  return Response.json({ ok: true, ...run }, { headers: { 'Cache-Control': 'no-store' } });
 }

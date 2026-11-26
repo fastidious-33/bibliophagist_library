@@ -1,13 +1,79 @@
 import { db } from '@/lib/db';
+import { getInbox, type InboxKind } from '@/lib/desk-inbox';
 import { syncPauses } from '@/lib/desk-loans';
 import { purgeDeclined } from '@/lib/desk-members';
-import { eventBooks, eventDate, type EventBook } from '@/lib/events';
+import { digestEmail, reminderEmail } from '@/lib/emails';
+import { eventBooks, eventDate, eventsEnabled, librarianEmail, sendEvent, type EventBook } from '@/lib/events';
+import { SITE_URL } from '@/lib/site';
 
 /**
- * Activepieces Flow 2, the daily run (M3-BORROWING.md §12): today's
- * reminders, and the Sunday export. Server code only; the routes in
- * app/api/automation/ check the secret first.
+ * The daily run (M3-BORROWING.md §12): reminders and the librarian's
+ * digest, every morning, woken by Vercel Cron and delivered by Activepieces
+ * Flow 1. Also the Sunday export for the backup flow. Server code only;
+ * the routes in app/api/automation/ check the secret first.
  */
+
+/** What the daily run did, for its route's answer (and Vercel's logs). */
+export interface DailyRun {
+  /** Reminders picked today (one per book). */
+  reminders: number;
+  /** Reminder emails sent (one per member). */
+  emails: number;
+  /** Whether the librarian's digest went (only when something waits). */
+  digest: boolean;
+  /** Set when nothing could be sent (no webhook set up): reminders stay unsent for tomorrow. */
+  skipped?: string;
+}
+
+/** How each kind of inbox item reads in the digest, in the inbox's order. */
+const DIGEST_LABELS: [InboxKind, string][] = [
+  ['overdue', 'Overdue books'],
+  ['requests', 'People asking for books'],
+  ['signup', 'Sign-ups'],
+  ['payment', 'Payments due'],
+  ['turn', 'Waited-for books back on the shelf'],
+  ['set_aside', 'Set aside, not yet collected'],
+  ['more_time', '"More time" asks'],
+  ['change', 'Details changes'],
+];
+
+/**
+ * The morning run: the upkeep, then each member's reminders in one email,
+ * then the digest to the librarian if the inbox isn't empty. Everything
+ * goes out through Flow 1 (sendEvent). Without the webhook set up, only the
+ * upkeep runs: reminders aren't marked sent, so they go once it is.
+ */
+export async function runDaily(): Promise<DailyRun> {
+  if (!eventsEnabled()) {
+    await Promise.all([syncPauses(), purgeDeclined()]);
+    return { reminders: 0, emails: 0, digest: false, skipped: 'ACTIVEPIECES_WEBHOOK_URL is not set' };
+  }
+
+  const reminders = await takeReminders();
+  const byMember = new Map<string, Reminder[]>();
+  for (const reminder of reminders) {
+    byMember.set(reminder.to, [...(byMember.get(reminder.to) ?? []), reminder]);
+  }
+  const accountUrl = `${SITE_URL}/account`;
+  for (const [to, theirs] of byMember) {
+    const email = reminderEmail(theirs[0].name, theirs, accountUrl);
+    sendEvent('reminder', { to, name: theirs[0].name, ...email, books: theirs.map((r) => r.book) });
+  }
+
+  // The digest: the desk's own inbox, counted (it also runs the upkeep).
+  const inbox = await getInbox();
+  const counts = DIGEST_LABELS.map(([kind, label]) => ({
+    label,
+    count: inbox.filter((item) => item.kind === kind).length,
+  }));
+  const digest = inbox.length > 0 && Boolean(librarianEmail());
+  if (digest) {
+    const email = digestEmail(counts, `${SITE_URL}/desk`);
+    sendEvent('desk.digest', { to: librarianEmail(), name: 'Librarian', ...email });
+  }
+
+  return { reminders: reminders.length, emails: byMember.size, digest };
+}
 
 export type ReminderKind = 'due_soon' | 'due_today' | 'overdue';
 

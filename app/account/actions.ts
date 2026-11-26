@@ -4,11 +4,10 @@ import { revalidatePath } from 'next/cache';
 import { getAuth, isAuthConfigured } from '@/lib/auth/server';
 import { getAvailability } from '@/lib/availability';
 import { isDatabaseConfigured } from '@/lib/db';
-import { getBook, loanContact } from '@/lib/desk-loans';
+import { getBook } from '@/lib/desk-loans';
 import { paidDeposit } from '@/lib/desk-members';
-import { eventBook, eventDate, librarianEmail, sendEvent } from '@/lib/events';
+import { eventDate, librarianEmail, sendEvent } from '@/lib/events';
 import {
-  changedFields,
   deleteMember,
   findMemberForLogin,
   requestDetailsChange,
@@ -81,12 +80,7 @@ export async function requestChange(_previous: ChangeState, form: FormData): Pro
   if (result === 'closed') {
     return { status: 'error', message: 'Change requests are closed for now. Ask me if something needs updating.' };
   }
-  // To the librarian: which fields, never the values.
-  sendEvent('member.change_requested', {
-    to: librarianEmail(),
-    name: member.name,
-    fields: changedFields(member, wanted).join(', '),
-  });
+  // The librarian hears about it in the morning digest (lib/reminders.ts).
   revalidatePath('/account');
   return { status: 'sent' };
 }
@@ -153,14 +147,7 @@ export async function requestBook(_previous: RequestState, form: FormData): Prom
   if (result === 'limit') {
     return { status: 'error', message: atLimit(holdings.limit) };
   }
-  // To the librarian: the handover choice and their note, never the address.
-  sendEvent('request.created', {
-    to: librarianEmail(),
-    name: member.name,
-    book: await eventBook(book._id, book.title),
-    handover,
-    note,
-  });
+  // The librarian hears about it in the morning digest (lib/reminders.ts).
   revalidatePath('/account');
   revalidatePath('/desk');
   return { status: 'sent' };
@@ -207,17 +194,7 @@ export async function askMoreTime(_previous: MoreTimeState, form: FormData): Pro
         message: `You’ve asked ${MAX_MORE_TIME_ASKS} times for this book. Message me if you need longer.`,
       };
   }
-  const loan = await loanContact(loanId);
-  if (loan) {
-    sendEvent('more_time.asked', {
-      to: librarianEmail(),
-      name: member.name,
-      book: await eventBook(loan.book_id, loan.book_title),
-      due: eventDate(loan.due_at),
-      extra,
-      note,
-    });
-  }
+  // The librarian hears about it in the morning digest (lib/reminders.ts).
   revalidatePath('/account');
   revalidatePath('/desk');
   return { status: 'sent' };

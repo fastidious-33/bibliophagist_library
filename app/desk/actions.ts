@@ -105,25 +105,8 @@ function refreshMember(id: string): void {
 
 // ---------- Emails (A4): what each action tells Activepieces ----------
 // sendEvent (lib/events.ts) goes after the response, and a failure is only
-// logged, so none of these can make an action fail.
-
-/** "Payment: Riya deposit paid", a note to the librarian. */
-async function tellPayment(
-  memberId: string,
-  kind: 'deposit' | 'subscription',
-  status: 'paid' | 'waived' | 'refunded',
-  amount: number,
-): Promise<void> {
-  const member = await memberContact(memberId);
-  if (!member) return;
-  sendEvent('payment.marked', {
-    to: librarianEmail(),
-    name: member.name,
-    kind: kind === 'deposit' ? 'deposit' : 'membership',
-    status,
-    amount,
-  });
-}
+// logged, so none of these can make an action fail. Payments marked here
+// send no note to the librarian: they did it themselves.
 
 /** An email to a loan's borrower about it, with the book and its (current) due date. */
 async function tellLoan(
@@ -292,7 +275,6 @@ export async function addPayment(_previous: DeskResult, form: FormData): Promise
           : 'The membership is already marked. Remove that entry first if it was a mistake.',
     };
   }
-  await tellPayment(id, kind, status, payment.amount);
   refreshMember(id);
   return { message: 'Payment marked.' };
 }
@@ -306,7 +288,6 @@ export async function refund(_previous: DeskResult, form: FormData): Promise<Des
   if (!refundedOn) return { error: 'Enter the date it was refunded.' };
   const done = await refundDeposit(id, idField(form, 'paymentId'), amount, refundedOn);
   if (!done) return { error: 'Only a paid deposit can be refunded.' };
-  await tellPayment(id, 'deposit', 'refunded', amount);
   refreshMember(id);
   return {};
 }
@@ -540,7 +521,6 @@ export async function markPaidAction(_previous: DeskResult, form: FormData): Pro
   });
   if (result === 'not_member') return { error: 'Payments open once they’re approved.' };
   if (result === 'already') return { error: 'That’s already marked. Reload the desk.' };
-  await tellPayment(id, kind, 'paid', kind === 'deposit' ? DEPOSIT_AMOUNT : SUBSCRIPTION_AMOUNT);
   refreshMember(id);
   return { message: 'Paid' };
 }
